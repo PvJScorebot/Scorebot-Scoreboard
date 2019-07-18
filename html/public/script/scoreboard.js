@@ -1,6 +1,11 @@
-// Scorebard Alpha
-// JavaScript
+//
+//  Scoreboard v1: Alpha
+//  iDigitalFlame 2019, The Scorebot Project.
+//
+//  Javascript Main
+//
 
+// Auto Interval Constants
 var interval_all = 15000;
 var interval_team = 7500;
 var interval_credit = 5000;

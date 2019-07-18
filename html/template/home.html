@@ -1,17 +1,32 @@
 <!DOCTYPE html>
+<!--
+    Scoreboard v1: Alpha
+    iDigitalFlame 2019, The Scorebot Project.
+
+    Games List Page
+-->
 <html lang="en">
     <head>
-        <meta charset="UTF-8">
-        <script type="text/javascript" src="script/board.js"></script>
-        <link rel="stylesheet" href="style/board.css" type="text/css" media="screen" />
+        <title>Scorebot: Games List</title>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <script type="text/javascript">game = {{.}};</script>
+        <script type="text/javascript" src="/script/scoreboard.js"></script>
+        <link rel="icon" type="image/x-icon" href="/image/favicon.png" />
+        <link rel="stylesheet" href="/style/awesome/css/font-awesome.min.css">
+        <link rel="stylesheet" href="/style/scoreboard.css" type="text/css" media="screen" />
     </head>
     <body>
-        <div class="list">
+        <div id="game-list">
             <ul>{{range .}}
-                <li><a href="/game/{{.ID}}/">
-                <div class="list-name">{{.Name}} - {{.Mode.String}}
-                <div class="list-status">{{.Status.String}} {{.String}}</div></div>
-                </a></li>
+                <li class="game-meta">
+                    <a href="/game/{{.ID}}/">
+                        <div class="list-name">{{.Name}} - {{.Mode.String}}
+                            <div class="list-status">{{.Status.String}} {{.String}}</div>
+                        </div>
+                    </a>
+                </li>
             {{end}}</ul>
         </div>
     </body>

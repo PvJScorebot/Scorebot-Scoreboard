@@ -2,6 +2,7 @@ package game
 
 import "fmt"
 
+// Temparory URL for Team Images
 const gif = "https://media3.giphy.com/media/3ohze4mdptnmdtyXgk/giphy.gif?cid=790b76115d2f3d255151467732f04b78&rid=giphy.gif"
 
 // Team is a struct that repersents a Team object on the
