@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Scorebot Scoreboard</title>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <script type="text/javascript">game = {{.}};</script>
+        <script type="text/javascript" src="/script/scoreboard.js"></script>
+        <link rel="stylesheet" href="/style/awesome/css/font-awesome.min.css">
+        <link rel="stylesheet" href="/style/scoreboard.css" type="text/css" media="screen" />
+    </head>
+    <body onload="init();">
+        <div id="board">
+            <div id="game">
+                <div style="clear: both;"></div>
+                <div id="bar">
+                    <div id="title"><div id="game-message"></div></div>
+                    <div id="menu">X</div>
+                </div>
+                <div style="clear: both;"></div>
+                <div id="game-tab">
+                    <a id="auto-tab" href="#" onclick="return navigate('auto');">Auto</a>
+                    <a id="overview-tab" href="#" onclick="return navigate('overview');">Overview</a>
+                    <a id="credits-tab" href="#" onclick="return navigate('credits');">Credits</a>
+                </div>
+                <div id="game-status"></div>
+                <div id="game-team"></div>
+            </div>
+        </div>
+        <div id="console">[root@localhost ~]# <span id="console-line">_</span></div>
+    </body>
+</html>

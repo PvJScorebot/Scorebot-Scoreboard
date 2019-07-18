@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <script type="text/javascript" src="script/board.js"></script>
+        <link rel="stylesheet" href="style/board.css" type="text/css" media="screen" />
+    </head>
+    <body>
+        <div class="list">
+            <ul>{{range .}}
+                <li><a href="/game/{{.ID}}/">
+                <div class="list-name">{{.Name}} - {{.Mode.String}}
+                <div class="list-status">{{.Status.String}} {{.String}}</div></div>
+                </a></li>
+            {{end}}</ul>
+        </div>
+    </body>
+</html>

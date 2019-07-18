@@ -1,0 +1,273 @@
+/* Scoreboard Style Sheet
+   Alpha
+*/
+
+body {
+    margin: 0;
+    padding: 0;
+    font-size: 16px;
+    background: rgb(0, 0, 0);
+    color: rgb(255, 255, 255);
+    font-family: 'Open Sans', Sans-Serif, Arial, FontAwesome;
+}
+body::after {
+    content: '';
+    height: 20px;
+    display: block;
+}
+
+#board {
+    margin: 10px auto 0 auto;
+}
+#bar {
+    height: 20px;
+    font-size: 20px;
+    max-height: 20px;
+    line-height: 20px;
+    vertical-align: middle;
+    color: rgb(255, 255, 255);
+    background: rgb(62,146,46);
+    border-bottom: 2px solid rgb(62,146,46);
+}
+#title {
+    float: left;
+    margin-left: 5px;
+}
+#menu {
+    float: right;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 0 5px 0 5px;
+}
+#console {
+    bottom: 0;
+    height: 20px;
+    padding-left: 4px;
+    position: absolute;
+}
+#console-line {
+    animation: blinker 2s linear infinite;
+}
+@keyframes blinker {
+    50% {
+        opacity: 0;
+    }
+}
+
+#game-credit { display: none; }
+
+#game {
+    max-width: 95%;
+    text-align: center;
+    padding: 0 0 10px 0;
+    margin: 0 auto 0 auto;
+    background: rgb(11, 24, 14);
+    border: 2px solid rgb(62,146,46);
+}
+#game-tab {
+    text-align: right;
+    padding-right: 5px;
+    border-top:1px solid rgb(0,0,0);
+    background: rgb(38, 83, 29);
+}
+#game-tab a {
+    display: inline;
+    text-decoration: none;
+    padding: 0 7px 5px 7px;
+    color: rgb(255, 255, 255);
+    border-left: 1px solid rgb(0, 0, 0);
+}
+#game-tab a:hover {
+    text-decoration: underline;
+    color: rgb(255, 255, 255);
+    background: rgb(62,146,46);
+}
+#game-tab a:visited {
+    text-decoration: none;
+    color: rgb(255, 255, 255);
+}
+#game-tab .selected {
+    border-bottom: 1px solid rgb(62,146,46);
+}
+#game-tab .auto-selected {
+    border-bottom: 1px solid rgb(22, 119, 158);
+}
+
+
+#game-status {
+    padding: 10px 0 0 25px;
+    text-align: left;
+    display: table-cell;
+}
+#game-status-name {
+    font-size: 30px;
+}
+#game-status-mode, #game-status-status {
+    margin-left: 5px;
+    font-size: 14px;
+    display: inline-block
+}
+#game-team.single .team {
+    display: none;
+}
+#game-team .team.selected {
+    display: inline-table;
+}
+
+.team {
+    margin: 5px;
+    padding: 5px;
+    text-align: left;
+    border-width: 3px;
+    border-style: solid;
+    display: inline-table;
+    background: rgb(25, 30, 36);
+    box-shadow: 3px 3px rgb(42, 43, 44);
+}
+.team.mini {
+    display: none;
+}
+.team-logo {
+    width: 100px;
+    height: 100px;
+    display: inline-table;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.team-name {
+    font-size: 28px;
+    font-weight: bold;
+    margin: 0 5px 0 3px;
+    vertical-align: top;
+    display: inline-table;
+}
+.team-host {
+    padding: 2px 0 2px 0;
+    border-top: 1px solid rgb(62,146,46);
+    border-bottom: 1px solid rgb(62,146,46);
+}
+.team-score {
+    margin: 2px 2px 2px 0;
+    vertical-align: bottom;
+}
+.team-beacon {
+    width: 25px;
+    min-width:25px;
+    padding-left: 2px;
+    display: table-cell;
+    border-left: 1px solid rgb(62,146,46);
+}
+.team-score .score {
+    margin-right: 8px;
+}
+
+.team.selected {
+    border-width: 0;
+    box-shadow: none;
+    background: none;
+    border-style: none;
+    border-top-width: 5px;
+    border-top-style: solid;
+}
+.team.selected .team-logo {
+    width: 300px;
+    height: 300px;
+    display: table-cell;
+}
+.team.selected .service {
+    width: 50px;
+    max-width: 50px;
+    color: rgb(255, 255, 255);
+}
+.team.selected .team-host {
+    border: none;
+    margin-left: 10px;
+}
+
+.host {
+    display: block;
+    font-size: 15px;
+    line-height: 20px;
+    margin: 2px 2px 2px 2px;
+}
+.host-name {
+    width: 100px;
+    overflow: hidden;
+    max-width: 100px;
+    min-width: 100px;
+    text-align: right;
+    display: table-cell;
+}
+.host.offline::before {
+    content: "";
+    position: absolute;
+    color: rgb(255, 0, 0);
+}
+
+.service {
+    width: 20px;
+    height: 20px;
+    max-height: 20px;
+    max-width: 20px;
+    font-size: 15px;
+    overflow: hidden;
+    line-height: 20px;
+    display: table-cell;
+    color: rgba(0, 0, 0, 0);
+    border-left: rgb(0, 0, 0) solid 5px;
+}
+.service-protocol {
+    display: none;
+}
+
+.score {
+    display: inline-table;
+    vertical-align: bottom;
+}
+.score-total {
+    display: block;
+    font-size: 16px;
+    font-weight: normal;
+}
+.score-flag-lost {
+    margin-right: 5px;
+    color: rgb(255, 0, 0);
+}
+.score-ticket-open {
+    color: rgb(255, 0, 0);
+}
+.score-health::before {
+    content: "";
+    margin-right: 3px;
+}
+.score-flag-open::before {
+    content: "";
+    margin-right: 3px;
+}
+.score-flag-lost::before {
+    content: "";
+    margin-right: 3px;
+    color: rgb(255, 255, 255);
+}
+.score-ticket-open::before {
+    content: "";
+    margin-right: 3px;
+    color: rgb(255, 255, 255);
+}
+.score-ticket-closed::before {
+    content: "";
+    margin-right: 3px;
+}
+.score-flag-captured::before {
+    content: "";
+    margin-right: 3px;
+}
+
+.beacon {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    min-height: 20px;
+    display: table-cell;
+}
