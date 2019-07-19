@@ -44,7 +44,9 @@ func (t *Team) getHash(h *Hasher) uint32 {
 		h.Hash(t.Minimal)
 		t.hash = h.Segment()
 	}
-	/*t.Beacons = append(t.Beacons, []*Beacon{
+
+	/* Beacon Spam Snippet
+	t.Beacons = append(t.Beacons, []*Beacon{
 		&Beacon{Team: 1, Color: "rgb(255, 0, 255)"},
 		&Beacon{Team: 2, Color: "rgb(255, 255, 0)"},
 		&Beacon{Team: 3, Color: "rgb(255, 0    0)"},

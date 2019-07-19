@@ -201,21 +201,21 @@ func (s *Service) getDifference(p *planner, old *Service) {
 	if old != nil && old.hash == s.hash {
 		p.setValue("port", s.Port, "service-port")
 		p.setValue("protocol", s.Protocol.String(), "service-protocol")
-		p.setProperty("", s.State.String(), "background-color")
 		if s.Bonus {
 			p.setProperty("", "+bonus", "class")
 		} else {
 			p.setProperty("", "-bonus", "class")
 		}
+		p.setProperty("", s.State.String(), "background-color")
 	} else {
 		p.setDeltaValue("port", s.Port, "service-port")
 		p.setDeltaValue("protocol", s.Protocol.String(), "service-protocol")
-		p.setDeltaProperty("", s.State.String(), "background-color")
 		if s.Bonus {
 			p.setDeltaProperty("", "+bonus", "class")
 		} else {
 			p.setDeltaProperty("", "-bonus", "class")
 		}
+		p.setDeltaProperty("", s.State.String(), "background-color")
 	}
 	p.rollbackPrefix()
 }

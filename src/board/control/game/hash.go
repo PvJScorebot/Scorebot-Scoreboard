@@ -3,6 +3,7 @@ package game
 import (
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"hash"
 	"hash/fnv"
 	"math"
@@ -111,6 +112,8 @@ func (h *Hasher) Hash(v interface{}) error {
 	case uint:
 		binary.BigEndian.PutUint64(b, uint64(v.(uint)))
 		h.Write(b)
+	case fmt.Stringer:
+		h.Write([]byte(v.(fmt.Stringer).String()))
 	default:
 		bufPool.Put(b)
 		return ErrCannotSum

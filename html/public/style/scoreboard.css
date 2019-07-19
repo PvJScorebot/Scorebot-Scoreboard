@@ -140,7 +140,10 @@ body::after {
     background-repeat: no-repeat;
 }
 .team-name {
+    width: 125px;
     font-size: 28px;
+    max-width: 125px;
+    overflow: hidden;
     font-weight: bold;
     margin: 0 5px 0 3px;
     vertical-align: top;
@@ -157,11 +160,13 @@ body::after {
 }
 .team-beacon {
     width: 25px;
+    height: 100px;
     min-width:25px;
     padding-right: 0;
     overflow: hidden;
+    max-height: 100px;
     vertical-align: top;
-    display: table-cell;
+    display: inline-block;
     border-right: 1px solid rgb(62,146,46);
 }
 .team-score .score {
@@ -192,8 +197,8 @@ body::after {
     margin-left: 10px;
 }
 .team.selected .team-name {
-    margin-left: 10px;
     font-size: 28px;
+    margin-left: 10px;
     margin-bottom: 10px;
 }
 .team.selected .team-score {
@@ -297,6 +302,14 @@ body::after {
     color: rgb(255, 0, 0);
 }
 
+.beacon {
+    width: 25px;
+    height: 25px;
+    min-width: 25px;
+    min-height: 25px;
+    display: inline-block;
+}
+
 .service {
     width: 20px;
     height: 20px;
@@ -322,6 +335,9 @@ body::after {
     font-size: 16px;
     font-weight: normal;
 }
+.score-flag-open {
+    display: none;
+}
 .score-flag-lost {
     margin-right: 5px;
     color: rgb(255, 0, 0);
@@ -329,12 +345,11 @@ body::after {
 .score-ticket-open {
     color: rgb(255, 0, 0);
 }
+.score-ticket-closed {
+    display: none;
+}
 .score-health::before {
     content: "";
-    margin-right: 3px;
-}
-.score-flag-open::before {
-    content: "";
     margin-right: 3px;
 }
 .score-flag-lost::before {
@@ -347,19 +362,7 @@ body::after {
     margin-right: 3px;
     color: rgb(255, 255, 255);
 }
-.score-ticket-closed::before {
-    content: "";
-    margin-right: 3px;
-}
 .score-flag-captured::before {
     content: "";
     margin-right: 3px;
-}
-
-.beacon {
-    width: 20px;
-    height: 20px;
-    min-width: 20px;
-    min-height: 20px;
-    display: inline-block;
 }
