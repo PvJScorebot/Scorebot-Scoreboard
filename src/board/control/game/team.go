@@ -1,6 +1,8 @@
 package game
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Temparory URL for Team Images
 const gif = "https://media3.giphy.com/media/3ohze4mdptnmdtyXgk/giphy.gif?cid=790b76115d2f3d255151467732f04b78&rid=giphy.gif"
@@ -42,6 +44,24 @@ func (t *Team) getHash(h *Hasher) uint32 {
 		h.Hash(t.Minimal)
 		t.hash = h.Segment()
 	}
+	/*t.Beacons = append(t.Beacons, []*Beacon{
+		&Beacon{Team: 1, Color: "rgb(255, 0, 255)"},
+		&Beacon{Team: 2, Color: "rgb(255, 255, 0)"},
+		&Beacon{Team: 3, Color: "rgb(255, 0    0)"},
+		&Beacon{Team: 4, Color: "rgb(0, 255, 255)"},
+		&Beacon{Team: 6, Color: "rgb(0,   0, 255)"},
+		&Beacon{Team: 5, Color: "rgb(0,   0, 255)"},
+	}...)
+
+	z := make([]*Beacon, 100)
+	for i := range z {
+		z[i] = &Beacon{
+			Team:  int64(i),
+			Color: fmt.Sprintf("rgb(%d, %d, %d)", rand.Intn(255), rand.Intn(255), rand.Intn(255)),
+		}
+	}
+	t.Beacons = append(t.Beacons, z...)*/
+
 	t.total = t.hash
 	for i := range t.Hosts {
 		t.total += t.Hosts[i].getHash(h)
@@ -70,11 +90,12 @@ func (t *Team) getDifference(p *planner, old *Team) {
 	}
 	p.setPrefix(fmt.Sprintf("%s-team-t%d", p.prefix, t.ID))
 	if old != nil && old.hash == t.hash {
+		p.setValue("beacon", "", "team-beacon")
+		p.setValue("beacon-con", "", "team-beacon-container")
 		p.setValue("logo", "", "team-logo")
 		p.setValue("name", "", "team-name")
 		p.setValue("host", "", "team-host")
 		p.setValue("score", "", "team-score")
-		p.setValue("beacon", "", "team-beacon")
 		p.setValue("name", t.Name, "team-name")
 		p.setProperty("logo", t.Color, "background-color")
 		p.setProperty("logo", fmt.Sprintf("url('%s')", gif), "background-image")
@@ -101,11 +122,12 @@ func (t *Team) getDifference(p *planner, old *Team) {
 			}
 		}
 	} else {
+		p.setDeltaValue("beacon", "", "team-beacon")
+		p.setDeltaValue("beacon-con", "", "team-beacon-container")
 		p.setDeltaValue("logo", "", "team-logo")
 		p.setDeltaValue("name", "", "team-name")
 		p.setDeltaValue("host", "", "team-host")
 		p.setDeltaValue("score", "", "team-score")
-		p.setDeltaValue("beacon", "", "team-beacon")
 		p.setDeltaValue("name", t.Name, "team-name")
 		p.setDeltaProperty("logo", t.Color, "background-color")
 		p.setDeltaProperty("logo", fmt.Sprintf("url('%s')", gif), "background-image")
@@ -166,7 +188,7 @@ func (t *Team) getDifference(p *planner, old *Team) {
 		}
 		for k, v := range x {
 			if v.c2 == nil {
-				p.setRemove(fmt.Sprintf("beacon-b%d", k))
+				p.setRemove(fmt.Sprintf("beacon-con-b%d", k))
 			} else if v.c1 == nil {
 				v.c2.(*Beacon).getDifference(p, nil)
 			} else {
@@ -178,11 +200,11 @@ func (t *Team) getDifference(p *planner, old *Team) {
 }
 func (b *Beacon) getDifference(p *planner, old *Beacon) {
 	if old == nil {
-		p.setDeltaValue(fmt.Sprintf("beacon-b%d", b.Team), "", "beacon")
+		p.setDeltaValue(fmt.Sprintf("beacon-con-b%d", b.Team), "", "beacon")
 	} else {
-		p.setValue(fmt.Sprintf("beacon-b%d", b.Team), "", "beacon")
+		p.setValue(fmt.Sprintf("beacon-con-b%d", b.Team), "", "beacon")
 	}
-	p.setPrefix(fmt.Sprintf("%s-beacon-b%d", p.prefix, b.Team))
+	p.setPrefix(fmt.Sprintf("%s-beacon-con-b%d", p.prefix, b.Team))
 	if old != nil && old.hash == b.hash {
 		p.setProperty("", b.Team, "iid")
 		p.setProperty("", b.Color, "background")

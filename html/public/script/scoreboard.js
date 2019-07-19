@@ -23,6 +23,7 @@ function init() {
     document.sb_auto = false;
     document.sb_debug = true;
     document.sb_loaded = false;
+    document.onresize = resize_beacons;
     debug("Starting init.. Selected Game id: " + game);
     if (!game) {
         debug("No game ID detected, bailing..");
@@ -82,6 +83,7 @@ function recv(message) {
         update_board(message.data);
         if (!document.sb_loaded) {
             navigate("auto");
+            resize_beacons();
         }
         document.sb_loaded = true;
     }
@@ -130,6 +132,14 @@ function navigate(panel) {
         }
     } else if (document.sb_auto) {
         document.sb_auto = false;
+    }
+}
+function resize_beacons() {
+    var bc = document.getElementsByClassName("team-beacon-container");
+    for (var i = 0; i < bc.length; i++) {
+        bc[i].style.display = "none";
+        bc[i].style.maxHeight = bc[i].parentElement.offsetHeight + "px";
+        bc[i].style.display = "";
     }
 }
 function update_board(data) {
@@ -246,3 +256,36 @@ function select_div(panel, divs, select) {
         gt.classList.add("single");
     }
 }
+/*
+function set_beacon_image(beacon) {
+    if (beacon.style.background.contains("data")) {
+        return
+    }
+    var beaconTestDiv = document.getElementById('sb3_team_div_beacon_' + team_id + '_' + beacon_team_id);
+    if (beaconDiv === null) return;
+    if (beaconTestDiv !== null) return;
+    var beaconColor = sb3_get_rgb(beacon_color);
+    var beaconLogo = new Image();
+    beaconLogo.onload = function () {
+        var beaconCanvas = document.createElement("canvas");
+        beaconCanvas.width = 25;
+        beaconCanvas.height = 25;
+        var beaconImage = document.createElement("img");
+        beaconImage.width = 25;
+        beaconImage.height = 25;
+        beaconImage.id = 'sb3_team_div_beacon_' + team_id + '_' + beacon_team_id;
+        var beaconDraw = beaconCanvas.getContext("2d");
+        beaconDraw.drawImage(beaconLogo, 0, 0);
+        var beaconCanvasImg = beaconDraw.getImageData(0, 0, 128, 128);
+        for (var beaconInt = 0; beaconInt < beaconCanvasImg.data.length; beaconInt += 4) {
+            beaconCanvasImg.data[beaconInt] = beaconColor[0];
+            beaconCanvasImg.data[beaconInt + 1] = beaconColor[1];
+            beaconCanvasImg.data[beaconInt + 2] = beaconColor[2];
+        }
+        beaconDraw.putImageData(beaconCanvasImg, 0, 0);
+        beaconImage.src = beaconCanvas.toDataURL("image/png");
+        beaconDiv.append(beaconImage)
+    }
+    beaconLogo.src = sb3_server + '/static/img/beacon.png';
+}
+*/
