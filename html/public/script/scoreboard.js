@@ -10,15 +10,6 @@ var interval_all = 15000;
 var interval_team = 7500;
 var interval_credit = 5000;
 
-function display_close() {
-    debug("Displaying closed board...");
-    document.write("Closed!");
-}
-function display_invalid() {
-    debug("Displaying invalid board...");
-    document.write("Game Not Found");
-}
-
 function init() {
     document.sb_auto = false;
     document.sb_debug = true;
@@ -28,6 +19,7 @@ function init() {
         debug("No game ID detected, bailing..");
         return;
     }
+    document.sb_event = document.getElementById("event");
     document.sb_board = document.getElementById("board");
     setInterval(scroll_beacons, 200);
     debug("Opening websocket..");
@@ -48,6 +40,9 @@ function closed() {
 function startup() {
     debug("Received websocket open signal.");
     document.sb_socket.send(JSON.stringify({"game": game}));
+}
+function event_close() {
+    document.sb_event.style.display = "none";
 }
 function auto_scroll() {
     if (!document.sb_auto) {
@@ -137,6 +132,13 @@ function navigate(panel) {
         document.sb_auto = false;
     }
 }
+function display_close() {
+    debug("Displaying closed board...");
+    var em = document.getElementById("game-disconnected");
+    if (em !== null) {
+        em.style.display = "block";
+    }
+}
 function scroll_beacons() {
     var bt = document.getElementsByClassName("team-beacon");
     for (var bi = 0; bi < bt.length; bi++) {
@@ -147,6 +149,13 @@ function update_beacons() {
     var bl = document.getElementsByClassName("beacon");
     for (var bi = 0; bi < bl.length; bi++) {
         set_beacon_image(bl[bi]);
+    }
+}
+function display_invalid() {
+    debug("Displaying invalid board...");
+    var em = document.getElementById("game-invalid");
+    if (em !== null) {
+        em.style.display = "block";
     }
 }
 function update_board(data) {
@@ -330,4 +339,11 @@ function select_div(panel, divs, select) {
     } else {
         gt.classList.add("single");
     }
+}
+
+function show_event(event) {
+
+}
+function show_event_popup(message) {
+
 }

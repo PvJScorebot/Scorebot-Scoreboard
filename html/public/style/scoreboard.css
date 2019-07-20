@@ -57,7 +57,71 @@ body::after {
     }
 }
 
-#game-credit { display: none; }
+#event {
+    top: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    position: absolute;
+    background: rgba(0, 0, 0, 0.6);
+}
+#event-container {
+    width: 600px;
+    height: 500px;
+    max-width: 600px;
+    max-height: 500px;
+    margin: 50px auto 0 auto;
+    background: rgb(25, 30, 36);
+    border: 2px solid rgb(62, 146, 46);
+    box-shadow: 3px 3px rgb(42, 43, 44);
+}
+#event-bar {
+    height: 20px;
+    font-size: 20px;
+    max-height: 20px;
+    line-height: 20px;
+    vertical-align: middle;
+    color: rgb(255, 255, 255);
+    background: rgb(62,146,46);
+    border-bottom: 2px solid rgb(62,146,46);
+}
+#event-title {
+    float: left;
+    margin-left: 5px;
+}
+#event-menu {
+    float: right;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 0 5px 0 5px;
+    text-decoration: none;
+    color: rgb(255, 255, 255);
+}
+#event-menu a:hover, #event-menu a:visited {
+    text-decoration: none;
+    color: rgb(255, 255, 255);
+}
+#game-credit, #game-disconnected, #game-invalid {
+    display: none;
+}
+
+#game-invalid {
+    margin: 5px;
+    font-weight: bold;
+    padding: 5px 0 5px 0;
+    color: rgb(255, 255, 255);
+    background: rgb(255, 0, 0);
+}
+#game-disconnected {
+    margin: 5px;
+    font-weight: bold;
+    padding: 5px 0 5px 0;
+    color: rgb(255, 255, 255);
+    background: rgb(255, 0, 0);
+}
+#game-disconnected a, #game-disconnected a:hover, #game-disconnected a:visited {
+    color: rgb(255, 255, 255);
+}
 
 #game {
     max-width: 95%;
@@ -65,13 +129,13 @@ body::after {
     padding: 0 0 10px 0;
     margin: 0 auto 0 auto;
     background: rgb(11, 24, 14);
-    border: 2px solid rgb(62,146,46);
+    border: 2px solid rgb(62, 146, 46);
 }
 #game-tab {
     text-align: right;
     padding-right: 5px;
-    border-top:1px solid rgb(0,0,0);
     background: rgb(38, 83, 29);
+    border-top:1px solid rgb(0, 0, 0);
 }
 #game-tab a {
     display: inline;
@@ -83,14 +147,14 @@ body::after {
 #game-tab a:hover {
     text-decoration: underline;
     color: rgb(255, 255, 255);
-    background: rgb(62,146,46);
+    background: rgb(62, 146, 46);
 }
 #game-tab a:visited {
     text-decoration: none;
     color: rgb(255, 255, 255);
 }
 #game-tab .selected {
-    border-bottom: 1px solid rgb(62,146,46);
+    border-bottom: 1px solid rgb(62, 146, 46);
 }
 #game-tab .auto-selected {
     border-bottom: 1px solid rgb(22, 119, 158);

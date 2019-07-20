@@ -31,11 +31,23 @@
                     <a id="overview-tab" href="#" onclick="return navigate('overview');">Overview</a>
                     <a id="credits-tab" href="#" onclick="return navigate('credits');">Credits</a>
                 </div>
+                <div id="game-disconnected">Lost connection to the Scoreboard. <a href="#" onclick="document.location.reload();">Please refresh</a> to get updates.</div>
+                <div id="game-invalid">The requested Game cannot be found.</div>
                 <div id="game-status"></div>
                 <div id="game-team"></div>
             </div>
         </div>
         <div id="console">[root@localhost ~]# <span id="console-line">_</span></div>
-        <div id="event"></div>
+        <div id="event">
+            <div id="event-container">
+                <div style="clear: both;"></div>
+                <div id="event-bar">
+                    <div id="event-title"><div id="game-message"></div></div>
+                    <a id="event-menu" href="#" onclick="return event_close();">X</a>
+                </div>
+                <div style="clear: both;"></div>
+                <div id="event-data"></div>
+            </div>
+        </div>
     </body>
 </html>
