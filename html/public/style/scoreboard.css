@@ -97,6 +97,10 @@ body::after {
     text-decoration: none;
     color: rgb(255, 255, 255);
 }
+#event-data {
+    width: 600px;
+    height: 475px;
+}
 #event-menu a:hover, #event-menu a:visited {
     text-decoration: none;
     color: rgb(255, 255, 255);
@@ -297,40 +301,46 @@ body::after {
 .team.selected .team-score .score-health::before {
     width: 150px;
     margin-right: 5px;
+    content: " Health";
     display: inline-block;
-    content: " Health:";
+    font-family: FontAwesome;
 }
 .team.selected .team-score .score-flag-open::before {
     width: 150px;
     margin-right: 5px;
     display: inline-block;
-    content: " Flags Owned:";
+    font-family: FontAwesome;
+    content: " Flags Owned";
 }
 .team.selected .team-score .score-flag-lost::before {
     width: 150px;
     margin-right: 5px;
     display: inline-block;
-    content: " Flags Lost:";
+    font-family: FontAwesome;
+    content: " Flags Lost";
     color: rgb(255, 255, 255);
 }
 .team.selected .team-score .score-ticket-open::before {
     width: 150px;
     margin-right: 5px;
     display: inline-block;
-    content: " Tickets Open:";
+    font-family: FontAwesome;
+    content: " Tickets Open";
     color: rgb(255, 255, 255);
 }
 .team.selected .team-score .score-ticket-closed::before {
     width: 150px;
     margin-right: 5px;
     display: inline-block;
-    content: " Tickets Closed:";
+    font-family: FontAwesome;
+    content: " Tickets Closed";
 }
 .team.selected .team-score .score-flag-captured::before {
     width: 150px;
     margin-right: 5px;
     display: inline-block;
-    content: " Flags Captured:";
+    font-family: FontAwesome;
+    content: " Flags Captured";
 }
 
 .team.selected .team-beacon {

@@ -1,4 +1,4 @@
-module github.com/iDigitalFlame/scorebot-scoreboard
+module board
 
 go 1.12
 

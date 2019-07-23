@@ -8,11 +8,13 @@ import (
 // Update is a message struct that will be sent to clients to understand which
 // objects need to be created or updated when the board information changes.
 type Update struct {
-	ID     string `json:"id"`
-	Name   string `json:"name,omitempty"`
-	Class  string `json:"class,omitempty"`
-	Value  string `json:"value,omitempty"`
-	Remove bool   `json:"remove"`
+	ID     string            `json:"id"`
+	Data   map[string]string `json:"data"`
+	Name   string            `json:"name,omitempty"`
+	Class  string            `json:"class,omitempty"`
+	Value  string            `json:"value,omitempty"`
+	Event  bool              `json:"event"`
+	Remove bool              `json:"remove"`
 }
 type planner struct {
 	Delta  []*Update
@@ -126,6 +128,33 @@ func (p *planner) setDeltaProperty(id, v interface{}, s string) {
 		i.ID = p.prefix
 	} else if len(p.prefix) > 0 {
 		i.ID = fmt.Sprintf("%s-%s", p.prefix, i.ID)
+	}
+	p.Delta = append(p.Delta, i)
+	p.Create = append(p.Create, i)
+}
+
+func (p *planner) setRemoveEvent(id int64, t uint8) {
+	p.Delta = append(p.Delta, &Update{
+		ID:     strconv.Itoa(int(id)),
+		Value:  strconv.Itoa(int(t)),
+		Event:  true,
+		Remove: true,
+	})
+}
+func (p *planner) setEvent(id int64, t uint8, d map[string]string) {
+	p.Create = append(p.Create, &Update{
+		ID:    strconv.Itoa(int(id)),
+		Data:  d,
+		Event: true,
+		Value: strconv.Itoa(int(t)),
+	})
+}
+func (p *planner) setDeltaEvent(id int64, t uint8, d map[string]string) {
+	i := &Update{
+		ID:    strconv.Itoa(int(id)),
+		Data:  d,
+		Event: true,
+		Value: strconv.Itoa(int(t)),
 	}
 	p.Delta = append(p.Delta, i)
 	p.Create = append(p.Create, i)

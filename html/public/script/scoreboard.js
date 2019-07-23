@@ -21,6 +21,8 @@ function init() {
     }
     document.sb_event = document.getElementById("event");
     document.sb_board = document.getElementById("board");
+    document.sb_event_data = document.getElementById("event-data");
+    document.sb_event_title = document.getElementById("event-title");
     setInterval(scroll_beacons, 200);
     debug("Opening websocket..");
     document.sb_socket = new WebSocket("ws://" + window.location.host + "/w");
@@ -43,6 +45,8 @@ function startup() {
 }
 function event_close() {
     document.sb_event.style.display = "none";
+    document.sb_event_data.innerHTML = "";
+    document.sb_event_title.innerText = "";
 }
 function auto_scroll() {
     if (!document.sb_auto) {
@@ -184,6 +188,10 @@ function auto_set(div, divs) {
 }
 function handle_update(update) {
     debug("Processing '" + JSON.stringify(update) + "'...")
+    if (update.event) {
+        handle_event(update);
+        return
+    }
     if (update.remove) {
         var rele = document.getElementById(update.id);
         if (rele !== null) {
@@ -341,9 +349,43 @@ function select_div(panel, divs, select) {
     }
 }
 
-function show_event(event) {
-
+function handle_event(event) {
+    var et = parseInt(event.value);
+    if (et === null || et <= -1) {
+        return;
+    }
+    event.value = et;
+    if (event.value == 1 || event.value == 3) {
+        handle_event_popup(event);
+    }
 }
-function show_event_popup(message) {
 
+function handle_event_popup(event) {
+    if (event.remove) {
+        document.sb_event.style.display = "none";
+        document.sb_event_data.innerHTML = "";
+        document.sb_event_title.innerText = "";
+        return;
+    }
+    if (event.data.title) {
+        document.sb_event_title.innerText = event.data.title;
+    } else {
+        document.sb_event_title.innerText = "COMPROMISE DETECTED!!!";
+    }
+    if (event.value === 3) {
+        if (!(event.data.video)) {
+            return;
+        }
+        var yt = "https://www.youtube-nocookie.com/embed/" + event.data.video + "?controls=0&amp;autoplay=1";
+        if (event.data.start) {
+            yt = yt + "&amp;start=" + event.data.start;
+        }
+        document.sb_event_data.innerHTML = '<iframe width="100%" height=100%" src="' + yt + '" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope"></iframe>';
+        document.sb_event.style.display = "block";
+        debug("Video event shown!")
+    } else {
+        document.sb_event_data.innerHTML = event.data.text;
+        document.sb_event.style.display = "block";
+        debug("Window event shown!")
+    }
 }

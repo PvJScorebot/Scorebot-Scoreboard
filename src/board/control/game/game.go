@@ -48,11 +48,29 @@ type Meta struct {
 type Game struct {
 	Meta    *Meta
 	Teams   []*Team
+	Events  *Events
 	Credit  string
 	Message string
 
 	hash  uint32
 	total uint32
+	event uint32
+}
+
+// Event is a struct that repersents a Game style event.
+type Event struct {
+	ID   int64             `json:"id"`
+	Type uint8             `json:"type"`
+	Data map[string]string `json:"data"`
+}
+
+// Events is a struct that helps establish the active events and limites the types of
+// events that can be active
+type Events struct {
+	Window  *Event
+	Current []*Event
+
+	hash uint32
 }
 
 // String returns the proper name for this Mode.
@@ -75,8 +93,8 @@ func (m Mode) String() string {
 // GenerateHash returns the total game hash and generates the individal hash value for each
 // sub item.
 func (g *Game) GenerateHash() {
+	h := &Hasher{}
 	if g.hash == 0 {
-		h := &Hasher{}
 		h.Hash(g.Message)
 		g.hash = h.Segment()
 		g.Meta.getHash(h)
@@ -84,6 +102,8 @@ func (g *Game) GenerateHash() {
 			g.Teams[i].getHash(h)
 		}
 		g.total = h.Sum32()
+		h.Reset()
+		g.Events.getHash(h)
 	}
 }
 
@@ -142,6 +162,8 @@ func (g *Game) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	g.Meta = &Meta{}
+	fmt.Printf("derp\n")
+	g.Events = &Events{Current: make([]*Event, 0)}
 	if x, ok := m["name"]; ok {
 		if err := json.Unmarshal(x, &(g.Meta.Name)); err != nil {
 			return err
@@ -164,6 +186,11 @@ func (g *Game) UnmarshalJSON(b []byte) error {
 	}
 	if x, ok := m["teams"]; ok {
 		if err := json.Unmarshal(x, &(g.Teams)); err != nil {
+			return err
+		}
+	}
+	if x, ok := m["events"]; ok {
+		if err := json.Unmarshal(x, &(g.Events.Current)); err != nil {
 			return err
 		}
 	}
@@ -232,5 +259,78 @@ func (g *Game) Difference(old *Game) (new []*Update, delta []*Update) {
 		Create: make([]*Update, 0),
 	}
 	g.getDifference(p, old)
+	fmt.Printf("ddd : %s %s\n", g.Events)
+	if old != nil {
+		g.Events.getDifference(p, old.Events)
+	} else {
+		g.Events.getDifference(p, nil)
+	}
 	return p.Create, p.Delta
+}
+
+func (e *Events) getDifference(p *planner, old *Events) {
+	if old != nil {
+		e.Window = old.Window
+	}
+	if old != nil && old.hash == e.hash {
+		for i := range e.Current {
+			p.setEvent(e.Current[i].ID, e.Current[i].Type, e.Current[i].Data)
+		}
+	} else {
+		c := make(map[int64]*comparable)
+		if old != nil {
+			for i := range old.Current {
+				c[old.Current[i].ID] = &comparable{c1: old.Current[i]}
+			}
+		}
+		for i := range e.Current {
+			v, ok := c[e.Current[i].ID]
+			if !ok {
+				v = &comparable{}
+				c[e.Current[i].ID] = v
+			}
+			v.c2 = e.Current[i]
+		}
+		for k, v := range c {
+			if v.c2 == nil {
+				p.setRemoveEvent(k, v.c1.(*Event).Type)
+				continue
+			}
+			if v.c2.(*Event).Type > 0 {
+				e.setWindowEvent(p, v.c2.(*Event))
+			}
+			if v.c1 == nil {
+				p.setDeltaEvent(k, v.c2.(*Event).Type, v.c2.(*Event).Data)
+			} else {
+				p.setEvent(k, v.c2.(*Event).Type, v.c2.(*Event).Data)
+			}
+		}
+	}
+}
+func (e *Events) setWindowEvent(p *planner, w *Event) {
+	if w.Type <= 0 {
+		return
+	}
+	if e.Window != nil {
+		if e.Window.ID == w.ID {
+			return
+		}
+		p.setRemoveEvent(w.ID, w.Type)
+	}
+	e.Window = w
+}
+func (e *Events) getHash(h *Hasher) uint32 {
+	if e.hash == 0 {
+		for i := range e.Current {
+			h.Hash(e.Current[i].ID)
+			h.Hash(e.Current[i].Type)
+			for k, v := range e.Current[i].Data {
+				h.Hash(k)
+				h.Hash(v)
+			}
+		}
+		e.hash = h.Segment()
+	}
+	fmt.Printf("%s\n", e.Current)
+	return e.hash
 }

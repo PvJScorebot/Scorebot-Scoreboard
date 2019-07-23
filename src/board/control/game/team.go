@@ -28,6 +28,7 @@ type Team struct {
 
 // Beacon is a struct that repersents a compromise on a host.
 type Beacon struct {
+	ID    int64  `json:"id"`
 	Team  int64  `json:"team"`
 	Color string `json:"color"`
 
@@ -45,19 +46,20 @@ func (t *Team) getHash(h *Hasher) uint32 {
 		t.hash = h.Segment()
 	}
 
-	/* Beacon Spam Snippet
+	/*//Beacon Spam Snippet
 	t.Beacons = append(t.Beacons, []*Beacon{
-		&Beacon{Team: 1, Color: "rgb(255, 0, 255)"},
-		&Beacon{Team: 2, Color: "rgb(255, 255, 0)"},
-		&Beacon{Team: 3, Color: "rgb(255, 0    0)"},
-		&Beacon{Team: 4, Color: "rgb(0, 255, 255)"},
-		&Beacon{Team: 6, Color: "rgb(0,   0, 255)"},
-		&Beacon{Team: 5, Color: "rgb(0,   0, 255)"},
+		&Beacon{ID: 1, Team: 1, Color: "rgb(255, 0, 255)"},
+		&Beacon{ID: 2, Team: 2, Color: "rgb(255, 255, 0)"},
+		&Beacon{ID: 3, Team: 3, Color: "rgb(255, 0    0)"},
+		&Beacon{ID: 4, Team: 4, Color: "rgb(0, 255, 255)"},
+		&Beacon{ID: 5, Team: 6, Color: "rgb(0,   0, 255)"},
+		&Beacon{ID: 6, Team: 5, Color: "rgb(0,   0, 255)"},
 	}...)
 
 	z := make([]*Beacon, 100)
 	for i := range z {
 		z[i] = &Beacon{
+			ID:    int64(10 + i),
 			Team:  int64(i),
 			Color: fmt.Sprintf("rgb(%d, %d, %d)", rand.Intn(255), rand.Intn(255), rand.Intn(255)),
 		}
@@ -78,6 +80,7 @@ func (t *Team) getHash(h *Hasher) uint32 {
 }
 func (b *Beacon) getHash(h *Hasher) uint32 {
 	if b.hash == 0 {
+		h.Hash(b.ID)
 		h.Hash(b.Team)
 		h.Hash(b.Color)
 		b.hash = h.Segment()
@@ -202,16 +205,16 @@ func (t *Team) getDifference(p *planner, old *Team) {
 }
 func (b *Beacon) getDifference(p *planner, old *Beacon) {
 	if old == nil {
-		p.setDeltaValue(fmt.Sprintf("beacon-con-b%d", b.Team), "", "beacon")
+		p.setDeltaValue(fmt.Sprintf("beacon-con-b%d", b.ID), "", "beacon")
 	} else {
-		p.setValue(fmt.Sprintf("beacon-con-b%d", b.Team), "", "beacon")
+		p.setValue(fmt.Sprintf("beacon-con-b%d", b.ID), "", "beacon")
 	}
-	p.setPrefix(fmt.Sprintf("%s-beacon-con-b%d", p.prefix, b.Team))
+	p.setPrefix(fmt.Sprintf("%s-beacon-con-b%d", p.prefix, b.ID))
 	if old != nil && old.hash == b.hash {
-		p.setProperty("", b.Team, "iid")
+		p.setProperty("", b.Team, "tid")
 		p.setProperty("", b.Color, "background")
 	} else {
-		p.setDeltaProperty("", b.Team, "iid")
+		p.setDeltaProperty("", b.Team, "tid")
 		p.setDeltaProperty("", b.Color, "background")
 	}
 	p.rollbackPrefix()
