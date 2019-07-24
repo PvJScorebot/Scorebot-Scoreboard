@@ -46,11 +46,12 @@ type Meta struct {
 // Game is a struct that contains all the complex Game data,
 // including Hosts and Team information.
 type Game struct {
-	Meta    *Meta
-	Teams   []*Team
-	Events  *Events
-	Credit  string
-	Message string
+	Meta     *Meta
+	Teams    []*Team
+	Events   *Events
+	Credit   string
+	Message  string
+	Scorebot string
 
 	hash  uint32
 	total uint32
@@ -71,6 +72,11 @@ type Events struct {
 	Current []*Event
 
 	hash uint32
+}
+
+// Active is a bool that returns true if the Game is no longer marked as active.
+func (m *Meta) Active() bool {
+	return m.Status != Cancled && m.Status != Completed
 }
 
 // String returns the proper name for this Mode.
@@ -99,6 +105,11 @@ func (g *Game) GenerateHash() {
 		g.hash = h.Segment()
 		g.Meta.getHash(h)
 		for i := range g.Teams {
+			if g.Teams[i].Logo == "default.png" {
+				g.Teams[i].Logo = "/image/team.png"
+			} else {
+				g.Teams[i].Logo = fmt.Sprintf("%s%s", g.Scorebot, g.Teams[i].Logo)
+			}
 			g.Teams[i].getHash(h)
 		}
 		g.total = h.Sum32()
@@ -154,6 +165,20 @@ func (m *Meta) getHash(h *Hasher) uint32 {
 	}
 	return m.hash
 }
+func (e *Events) getHash(h *Hasher) uint32 {
+	if e.hash == 0 {
+		for i := range e.Current {
+			h.Hash(e.Current[i].ID)
+			h.Hash(e.Current[i].Type)
+			for k, v := range e.Current[i].Data {
+				h.Hash(k)
+				h.Hash(v)
+			}
+		}
+		e.hash = h.Segment()
+	}
+	return e.hash
+}
 
 // UnmarshalJSON attempts to unmarshal JSON into a Game struct.
 func (g *Game) UnmarshalJSON(b []byte) error {
@@ -162,7 +187,6 @@ func (g *Game) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	g.Meta = &Meta{}
-	fmt.Printf("derp\n")
 	g.Events = &Events{Current: make([]*Event, 0)}
 	if x, ok := m["name"]; ok {
 		if err := json.Unmarshal(x, &(g.Meta.Name)); err != nil {
@@ -203,6 +227,7 @@ func (g *Game) getDifference(p *planner, old *Game) {
 		p.setValue("credit", g.Credit, "game-credit")
 		p.setValue("message", g.Message, "game-message")
 		g.Meta.getDifference(p, old.Meta)
+		g.Events.getDifference(p, old.Events)
 		for i := range g.Teams {
 			g.Teams[i].getDifference(p, old.Teams[i])
 		}
@@ -213,11 +238,13 @@ func (g *Game) getDifference(p *planner, old *Game) {
 		c := make(map[int64]*comparable)
 		if old != nil {
 			g.Meta.getDifference(p, old.Meta)
+			g.Events.getDifference(p, old.Events)
 			for i := range old.Teams {
 				c[old.Teams[i].ID] = &comparable{c1: old.Teams[i]}
 			}
 		} else {
 			g.Meta.getDifference(p, nil)
+			g.Events.getDifference(p, nil)
 		}
 		for i := range g.Teams {
 			v, ok := c[g.Teams[i].ID]
@@ -250,24 +277,18 @@ func (m *Meta) getDifference(p *planner, old *Meta) {
 		p.setDeltaValue("status-status", m.Status, "game-status")
 	}
 }
-
-// Difference returns two sets of Update arrays, the first is the required updates to build
-// the current board (for new clients) and the second is the delta updates that need to be sent to existing clients.
-func (g *Game) Difference(old *Game) (new []*Update, delta []*Update) {
-	p := &planner{
-		Delta:  make([]*Update, 0),
-		Create: make([]*Update, 0),
+func (e *Events) setWindowEvent(p *planner, w *Event) {
+	if w.Type <= 0 {
+		return
 	}
-	g.getDifference(p, old)
-	fmt.Printf("ddd : %s %s\n", g.Events)
-	if old != nil {
-		g.Events.getDifference(p, old.Events)
-	} else {
-		g.Events.getDifference(p, nil)
+	if e.Window != nil {
+		if e.Window.ID == w.ID {
+			return
+		}
+		p.setRemoveEvent(w.ID, w.Type)
 	}
-	return p.Create, p.Delta
+	e.Window = w
 }
-
 func (e *Events) getDifference(p *planner, old *Events) {
 	if old != nil {
 		e.Window = old.Window
@@ -307,30 +328,14 @@ func (e *Events) getDifference(p *planner, old *Events) {
 		}
 	}
 }
-func (e *Events) setWindowEvent(p *planner, w *Event) {
-	if w.Type <= 0 {
-		return
+
+// Difference returns two sets of Update arrays, the first is the required updates to build
+// the current board (for new clients) and the second is the delta updates that need to be sent to existing clients.
+func (g *Game) Difference(old *Game) (new []*Update, delta []*Update) {
+	p := &planner{
+		Delta:  make([]*Update, 0),
+		Create: make([]*Update, 0),
 	}
-	if e.Window != nil {
-		if e.Window.ID == w.ID {
-			return
-		}
-		p.setRemoveEvent(w.ID, w.Type)
-	}
-	e.Window = w
-}
-func (e *Events) getHash(h *Hasher) uint32 {
-	if e.hash == 0 {
-		for i := range e.Current {
-			h.Hash(e.Current[i].ID)
-			h.Hash(e.Current[i].Type)
-			for k, v := range e.Current[i].Data {
-				h.Hash(k)
-				h.Hash(v)
-			}
-		}
-		e.hash = h.Segment()
-	}
-	fmt.Printf("%s\n", e.Current)
-	return e.hash
+	g.getDifference(p, old)
+	return p.Create, p.Delta
 }

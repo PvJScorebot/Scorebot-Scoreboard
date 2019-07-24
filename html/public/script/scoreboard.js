@@ -1,8 +1,8 @@
 //
-//  Scoreboard v1: Alpha
+//  Scoreboard v1.0.0
 //  iDigitalFlame 2019, The Scorebot Project.
 //
-//  Javascript Main
+//  Javascript Main File
 //
 
 // Auto Interval Constants
@@ -14,16 +14,21 @@ function init() {
     document.sb_auto = false;
     document.sb_debug = true;
     document.sb_loaded = false;
+    document.sb_tab_offset = null;
     debug("Starting init.. Selected Game id: " + game);
     if (!game) {
         debug("No game ID detected, bailing..");
         return;
     }
+    window.addEventListener("resize", check_mobile);
     document.sb_event = document.getElementById("event");
     document.sb_board = document.getElementById("board");
+    document.sb_effect = document.getElementById("effect");
+    document.sb_message = document.getElementById("console-msg");
     document.sb_event_data = document.getElementById("event-data");
     document.sb_event_title = document.getElementById("event-title");
     setInterval(scroll_beacons, 200);
+    setInterval(scroll_team_names, 200);
     debug("Opening websocket..");
     document.sb_socket = new WebSocket("ws://" + window.location.host + "/w");
     document.sb_socket.onopen = startup;
@@ -43,6 +48,25 @@ function startup() {
     debug("Received websocket open signal.");
     document.sb_socket.send(JSON.stringify({"game": game}));
 }
+function exit_game() {
+    alert("The Cake is a Lie.");
+    return false;
+}
+function hamburger() {
+    if (!is_mobile()) {
+        return false;
+    }
+    var dt = document.getElementById("game-tab");
+    if (dt === null) {
+        return false;
+    }
+    if (dt.style.display.indexOf("none") > -1 || dt.style.display.length === 0) {
+        dt.style.display = "block";
+    } else {
+        dt.style.display = "none";
+    }
+    return false;
+}
 function event_close() {
     document.sb_event.style.display = "none";
     document.sb_event_data.innerHTML = "";
@@ -59,7 +83,6 @@ function auto_scroll() {
         if (tm[i].id === "auto-tab") {
             continue;
         }
-        debug(tm[i].id);
         if (nx) {
             auto_set(tm[i], tm);
             return
@@ -79,9 +102,19 @@ function recv(message) {
     if (message.data === null && !document.sb_loaded) {
         socket.close()
     } else {
+        if (!document.sb_loaded) {
+            var lm = document.getElementById("game-status-load");
+            if (lm !== null) {
+                lm.remove();
+            }
+        }
         update_board(message.data);
         if (!document.sb_loaded) {
-            navigate("auto");
+            if (is_mobile()) {
+                navigate("overview")
+            } else {
+                navigate("auto");
+            }
         }
         document.sb_loaded = true;
     }
@@ -101,17 +134,48 @@ function update_tabs() {
                 tl.appendChild(ele);
             }
         }
-        var name = document.getElementById(tm[i].id + "-name");
+        var name = document.getElementById(tm[i].id + "-name-name");
         if (name === null) {
             continue;
         }
+        if (name.scrollHeight > name.offsetHeight) {
+            name.classList.add("small");
+        }
         ele.setAttribute("href", "#");
         ele.setAttribute("onclick", "return navigate('" + tm[i].id + "');");
-        var si = name.innerHTML.indexOf("<");
-        if (si > 0) {
-            ele.innerText = name.innerHTML.substr(0, si);
+        var td = document.getElementById(tm[i].id);
+        if (td !== null) {
+            td.setAttribute("onclick", "return navigate('" + tm[i].id + "');");
+        }
+        ele.innerText = name.innerText
+    }
+}
+function check_mobile() {
+    if (is_mobile(true)) {
+        return;
+    }
+    var mb = document.getElementById("menu");
+    var dt = document.getElementById("game-tab");
+    if (dt === null || mb === null) {
+        return;
+    }
+    if (dt.offsetHeight <= 20) {
+        if (document.sb_tab_offset !== null && document.sb_tab_offset < dt.parentElement.offsetWidth) {
+            document.sb_tab_offset = null;
+            mb.classList.remove("mobile");
+            dt.classList.remove("mobile");
+            if (dt.style.display.indexOf("none") > -1 || dt.style.display.length === 0) {
+                dt.style.display = "";
+            }
+            return;
+        }
+        if (document.sb_tab_offset === null) {
+            return;
         }
     }
+    document.sb_tab_offset = dt.offsetWidth;
+    dt.classList.add("mobile");
+    mb.classList.add("mobile");
 }
 function debug(message) {
     if (document.sb_debug) {
@@ -135,6 +199,14 @@ function navigate(panel) {
         }
         document.sb_auto = false;
     }
+    if (is_mobile()) {
+        var dt = document.getElementById("game-tab");
+        if (dt !== null) {
+            if (dt.style.display.indexOf("none") === -1 || dt.style.display.length !== 0) {
+                dt.style.display = "none";
+            }
+        }
+    }
 }
 function display_close() {
     debug("Displaying closed board...");
@@ -157,6 +229,12 @@ function update_beacons() {
 }
 function display_invalid() {
     debug("Displaying invalid board...");
+    if (!document.sb_loaded) {
+        var lm = document.getElementById("game-status-load");
+        if (lm !== null) {
+            lm.remove();
+        }
+    }
     var em = document.getElementById("game-invalid");
     if (em !== null) {
         em.style.display = "block";
@@ -185,6 +263,29 @@ function auto_set(div, divs) {
         setTimeout(auto_scroll, interval_team);
     }
     select_div(div.id.replace("-tab", ""), divs, false);
+}
+function handle_event(event) {
+    if (!event.value) {
+        return;
+    }
+    if (event.value === "1" || event.value === "3") {
+        handle_event_popup(event);
+        return;
+    }
+    if (event.value === "0") {
+        handle_event_message(event)
+        return;
+    }
+    if (event.value === "2") {
+        handle_event_effect(event)
+        return;
+    }
+}
+function scroll_team_names() {
+    var tn = document.getElementsByClassName("team-name-div");
+    for (var ti = 0; ti < tn.length; ti++) {
+        scroll_team_name(tn[ti]);
+    }
 }
 function handle_update(update) {
     debug("Processing '" + JSON.stringify(update) + "'...")
@@ -233,6 +334,7 @@ function handle_update(update) {
         return;
     }
     if (update.name !== "class") {
+        debug(ele.id + " : " + update.name + " : " + update.value);
         ele.style[update.name] = update.value;
         return;
     }
@@ -318,6 +420,111 @@ function set_beacon_image(beacon) {
     }
     image.src = "/image/beacon.png";
 }
+function handle_event_popup(event) {
+    if (event.remove) {
+        document.sb_event.style.display = "none";
+        document.sb_event_data.innerHTML = "";
+        document.sb_event_title.innerText = "";
+        debug("Removed window event.");
+        return;
+    }
+    if (event.data.title) {
+        document.sb_event_title.innerText = event.data.title;
+    } else {
+        document.sb_event_title.innerText = "COMPROMISE DETECTED!!!";
+    }
+    if (event.value === "3") {
+        if (!(event.data.video)) {
+            return;
+        }
+        var yt = "https://www.youtube-nocookie.com/embed/" + event.data.video + "?controls=0&amp;autoplay=1";
+        if (event.data.start) {
+            yt = yt + "&amp;start=" + event.data.start;
+        }
+        document.sb_event_data.innerHTML = '<iframe width="100%" height=100%" src="' + yt + '" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope"></iframe>';
+        document.sb_event.style.display = "block";
+        debug("Video event shown!");
+    } else {
+        document.sb_event_data.innerHTML = "<div>" + event.data.text + "</div>";
+        document.sb_event.style.display = "block";
+        debug("Window event shown!");
+    }
+}
+function handle_event_effect(event) {
+    if (event.remove) {
+        var ele = document.getElementById("eff-" + event.id);
+        if (ele !== null) {
+            ele.remove();
+        }
+        return;
+    }
+    var ele = document.createElement("div");
+    ele.id = "eff-" + event.id;
+    ele.innerHTML = event.data.html;
+    document.sb_effect.appendChild(ele);
+    debug("Added effect event!");
+    var sc = ele.getElementsByTagName("script");
+    if (sc.length > 0) {
+        debug("Triggering event scripts");
+        for (var si = 0; si < sc.length; si++) {
+            eval(sc[si].text);
+        }
+    }
+}
+function scroll_team_name(team_name) {
+    if (team_name.scrollWidth === 0) {
+        team_name.classList.remove("reverse");
+        return;
+    }
+    var rev = team_name.classList.contains("reverse");
+    if ((team_name.scrollWidth - team_name.offsetWidth) == team_name.scrollLeft) {
+        team_name.classList.add("reverse");
+        rev = true;
+    } else if (team_name.scrollLeft == 0) {
+        team_name.classList.remove("reverse");
+        rev = false;
+    }
+    if (rev) {
+        team_name.scrollLeft -= 2;
+    } else {
+        team_name.scrollLeft += 2;
+    }
+}
+function handle_event_message(event) {
+    if (event.remove) {
+        var ele = document.getElementById("msg-" + event.id);
+        if (ele !== null) {
+            ele.remove();
+        }
+        return;
+    }
+    var ele = document.createElement("div");
+    ele.id = "msg-" + event.id;
+    ele.classList.add("message");
+    if (event.data.command && event.data.command.length > 0) {
+        if (event.data.response && event.data.response.length > 0) {
+            ele.innerHTML = "[root@localhost ~]# " + event.data.text + "<br/>" + event.data.response.replace("\n", "<br/>");
+        } else {
+            ele.innerText = "[root@localhost ~]# " + event.data.text;
+        }
+    } else {
+        ele.innerText = "[root@localhost ~]# echo " + event.data.text + " > /dev/null";
+    }
+    document.sb_message.appendChild(ele);
+    document.sb_message.scrollTop = document.sb_message.offsetHeight;
+    debug("Added message event!");
+}
+function is_mobile(css_only = false) {
+    var ms = window.matchMedia("only screen and (max-width: 650px)").matches || window.matchMedia("only screen and (max-width:767px) and (orientation:portrait)").matches
+    if (ms) {
+        return true;
+    }
+    if (css_only) {
+        return false;
+    }
+    var mb = document.getElementById("menu");
+    return mb.classList.contains("mobile");
+}
 function select_div(panel, divs, select) {
     for (var i = 0; i < divs.length; i++) {
         name = divs[i].id.replace("-tab", "");
@@ -346,46 +553,5 @@ function select_div(panel, divs, select) {
         gt.classList.remove("single");
     } else {
         gt.classList.add("single");
-    }
-}
-
-function handle_event(event) {
-    var et = parseInt(event.value);
-    if (et === null || et <= -1) {
-        return;
-    }
-    event.value = et;
-    if (event.value == 1 || event.value == 3) {
-        handle_event_popup(event);
-    }
-}
-
-function handle_event_popup(event) {
-    if (event.remove) {
-        document.sb_event.style.display = "none";
-        document.sb_event_data.innerHTML = "";
-        document.sb_event_title.innerText = "";
-        return;
-    }
-    if (event.data.title) {
-        document.sb_event_title.innerText = event.data.title;
-    } else {
-        document.sb_event_title.innerText = "COMPROMISE DETECTED!!!";
-    }
-    if (event.value === 3) {
-        if (!(event.data.video)) {
-            return;
-        }
-        var yt = "https://www.youtube-nocookie.com/embed/" + event.data.video + "?controls=0&amp;autoplay=1";
-        if (event.data.start) {
-            yt = yt + "&amp;start=" + event.data.start;
-        }
-        document.sb_event_data.innerHTML = '<iframe width="100%" height=100%" src="' + yt + '" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope"></iframe>';
-        document.sb_event.style.display = "block";
-        debug("Video event shown!")
-    } else {
-        document.sb_event_data.innerHTML = event.data.text;
-        document.sb_event.style.display = "block";
-        debug("Window event shown!")
     }
 }

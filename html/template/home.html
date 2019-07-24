@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <!--
-    Scoreboard v1: Alpha
+    Scoreboard v1.0.0
     iDigitalFlame 2019, The Scorebot Project.
 
-    Games List Page
+    Games Template List Page
 -->
 <html lang="en">
     <head>
@@ -11,23 +11,250 @@
         <meta charset="UTF-8" />
         <meta http-equiv="X-UA-Compatible" content="ie=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <script type="text/javascript">game = {{.}};</script>
-        <script type="text/javascript" src="/script/scoreboard.js"></script>
-        <link rel="icon" type="image/x-icon" href="/image/favicon.png" />
+        <link rel="icon" type="image/x-icon" href="/image/logo.png" />
         <link rel="stylesheet" href="/style/awesome/css/font-awesome.min.css">
         <link rel="stylesheet" href="/style/scoreboard.css" type="text/css" media="screen" />
     </head>
     <body>
-        <div id="game-list">
-            <ul>{{range .}}
-                <li class="game-meta">
-                    <a href="/game/{{.ID}}/">
-                        <div class="list-name">{{.Name}} - {{.Mode.String}}
-                            <div class="list-status">{{.Status.String}} {{.String}}</div>
-                        </div>
-                    </a>
-                </li>
-            {{end}}</ul>
+        <a target="_blank" href="http://prosversusjoes.net"><div id="logo"></div></a>
+        <div id="board">
+            <div id="game">
+                <div style="clear: both;"></div>
+                <div id="bar">
+                    <div id="title"><a href="/">ProsVJoes CTF</a></div>
+                    <div id="menu">
+                        <a id="menu-exit" href="#" onclick="return false;">X</a>
+                    </div>
+                </div>
+                <div style="clear: both;"></div>
+                <!-- <div id="game-summary">
+                    <div id="game-summary-title">What is Pros V Joes CTF?</div>
+                    This event is an opportunity for average users (Joes) to try their hand at both the offensive and defensive side of computer security.
+                    For the Pro's, it's a chance to hone and show off their skills, helping others to learn and better themselves. Joes are split up into teams,
+                    each with a Pro captain, and given their own network to defend against the other Pros in our Red Cell. Each team's network is full of servers
+                    and desktops running Windows, Linux, your standard services like DNS, Web, Mail, and others. Of course, there will be more than a few surprises...<br/>
+                    For two days, players will attack and defend in live networks, breaking into each other's systems to steal flags for fame and glory. Each team is
+                    provided with their own network that is full of servers and workstations to defend. All of this gear is housed in a dedicated and isolated network
+                    that we affectionately call the Gaming Grid. Players need only bring a laptop to connect to the environment with. (Laptops will not be in the line of fire).
+                </div> -->
+                <div id="game-list">
+                    Active Games
+                    <ul>{{range .}}{{if .Active}}
+                        <li class="game-meta">
+                            <a href="/game/{{.ID}}/">
+                                <div class="list-name">{{.Name}}
+                                    <div class="list-status">{{.Mode.String}} - {{.Status.String}} {{.String}}</div>
+                                </div>
+                            </a>
+                        </li>
+                    {{end}}{{end}}</ul>
+                </div>
+                <div id="credits-main">
+                    <div id="credits-title">Brought to You By</div>
+                    <div class="credits-list credits-corporate">
+                        <a target="_blank" href="https://www.paloaltonetworks.com">
+                            <img src="/image/credit/corporate/paloalto.jpg" alt="Palo Alto Networks" />
+                            Palo Alto Networks
+                        </a>
+                        <a target="_blank" href="https://www.wilmu.edu">
+                            <img src="/image/credit/corporate/wilmu.jpg" alt="Wilmington University" />
+                            Wilmington University
+                        </a>
+                        <a target="_blank" href="https://www.mavensecurity.com">
+                            <img src="/image/credit/corporate/maven.jpg" alt="Palo Alto Networks" />
+                            Maven Security
+                        </a>
+                        <a target="_blank" href="https://www.cobaltstrike.com">
+                            <img src="/image/credit/corporate/cobaltstrike.jpg" alt="Cobalt Strike" />
+                            Cobalt Strike
+                        </a>
+                    </div>
+                    <div class="credits-header">Gold Team</div>
+                    <div class="credits-list">
+                        <a target="_blank" href="https://twitter.com/dichotomy1">
+                            <img src="/image/credit/dichotomy.jpg" alt="Dichotomy" />
+                            Dichotomy
+                        </a>
+                        <a target="_blank" href="https://twitter.com/captainopsec">
+                            <img src="/image/credit/captainopsec.jpg" alt="Captain OPSEC" />
+                            Captain OPSEC
+                        </a>
+                        <a target="_blank" href="https://twitter.com/VeloceVettura">
+                            <img src="/image/credit/velocevettura.jpg" alt="VeloceVettura" />
+                            VeloceVettura
+                        </a>
+                        <a target="_blank" href="https://twitter.com/gdbassett">
+                            <img src="/image/credit/gabetheengineer.jpg" alt="gabetheengineer" />
+                            gabetheengineer
+                        </a>
+                        <a target="_blank" href="https://twitter.com/laurenkrucker">
+                            <img src="/image/credit/ruckerlk.jpg" alt="ruckerlk" />
+                            ruckerlk
+                        </a>
+                        <a target="_blank" href="https://twitter.com/gi0cann">
+                            <img src="/image/credit/gi0cann.jpg" alt="Gi0cann" />
+                            Gi0cann
+                        </a>
+                        <a target="_blank" href="https://twitter.com/matir">
+                            <img src="/image/credit/matir.jpg" alt="Matir" />
+                            Matir
+                        </a>
+                        <a target="_blank" href="https://twitter.com/iDigitalFlame">
+                            <img src="/image/credit/idigitalflame.png" alt="iDigitalFlame" />
+                            iDigitalFlame
+                        </a>
+                        <a target="_blank" href="https://twitter.com/zachhilbert">
+                            <img src="/image/credit/gambite.png" alt="gambite" />
+                            gambite
+                        </a>
+                        <a target="_blank" href="https://twitter.com/">
+                            <img src="/image/credit/myssfit.jpg" alt="Myssfit" />
+                            Myssfit
+                        </a>
+                        <a target="_blank" href="https://twitter.com/dr_marvincandle">
+                            <img src="/image/credit/drmarvincandle.jpg" alt="Dr. Marvin Candle" />
+                            Dr. Marvin Candle
+                        </a>
+                        <a target="_blank" href="https://twitter.com/Uplink_snafu">
+                            <img src="/image/credit/uplink.jpg" alt="Uplink" />
+                            Uplink
+                        </a>
+                    </div>
+                    <div class="credits-header">Blue Team Leaders</div>
+                    <div class="credits-list">
+                        <a target="_blank" href="https://twitter.com/ccazrun">
+                            <img src="/image/credit/caz.jpg" alt="Starling" />
+                            Starling
+                        </a>
+                        <a target="_blank" href="https://twitter.com/wishperactual">
+                            <img src="/image/credit/wishper.jpg" alt="Wishper" />
+                            Wishper
+                        </a>
+                        <a href="#">
+                            <img src="/image/credit/ahhh.jpg" alt="ahhh" />
+                            ahhh
+                        </a>
+                        <a target="_blank" href="https://twitter.com/gepeto42">
+                            <img src="/image/credit/gepeto42.jpg" alt="gepeto42" />
+                            gepeto42
+                        </a>
+                        <a target="_blank" href="https://twitter.com/_imp0ster_">
+                            <img src="/image/credit/imp0ster.jpg" alt="imp0ster" />
+                            imp0ster
+                        </a>
+                        <a target="_blank" href="https://twitter.com/malwaremama">
+                            <img src="/image/credit/malwaremama.jpg" alt="malwaremama" />
+                            malwaremama
+                        </a>
+                        <a target="_blank" href="https://twitter.com/dmfroberson">
+                            <img src="/image/credit/dmfr.jpg" alt="DMFR" />
+                            DMFR
+                        </a>
+                        <a target="_blank" href="https://twitter.com/T3cht0n1c">
+                            <img src="/image/credit/techtonic.jpg" alt="Techtonic" />
+                            Techtonic
+                        </a>
+                        <a href="#">
+                            <img src="/image/credit/tournikit.jpg" alt="tournikit" />
+                            tournikit
+                        </a>
+                        <a target="_blank" href="https://twitter.com/__quicksand">
+                            <img src="/image/credit/quicksand.jpg" alt="quicksand" />
+                            quicksand
+                        </a>
+                        <a target="_blank" href="https://twitter.com/_lazzarus">
+                            <img src="/image/credit/lazzarus.jpg" alt="Lazzarus" />
+                            Lazzarus
+                        </a>
+                    </div>
+                    <div class="credits-header">Red Team</div>
+                    <div class="credits-list">
+                        <a target="_blank" href="https://twitter.com/_t1v0_">
+                            <img src="/image/credit/t1v0.jpg" alt="t1v0" />
+                            t1v0
+                        </a>
+                        <a href="#">
+                            <img src="/image/credit/jon.jpg" alt="Jon" />
+                            Jon
+                        </a>
+                        <a target="_blank" href="https://twitter.com/AnarKyx01">
+                            <img src="/image/credit/anarky.jpg" alt="AnarKy" />
+                            AnarKy
+                        </a>
+                        <a target="_blank" href="https://twitter.com/mostly_hrmless">
+                            <img src="/image/credit/mostlyharmless.jpg" alt="Mostly Harmless" />
+                            Mostly Harmless
+                        </a>
+                        <a target="_blank" href="https://twitter.com/theDarracott">
+                            <img src="/image/credit/deltacharlie.jpg" alt="DeltaCharlie" />
+                            DeltaCharlie
+                        </a>
+                        <a target="_blank" href="https://twitter.com/__Promina__">
+                            <img src="/image/credit/promina.jpg" alt="Promina" />
+                            Promina
+                        </a>
+                        <a target="_blank" href="https://twitter.com/webyeti">
+                            <img src="/image/credit/webyeti.jpg" alt="webyeti" />
+                            webyeti
+                        </a>
+                        <a target="_blank" href="https://twitter.com/pathetiq">
+                            <img src="/image/credit/pathetiq.jpg" alt="PathetiQ" />
+                            PathetiQ
+                        </a>
+                        <a target="_blank" href="https://twitter.com/gmroybal_iii">
+                            <img src="/image/credit/cicadamikoto.jpg" alt="Cicadamikoto" />
+                            Cicadamikoto
+                        </a>
+                        <a target="_blank" href="https://twitter.com/ifounditthisway">
+                            <img src="/image/credit/ifounditthisway.jpg" alt="ifounditthisway" />
+                            ifounditthisway
+                        </a>
+                        <a target="_blank" href="https://twitter.com/niden">
+                            <img src="/image/credit/niden.png" alt="niden" />
+                            niden
+                        </a>
+                        <a target="_blank" href="https://twitter.com/74rku5">
+                            <img src="/image/credit/74rku5.jpg" alt="74rku5" />
+                            74rku5
+                        </a>
+                        <a target="_blank" href="https://twitter.com/hawkhax">
+                            <img src="/image/credit/faultline.jpg" alt="Faultline" />
+                            Faultline
+                        </a>
+                        <a target="_blank" href="https://twitter.com/childrenofinit">
+                            <img src="/image/credit/childrenofinit.jpg" alt="Children Of Init" />
+                            Children Of Init
+                        </a>
+                        <a target="_blank" href="https://twitter.com/0xC413">
+                            <img src="/image/credit/cale.jpg" alt="Cale" />
+                            Cale
+                        </a>
+                        <a target="_blank" href="https://twitter.com/2fluffyhuffy">
+                            <img src="/image/credit/huffy.jpg" alt="Huffy" />
+                            Huffy
+                        </a>
+                        <a target="_blank" href="https://twitter.com/brimston3">
+                            <img src="/image/credit/brimstone.jpg" alt="Brimstone" />
+                            Brimstone
+                        </a>
+                        <a target="_blank" href="https://twitter.com/BennyHusted">
+                            <img src="/image/credit/benny.jpg" alt="Benny" />
+                            Benny
+                        </a>
+                    </div>
+                    <div class="credits-header">Gray Team Leaders</div>
+                    <div class="credits-list">
+                        <a href="#">
+                            <img src="/image/credit/mark.jpg" alt="Mark" />
+                            Mark
+                        </a>
+                        <a target="_blank" href="https://twitter.com/pc_labs">
+                            <img src="/image/credit/guyedri.jpg" alt="Guy Edri" />
+                            Guy Edri
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </body>
 </html>

@@ -71,6 +71,17 @@ func (c *Collection) Sync() {
 	}
 }
 
+// Done stops all WebSockets and closes the connections.
+func (c *Collection) Done() error {
+	var err error
+	for _, v := range c.Subscribers {
+		for i := range v.clients {
+			err = v.clients[i].Close()
+		}
+	}
+	return err
+}
+
 // NewClient attempts to add the client 'n' to the Subscription swarm.
 func (c *Collection) NewClient(n client) {
 	c.log.Debug("Received a connection from \"%s\", listening for Hello..", n.IP())

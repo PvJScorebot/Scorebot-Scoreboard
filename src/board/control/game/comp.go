@@ -12,7 +12,7 @@ type Update struct {
 	Data   map[string]string `json:"data"`
 	Name   string            `json:"name,omitempty"`
 	Class  string            `json:"class,omitempty"`
-	Value  string            `json:"value,omitempty"`
+	Value  interface{}       `json:"value,omitempty"`
 	Event  bool              `json:"event"`
 	Remove bool              `json:"remove"`
 }
@@ -78,6 +78,14 @@ func (p *planner) setRemove(id interface{}) {
 	}
 	p.Delta = append(p.Delta, i)
 }
+func (p *planner) setRemoveEvent(id int64, t uint8) {
+	p.Delta = append(p.Delta, &Update{
+		ID:     strconv.Itoa(int(id)),
+		Value:  strconv.Itoa(int(t)),
+		Event:  true,
+		Remove: true,
+	})
+}
 func (p *planner) setValue(id, v interface{}, c string) {
 	i := &Update{
 		ID:    printStr(id),
@@ -131,15 +139,6 @@ func (p *planner) setDeltaProperty(id, v interface{}, s string) {
 	}
 	p.Delta = append(p.Delta, i)
 	p.Create = append(p.Create, i)
-}
-
-func (p *planner) setRemoveEvent(id int64, t uint8) {
-	p.Delta = append(p.Delta, &Update{
-		ID:     strconv.Itoa(int(id)),
-		Value:  strconv.Itoa(int(t)),
-		Event:  true,
-		Remove: true,
-	})
 }
 func (p *planner) setEvent(id int64, t uint8, d map[string]string) {
 	p.Create = append(p.Create, &Update{

@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 	"text/template"
 	"time"
 
@@ -44,29 +46,41 @@ type Scoreboard struct {
 func init() {
 	slug.Replacement = '-'
 }
-func (s *Scoreboard) update() {
-	s.log.Trace("Starting update..")
+
+// Start begins the listening process for the Scoreboard.  This function
+// blocks untill interrupted.
+func (s *Scoreboard) Start() error {
+	s.log.Info("Starting scoreboard service..")
+	go s.Server.Start()
+	wait := make(chan os.Signal)
+	signal.Notify(wait, syscall.SIGINT, syscall.SIGTERM)
+	<-wait
+	s.log.Info("Stopping and shutting down..")
+	s.timer.Stop()
+	return s.Collection.Done()
+}
+func (s *Scoreboard) update() error {
+	s.log.Debug("Starting update..")
 	if err := s.API.GetJSON("api/games/", &(s.games)); err != nil {
 		s.log.Error("Error occured during tick: %s", err.Error())
-		return
+		return err
 	}
 	for i := range s.games {
+		if !s.games[i].Active() {
+			continue
+		}
 		n := slug.Clean(s.games[i].Name)
 		if _, ok := s.names[n]; !ok {
 			s.names[n] = s.games[i].ID
 			s.log.Debug("Added game name mapping \"%s\" to ID %d.", n, s.games[i].ID)
 		}
 	}
-	s.log.Trace("Read %d games from scorebot, update finished.", len(s.games))
+	s.log.Debug("Read %d games from scorebot, update finished.", len(s.games))
 	s.Collection.Sync()
-}
-
-// Start begins the listening process for the Scoreboard.  This function
-// blocks untill interrupted.
-func (s *Scoreboard) Start() error {
-	return s.Server.Start()
+	return nil
 }
 func (s *Scoreboard) updateMeta(g *game.Game) {
+	g.Scorebot = s.API.Base.String()
 	for i := range s.games {
 		if s.games[i].ID == g.Meta.ID {
 			g.Meta.End = s.games[i].End
@@ -103,7 +117,7 @@ func (s *Scoreboard) http(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if z > 0 {
-		s.log.Trace("Received scoreboard request from \"%s\"..", r.RemoteAddr)
+		s.log.Debug("Received scoreboard request from \"%s\"..", r.RemoteAddr)
 		if err := s.html.ExecuteTemplate(w, "scoreboard.html", z); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprint(w, http.StatusText(http.StatusInternalServerError))
@@ -164,7 +178,9 @@ func NewScoreboard(listen string, timeout, tick int, dir, scorebot, log string, 
 	s.Collection.GameCallback(s.updateMeta)
 	s.Server.AddHandlerFunc("/", s.http)
 	s.Server.AddHandler("/w", web.NewWebSocket(2048, func(u *web.Stream) { s.Collection.NewClient(u) }))
-	s.update()
+	if err := s.update(); err != nil {
+		return nil, xerrors.Errorf("unable to connect to scorebot \"%s\": %w", scorebot, err)
+	}
 	s.timer = time.AfterFunc(s.tick, func() {
 		s.update()
 		s.timer.Reset(s.tick)

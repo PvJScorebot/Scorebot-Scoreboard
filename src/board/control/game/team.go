@@ -4,9 +4,6 @@ import (
 	"fmt"
 )
 
-// Temparory URL for Team Images
-const gif = "https://media3.giphy.com/media/3ohze4mdptnmdtyXgk/giphy.gif?cid=790b76115d2f3d255151467732f04b78&rid=giphy.gif"
-
 // Team is a struct that repersents a Team object on the
 // Scoreboard
 type Team struct {
@@ -45,27 +42,6 @@ func (t *Team) getHash(h *Hasher) uint32 {
 		h.Hash(t.Minimal)
 		t.hash = h.Segment()
 	}
-
-	/*//Beacon Spam Snippet
-	t.Beacons = append(t.Beacons, []*Beacon{
-		&Beacon{ID: 1, Team: 1, Color: "rgb(255, 0, 255)"},
-		&Beacon{ID: 2, Team: 2, Color: "rgb(255, 255, 0)"},
-		&Beacon{ID: 3, Team: 3, Color: "rgb(255, 0    0)"},
-		&Beacon{ID: 4, Team: 4, Color: "rgb(0, 255, 255)"},
-		&Beacon{ID: 5, Team: 6, Color: "rgb(0,   0, 255)"},
-		&Beacon{ID: 6, Team: 5, Color: "rgb(0,   0, 255)"},
-	}...)
-
-	z := make([]*Beacon, 100)
-	for i := range z {
-		z[i] = &Beacon{
-			ID:    int64(10 + i),
-			Team:  int64(i),
-			Color: fmt.Sprintf("rgb(%d, %d, %d)", rand.Intn(255), rand.Intn(255), rand.Intn(255)),
-		}
-	}
-	t.Beacons = append(t.Beacons, z...)*/
-
 	t.total = t.hash
 	for i := range t.Hosts {
 		t.total += t.Hosts[i].getHash(h)
@@ -101,9 +77,9 @@ func (t *Team) getDifference(p *planner, old *Team) {
 		p.setValue("name", "", "team-name")
 		p.setValue("host", "", "team-host")
 		p.setValue("score", "", "team-score")
-		p.setValue("name", t.Name, "team-name")
+		p.setValue("name-name", t.Name, "team-name-div")
 		p.setProperty("logo", t.Color, "background-color")
-		p.setProperty("logo", fmt.Sprintf("url('%s')", gif), "background-image")
+		p.setProperty("logo", fmt.Sprintf("url('%s')", t.Logo), "background-image")
 		p.setProperty("", t.Color, "border-color")
 		if t.Offense {
 			p.setProperty("", "+offense", "class")
@@ -133,9 +109,9 @@ func (t *Team) getDifference(p *planner, old *Team) {
 		p.setDeltaValue("name", "", "team-name")
 		p.setDeltaValue("host", "", "team-host")
 		p.setDeltaValue("score", "", "team-score")
-		p.setDeltaValue("name", t.Name, "team-name")
+		p.setDeltaValue("name-name", t.Name, "team-name-div")
 		p.setDeltaProperty("logo", t.Color, "background-color")
-		p.setDeltaProperty("logo", fmt.Sprintf("url('%s')", gif), "background-image")
+		p.setDeltaProperty("logo", fmt.Sprintf("url('%s')", t.Logo), "background-image")
 		p.setDeltaProperty("", t.Color, "border-color")
 		if t.Offense {
 			p.setDeltaProperty("", "+offense", "class")

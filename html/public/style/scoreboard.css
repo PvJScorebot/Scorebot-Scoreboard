@@ -1,8 +1,8 @@
 /*
-    Scoreboard v1: Alpha
+    Scoreboard v1.0.0
     iDigitalFlame 2019, The Scorebot Project.
 
-    CSS Main
+    CSS Main File
 */
 
 body {
@@ -11,50 +11,174 @@ body {
     font-size: 16px;
     background: rgb(0, 0, 0);
     color: rgb(255, 255, 255);
-    font-family: 'Open Sans', Sans-Serif, Arial, FontAwesome;
+    font-family: "Open Sans", Sans-Serif, Arial, FontAwesome;
 }
-body::after {
-    content: '';
-    height: 20px;
+
+@font-face {
+    font-family: "freepixel";
+    src: url("/style/freepixel.ttf");
+}
+@import "/style/awesome/font-awesome.mini.css";
+
+#logo {
+    margin: 10px;
+    height: 200px;
+    max-height: 200px;
+    background: url("/image/title.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+#game-list {
+    margin: 5px;
+    font-size: 28px;
+    font-weight: bold;
+}
+#game-list ul {
+    margin: 0;
+    padding: 10px 0 0 0;
+    border-top: 2px solid rgb(62,146,46);
+}
+#game-list li {
+    font-size: 16px;
+    font-weight: normal;
+    color: rgb(255, 255, 255);
+}
+#game-list ul, #game-list li {
+    list-style: none;
+}
+.list-name {
+    font-size: 20px;
+}
+.list-status {
+    font-size: 14px;
+}
+#game-list a:hover {
+    background: rgb(62, 146, 46);
+}
+#game-list a, #game-list a:visited, #game-list a:hover {
+    padding: 5px;
     display: block;
+    text-decoration: none;
+    color: rgb(255, 255, 255);
+}
+
+#credits {
+    display: none;
+}
+.credits-list {
+    display: block;
+    padding: 10px 5px 0 5px;
+}
+#credits-title {
+    font-size: 28px;
+    font-weight: bold;
+    padding: 10px 0 0 0;
+    border-bottom: 2px solid rgb(62,146,46);
+}
+.credits-header {
+    font-size: 22px;
+    padding: 5px 0 0 0;
+}
+.credits-list a {
+    margin: 2px;
+    padding: 4px;
+    height: 75px;
+    font-size: 15px;
+    max-height: 75px;
+    text-align: center;
+    display: inline-block;
+    text-decoration: none;
+    vertical-align: bottom;
+    color: rgb(255, 255, 255);
+    background: rgb(62,146,46);
+    border: 1px solid rgb(62,146,46);
+}
+.credits-list img {
+    height: 50px;
+    display: block;
+    max-width: 50px;
+    max-height: 50px;
+    margin: 0 auto 5px auto;
+}
+#credits.selected {
+    display: block;
+}
+.credits-corporate a {
+    height: 175px;
+    font-size: 20px;
+    max-height: 175px;
+}
+.credits-corporate img {
+    width: unset;
+    height: unset;
+    max-width: 250px;
+    max-height: 150px;
+}
+.credits-list a:hover, a:visited {
+    text-decoration: none;
+    color: rgb(255, 255, 255);
 }
 
 #board {
     margin: 10px auto 0 auto;
 }
-#bar {
+#menu-hamburger {
+    display: none;
+    font-size: 15px;
+    font-family: FontAwesome;
+}
+#bar, #event-bar {
     height: 20px;
     font-size: 20px;
     max-height: 20px;
     line-height: 20px;
+    font-weight: bold;
     vertical-align: middle;
+    font-family: "freepixel";
     color: rgb(255, 255, 255);
     background: rgb(62,146,46);
     border-bottom: 2px solid rgb(62,146,46);
 }
-#title {
-    float: left;
-    margin-left: 5px;
-}
-#menu {
+#menu, #event-menu {
     float: right;
     font-size: 20px;
     font-weight: bold;
     padding: 0 5px 0 5px;
+    text-decoration: none;
+    color: rgb(255, 255, 255);
 }
-#console {
-    bottom: 0;
-    height: 20px;
-    padding-left: 4px;
-    position: absolute;
+#title, #event-title {
+    float: left;
+    margin-left: 5px;
 }
-#console-line {
-    animation: blinker 2s linear infinite;
+#bar a, #bar a:hover, #bar a:visited, #event-bar a, #event-bar a:hover, #event-bar a:visited {
+    text-decoration: none;
+    color: rgb(255, 255, 255);
 }
-@keyframes blinker {
-    50% {
-        opacity: 0;
-    }
+
+#game-tab.mobile {
+    display: none;
+    padding-right: 0;
+    text-align: center;
+}
+#game-tab.mobile a {
+    display: block;
+    padding-left: 0;
+    padding-right: 0;
+}
+#menu.mobile #menu-exit {
+    display: none;
+}
+#game-tab.mobile .selected {
+    border: none;
+    background: rgb(62, 146, 46);
+}
+#menu.mobile #menu-hamburger {
+    display: block;
+}
+#game-tab.mobile .auto-selected {
+    border: none;
 }
 
 #event {
@@ -65,48 +189,50 @@ body::after {
     position: absolute;
     background: rgba(0, 0, 0, 0.6);
 }
+#effect {
+    display: none;
+}
+#event-data {
+    height: 95%;
+    display: block;
+    overflow: hidden;
+}
+#event-data div {
+    text-align: center;
+    margin: 5px 5px 5px 5px;
+}
 #event-container {
-    width: 600px;
-    height: 500px;
-    max-width: 600px;
-    max-height: 500px;
+    width: 75%;
+    height: 60%;
+    overflow: hidden;
+    max-width: 650px;
+    max-height: 550px;
     margin: 50px auto 0 auto;
     background: rgb(25, 30, 36);
     border: 2px solid rgb(62, 146, 46);
     box-shadow: 3px 3px rgb(42, 43, 44);
 }
-#event-bar {
-    height: 20px;
-    font-size: 20px;
-    max-height: 20px;
-    line-height: 20px;
-    vertical-align: middle;
-    color: rgb(255, 255, 255);
-    background: rgb(62,146,46);
-    border-bottom: 2px solid rgb(62,146,46);
-}
-#event-title {
-    float: left;
-    margin-left: 5px;
-}
-#event-menu {
-    float: right;
-    font-size: 20px;
-    font-weight: bold;
-    padding: 0 5px 0 5px;
-    text-decoration: none;
-    color: rgb(255, 255, 255);
-}
-#event-data {
-    width: 600px;
-    height: 475px;
-}
-#event-menu a:hover, #event-menu a:visited {
-    text-decoration: none;
-    color: rgb(255, 255, 255);
-}
 #game-credit, #game-disconnected, #game-invalid {
     display: none;
+}
+
+#console {
+    height: 20px;
+    padding-left: 4px;
+    margin: 10px 5px 0 5px;
+    font-family: "freepixel";
+}
+#console-msg {
+    overflow: hidden;
+    max-height: 100px;
+}
+#console-line {
+    animation: blinker 2s linear infinite;
+}
+@keyframes blinker {
+    50% {
+        opacity: 0;
+    }
 }
 
 #game-invalid {
@@ -132,10 +258,17 @@ body::after {
     text-align: center;
     padding: 0 0 10px 0;
     margin: 0 auto 0 auto;
-    background: rgb(11, 24, 14);
+    background: rgb(11, 24, 14) url("/image/logo.png");
+    background-size: 5%;
+    background-repeat: no-repeat;
+    background-position-x: right;
+    background-position-y: bottom;
+    background-blend-mode: luminosity;
     border: 2px solid rgb(62, 146, 46);
+
 }
 #game-tab {
+    display: block;
     text-align: right;
     padding-right: 5px;
     background: rgb(38, 83, 29);
@@ -164,25 +297,28 @@ body::after {
     border-bottom: 1px solid rgb(22, 119, 158);
 }
 
-
 #game-status {
-    padding: 10px 0 0 25px;
     text-align: left;
     display: table-cell;
+    padding: 10px 0 0 25px;
 }
 #game-status-name {
     font-size: 30px;
-}
-#game-status-mode, #game-status-status {
-    margin-left: 5px;
-    font-size: 14px;
-    display: inline-block
 }
 #game-team.single .team {
     display: none;
 }
 #game-team .team.selected {
     display: inline-table;
+}
+#game-status-status::before {
+    content: "-";
+    margin-right: 5px;
+}
+#game-status-mode, #game-status-status {
+    font-size: 14px;
+    margin-left: 5px;
+    display: inline-block
 }
 
 .team {
@@ -208,14 +344,14 @@ body::after {
     background-repeat: no-repeat;
 }
 .team-name {
-    width: 125px;
+    width: 150px;
     font-size: 28px;
-    max-width: 125px;
+    max-width: 150px;
     overflow: hidden;
     font-weight: bold;
     margin: 0 5px 0 3px;
     vertical-align: top;
-    display: inline-table;
+    display: inline-block;
 }
 .team-host {
     padding: 2px 0 2px 0;
@@ -237,8 +373,17 @@ body::after {
     display: inline-block;
     border-right: 1px solid rgb(62,146,46);
 }
+.team-name-div {
+    width: 150px;
+    max-height: 80px;
+    max-width: 150px;
+    overflow: hidden;
+}
 .team-score .score {
     margin-right: 8px;
+}
+.team-name-div.small {
+    font-size: 24px;
 }
 
 .team.selected {
@@ -249,41 +394,50 @@ body::after {
     border-top-width: 5px;
     border-top-style: solid;
 }
+.team.selected .service {
+    width: 50px;
+    max-width: 50px;
+    color: rgb(255, 255, 255);
+}
 .team.selected .team-logo {
     width: 300px;
     height: 300px;
     vertical-align: top;
     display: table-cell;
 }
-.team.selected .service {
-    width: 50px;
-    max-width: 50px;
-    color: rgb(255, 255, 255);
-}
 .team.selected .team-host {
     border: none;
     margin-left: 10px;
 }
 .team.selected .team-name {
+    width: unset;
     font-size: 28px;
-    margin-left: 10px;
-    margin-bottom: 10px;
+    max-width: unset;
+    margin: 0 0 10px 10px;
 }
 .team.selected .team-score {
     display: table-row;
 }
-.team.selected .team-score::before {
-    display: block;
-   margin: 10px 0 5px 0;
-   content: "Team Statistics";
-   border-bottom: 1px solid rgb(62, 146, 46);
-}
 .team.selected .team-beacon {
     border-left: none;
+}
+.team.selected .team-name-div {
+    font-size: 28px;
+    display: inline;
+    max-width: unset;
 }
 .team.selected .team-score .score {
     display: block;
     margin-top: 5px;
+}
+.team.selected .team-score::before {
+    display: block;
+    margin: 10px 0 5px 0;
+    content: "Team Statistics";
+    border-bottom: 1px solid rgb(62, 146, 46);
+}
+.team.selected .team-name-div.small {
+    font-size: 28px;
 }
 .team.selected .team-name .score-total {
     font-size: 28px;
@@ -409,18 +563,12 @@ body::after {
     font-size: 16px;
     font-weight: normal;
 }
-.score-flag-open {
-    display: none;
-}
 .score-flag-lost {
     margin-right: 5px;
     color: rgb(255, 0, 0);
 }
 .score-ticket-open {
     color: rgb(255, 0, 0);
-}
-.score-ticket-closed {
-    display: none;
 }
 .score-health::before {
     content: "";
@@ -439,4 +587,73 @@ body::after {
 .score-flag-captured::before {
     content: "";
     margin-right: 3px;
+}
+.score-flag-open, .score-ticket-closed {
+    display: none;
+}
+
+@media only screen and (max-width: 650px), only screen and (max-width:767px) and (orientation:portrait) {
+    #menu-exit {
+        display: none;
+    }
+    #game-tab {
+        display: none;
+        padding-right: 0;
+        text-align: center;
+    }
+    #game-tab a {
+        display: block;
+        padding-left: 0;
+        padding-right: 0;
+    }
+    #menu-hamburger {
+        display: inline;
+    }
+    #game-tab .selected {
+        border: none;
+        background: rgb(62, 146, 46);
+    }
+    #game-tab .auto-selected {
+        border: none;
+        background: rgb(22, 119, 158);
+    }
+}
+@media only screen and (max-width: 780px), only screen and (max-width:780px) and (orientation:portrait) {
+    .team.selected .team-logo {
+        margin: auto;
+        display: block;
+    }
+    .team.selected .team-name {
+        margin: 10px 0 10px 10px;
+    }
+}
+@media only screen and (max-width: 699px) and (orientation:portrait), only screen and (max-width:767px) and (orientation:portrait) {
+    #game-status, #game-status-name {
+        display: block;
+        text-align: center;
+        padding: 10px 0 0 0;
+    }
+}
+@media only screen and (max-width: 859px) and (orientation:landscape), only screen and (max-width: 780px), only screen and (max-width:780px) and (orientation:portrait) {
+    body {
+        background: rgb(11, 24, 14);
+    }
+    #board {
+        margin: 0;
+    }
+    #game {
+        padding: 0;
+        border: none;
+        max-width: 100%;
+    }
+    #console {
+        display: none;
+    }
+    #event-container {
+        margin: 0;
+        width: 100%;
+        height: 90%;
+        border: none;
+        border-bottom: 2px solid rgb(62, 146, 46)
+    }
 }
