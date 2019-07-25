@@ -124,7 +124,7 @@ func Defaults() string {
 				},
 				OnlyUsers:    []string{},
 				BlockedUsers: []string{},
-				BlockedWords: []string{""},
+				BlockedWords: []string{},
 			},
 			Expire:  DefaultExpire,
 			Timeout: DefaultTimeout,

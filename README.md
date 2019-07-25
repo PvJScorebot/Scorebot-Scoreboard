@@ -97,9 +97,7 @@ Default Config:
             ],
             "only_users": [],
             "blocked_users": [],
-            "banned_words": [
-                ""
-            ]
+            "banned_words": []
         },
         "expire": 45,
         "timeout": 10,
