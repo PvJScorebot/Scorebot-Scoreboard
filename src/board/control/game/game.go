@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"../../web"
 )
 
 // Game mode constants.
@@ -48,6 +50,7 @@ type Meta struct {
 type Game struct {
 	Meta     *Meta
 	Teams    []*Team
+	Tweets   *tweets
 	Events   *Events
 	Credit   string
 	Message  string
@@ -70,6 +73,11 @@ type Event struct {
 type Events struct {
 	Window  *Event
 	Current []*Event
+
+	hash uint32
+}
+type tweets struct {
+	Tweets []*web.Tweet
 
 	hash uint32
 }
@@ -115,6 +123,8 @@ func (g *Game) GenerateHash() {
 		g.total = h.Sum32()
 		h.Reset()
 		g.Events.getHash(h)
+		h.Reset()
+		g.Tweets.getHash(h)
 	}
 }
 
@@ -179,6 +189,15 @@ func (e *Events) getHash(h *Hasher) uint32 {
 	}
 	return e.hash
 }
+func (t *tweets) getHash(h *Hasher) uint32 {
+	if t.hash == 0 {
+		for i := range t.Tweets {
+			h.Hash(t.Tweets[i].ID)
+		}
+		t.hash = h.Segment()
+	}
+	return t.hash
+}
 
 // UnmarshalJSON attempts to unmarshal JSON into a Game struct.
 func (g *Game) UnmarshalJSON(b []byte) error {
@@ -187,6 +206,7 @@ func (g *Game) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	g.Meta = &Meta{}
+	g.Tweets = &tweets{}
 	g.Events = &Events{Current: make([]*Event, 0)}
 	if x, ok := m["name"]; ok {
 		if err := json.Unmarshal(x, &(g.Meta.Name)); err != nil {
@@ -228,6 +248,7 @@ func (g *Game) getDifference(p *planner, old *Game) {
 		p.setValue("message", g.Message, "game-message")
 		g.Meta.getDifference(p, old.Meta)
 		g.Events.getDifference(p, old.Events)
+		g.Tweets.getDifference(p, old.Tweets)
 		for i := range g.Teams {
 			g.Teams[i].getDifference(p, old.Teams[i])
 		}
@@ -239,12 +260,14 @@ func (g *Game) getDifference(p *planner, old *Game) {
 		if old != nil {
 			g.Meta.getDifference(p, old.Meta)
 			g.Events.getDifference(p, old.Events)
+			g.Tweets.getDifference(p, old.Tweets)
 			for i := range old.Teams {
 				c[old.Teams[i].ID] = &comparable{c1: old.Teams[i]}
 			}
 		} else {
 			g.Meta.getDifference(p, nil)
 			g.Events.getDifference(p, nil)
+			g.Tweets.getDifference(p, nil)
 		}
 		for i := range g.Teams {
 			v, ok := c[g.Teams[i].ID]
@@ -327,6 +350,69 @@ func (e *Events) getDifference(p *planner, old *Events) {
 			}
 		}
 	}
+}
+func (t *tweets) getDifference(p *planner, old *tweets) {
+	//p.setPrefix(fmt.Sprintf("%s-tweet", p.prefix))
+	if old != nil && old.hash == t.hash {
+		for i := range t.Tweets {
+			getTweetDifference(p, t.Tweets[i], nil)
+		}
+	} else {
+		c := make(map[int64]*comparable)
+		if old != nil {
+			for i := range old.Tweets {
+				c[old.Tweets[i].ID] = &comparable{c1: old.Tweets[i]}
+			}
+		}
+		for i := range t.Tweets {
+			v, ok := c[t.Tweets[i].ID]
+			if !ok {
+				v = &comparable{}
+				c[t.Tweets[i].ID] = v
+			}
+			v.c2 = t.Tweets[i]
+		}
+		for k, v := range c {
+			if v.c2 == nil {
+				p.setRemove(fmt.Sprintf("tweet-t%d", k))
+				continue
+			}
+			if v.c1 == nil {
+				getTweetDifference(p, v.c2.(*web.Tweet), nil)
+			} else {
+				getTweetDifference(p, v.c2.(*web.Tweet), v.c1.(*web.Tweet))
+			}
+		}
+	}
+	//p.rollbackPrefix()
+}
+func getTweetDifference(p *planner, new, old *web.Tweet) {
+	if old == nil {
+		p.setDeltaValue(fmt.Sprintf("tweet-t%d", new.ID), "", "tweet")
+	} else {
+		p.setValue(fmt.Sprintf("tweet-t%d", new.ID), "", "tweet")
+	}
+	p.setPrefix(fmt.Sprintf("%s-tweet-t%d", p.prefix, new.ID))
+	if old != nil {
+		p.setValue("user", new.User, "tweet-user")
+		p.setProperty("user", fmt.Sprintf("url('%s')", new.UserPhoto), "background-image")
+		p.setValue("user-name", new.UserName, "tweet-username")
+		p.setValue("content", new.Text, "tweet-content")
+		for x := range new.Images {
+			p.setValue(fmt.Sprintf("image-%d", x), "", "tweet-image")
+			p.setProperty(fmt.Sprintf("image-%d", x), fmt.Sprintf("url('%s')", new.Images[x]), "background-image")
+		}
+	} else {
+		p.setDeltaValue("user", new.User, "tweet-user")
+		p.setDeltaProperty("user", fmt.Sprintf("url('%s')", new.UserPhoto), "background-image")
+		p.setDeltaValue("user-name", new.UserName, "tweet-username")
+		p.setDeltaValue("content", new.Text, "tweet-content")
+		for x := range new.Images {
+			p.setDeltaValue(fmt.Sprintf("image-%d", x), "", "tweet-image")
+			p.setDeltaProperty(fmt.Sprintf("image-%d", x), fmt.Sprintf("url('%s')", new.Images[x]), "background-image")
+		}
+	}
+	p.rollbackPrefix()
 }
 
 // Difference returns two sets of Update arrays, the first is the required updates to build

@@ -11,7 +11,7 @@
         <meta charset="UTF-8" />
         <meta http-equiv="X-UA-Compatible" content="ie=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <script type="text/javascript">game = {{.}};</script>
+        <script type="text/javascript">game = {{.Game}};</script>
         <script type="text/javascript" src="/script/scoreboard.js"></script>
         <link rel="icon" type="image/x-icon" href="/image/logo.png" />
         <link rel="stylesheet" href="/style/awesome/css/font-awesome.min.css">
@@ -33,6 +33,7 @@
                     <a id="auto-tab" href="#" onclick="return navigate('auto');">Auto</a>
                     <a id="overview-tab" href="#" onclick="return navigate('overview');">Overview</a>
                     <a id="credits-tab" href="#" onclick="return navigate('credits');">Credits</a>
+                    {{if .Twitter}}<a id="game-tweet-tab" href="#" onclick="return navigate('game-tweet');">Tweets</a>{{end}}
                 </div>
                 <div id="game-disconnected">Lost connection to the Scoreboard. <a href="#" onclick="document.location.reload();">Please refresh</a> to get updates.</div>
                 <div id="game-invalid">The requested Game cannot be found.</div>
@@ -244,6 +245,7 @@
                         </a>
                     </div>
                 </div>
+                <div id="game-tweet"></div>
             </div>
         </div>
         <div id="console">
