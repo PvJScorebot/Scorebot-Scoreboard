@@ -1,6 +1,6 @@
 # Scorebot Scoreboard Service
 
-Scorebot Client for Scorebot-Core ()
+Scorebot Client for [Scorebot-Core](https://github.com/iDigitalFlame/scorebot-core)
 
 This client is new and improved and allows for multiple games to be synced and displayed
 using synced websockets.
