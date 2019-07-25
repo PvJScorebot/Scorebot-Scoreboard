@@ -13,6 +13,13 @@ Twitter integration is also enabled in this version. Add your API keys into the 
 ## Download
 
 You can visit the Releases page to download a linux compiled version. The resources and images are packed into the
-binary using Packr. It will run as long as you point it to an active Scorebot instance.
+binary using [Packr](https://github.com/gobuffalo/packr/tree/master/v2). It will run as long as you point it to an active Scorebot instance.
 
 ## Building
+
+```shell
+git clone https://github.com/iDigitalFlame/scoreboard
+cd scoreboard
+go build ./..
+bash build.sh
+```
