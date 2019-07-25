@@ -1,11 +1,18 @@
 # Scorebot Scoreboard Service
 
-This is a new service (client) for Scorebot. Part of the Scorebot software collection.
+Scorebot Client for Scorebot-Core ()
 
-The new scoreboard is built in Golang and allows for advanced display of the Scoreboard with a 75% reduction in traffic and loadtimes.
+This client is new and improved and allows for multiple games to be synced and displayed
+using synced websockets.
 
-Websockets are used to facilitate communication between the host and scoreboard. The Golang program functions as a webserver and a "differ" to detect changes in the game state.
+This scoreboard supports the Scorebot > 3.3.4 events API and is capable of displaying videos, messages and event
+window popups.
 
-This software functions *seperate* from scorebot and can run on a seperate server if required.
+Twitter integration is also enabled in this version. Add your API keys into the config to enable it.
 
-More info to come soon! (Still developing lol).
+## Download
+
+You can visit the Releases page to download a linux compiled version. The resources and images are packed into the
+binary using Packr. It will run as long as you point it to an active Scorebot instance.
+
+## Building

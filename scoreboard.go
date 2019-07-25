@@ -1,4 +1,4 @@
-package board
+package scoreboard
 
 import (
 	"encoding/json"
@@ -14,13 +14,15 @@ import (
 	"text/template"
 	"time"
 
-	"./control"
-	"./control/game"
-	"./logging"
-	"./web"
-	"golang.org/x/xerrors"
+	"github.com/iDigitalFlame/scoreboard/control"
+	"github.com/iDigitalFlame/scoreboard/control/game"
+	"github.com/iDigitalFlame/scoreboard/logging"
+	"github.com/iDigitalFlame/scoreboard/web"
 
+	"github.com/gobuffalo/packr/v2"
 	"github.com/stvp/slug"
+
+	"golang.org/x/xerrors"
 )
 
 const (
@@ -34,7 +36,7 @@ const (
 	// DefaultListen is the default listen address. Used if the listen setting is missing.
 	DefaultListen string = "0.0.0.0:8080"
 	// DefaultTimeout is the default timeout in seconds. Used if the timeout setting is missing.
-	DefaultTimeout uint16 = 30
+	DefaultTimeout uint16 = 10
 	// DefaultLogLevel is the default log level. Used if the log.level setting is missing.
 	DefaultLogLevel uint8 = 2
 )
@@ -46,6 +48,8 @@ var (
 	ErrInvalidConfig = xerrors.New("config struct cannot be nil")
 	// ErrInvalidLevel is returned if the specified log level value is not in the bounds of [0 - 5].
 	ErrInvalidLevel = xerrors.New("level must be between 0 and 5 inclusive")
+
+	resources = packr.New("html", "./html")
 )
 
 // Log is a struct that stores and repersents the Scoreboard Logging config
@@ -182,10 +186,16 @@ func (c *Config) verify() error {
 // blocks untill interrupted.
 func (s *Scoreboard) Start() error {
 	s.log.Info("Starting scoreboard service..")
-	go s.server.Start()
-	wait := make(chan os.Signal)
-	signal.Notify(wait, syscall.SIGINT, syscall.SIGTERM)
-	<-wait
+	w := make(chan os.Signal)
+	signal.Notify(w, syscall.SIGINT, syscall.SIGTERM)
+	go func(z *Scoreboard, q chan os.Signal) {
+		fmt.Printf("dd")
+		if err := s.server.Start(); err != nil {
+			z.log.Error("Web server returned error: %s", err.Error())
+			w <- syscall.SIGTERM
+		}
+	}(s, w)
+	<-w
 	s.log.Info("Stopping and shutting down..")
 	s.timer.Stop()
 	if s.twitter != nil {
@@ -268,31 +278,31 @@ func NewScoreboard(c *Config) (*Scoreboard, error) {
 	if err := c.verify(); err != nil {
 		return nil, err
 	}
-	p, t := filepath.Join(c.Directory, "public"), filepath.Join(c.Directory, "template")
-	if d, err := os.Stat(p); err != nil || !d.IsDir() {
-		return nil, xerrors.Errorf("public directory \"%s\" is not a valid directory", p)
-	}
-	if d, err := os.Stat(t); err != nil || !d.IsDir() {
-		return nil, xerrors.Errorf("templates directory \"%s\" is not a valid directory", t)
+	if len(c.Listen) == 0 {
+		c.Listen = DefaultListen
 	}
 	x := time.Second * time.Duration(c.Timeout)
 	a, err := web.NewAPI(c.Scorebot, x, nil)
 	if err != nil {
 		return nil, xerrors.Errorf("unable to setup API: %w", err)
 	}
-	if len(c.Listen) == 0 {
-		c.Listen = DefaultListen
+	p := ""
+	z := template.New("base")
+	if len(c.Directory) > 0 {
+		p = filepath.Join(c.Directory, "public")
+		if d, err := os.Stat(p); err != nil || !d.IsDir() {
+			return nil, xerrors.Errorf("public directory \"%s\" is not a valid directory", p)
+		}
+		t := filepath.Join(c.Directory, "template")
+		getTemplate(z, "home.html", t, "home.html")
+		getTemplate(z, "scoreboard.html", t, "scoreboard.html")
+	} else {
+		getTemplate(z, "home.html", "", "home.html")
+		getTemplate(z, "scoreboard.html", "", "scoreboard.html")
 	}
-	w, err := web.NewServer(c.Listen, p)
+	w, err := web.NewServer(c.Listen, p, resources)
 	if err != nil {
 		return nil, xerrors.Errorf("unable to setup web server: %w", err)
-	}
-	z, err := template.ParseFiles(
-		filepath.Join(t, "home.html"),
-		filepath.Join(t, "scoreboard.html"),
-	)
-	if err != nil {
-		return nil, xerrors.Errorf("unable to parse scorebot templates: %w", err)
 	}
 	s := &Scoreboard{
 		api:     a,
@@ -341,6 +351,24 @@ func NewScoreboard(c *Config) (*Scoreboard, error) {
 		s.timer.Reset(s.tick)
 	})
 	return s, nil
+}
+func getTemplate(t *template.Template, n, d, f string) error {
+	if len(d) > 0 {
+		s := filepath.Join(d, f)
+		i, err := os.Stat(s)
+		if err == nil && !i.IsDir() {
+			_, err := t.New(n).ParseFiles(s)
+			return xerrors.Errorf("unable to parse templates \"%s\": %w", f, err)
+		}
+	}
+	c, err := resources.FindString(fmt.Sprintf("template/%s", f))
+	if err != nil {
+		return xerrors.Errorf("could not find template \"%s\": %w", f, err)
+	}
+	if _, err := t.New(n).Parse(c); err != nil {
+		return xerrors.Errorf("unable to parse scorebot templates: %w", err)
+	}
+	return nil
 }
 func (s *Scoreboard) http(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {

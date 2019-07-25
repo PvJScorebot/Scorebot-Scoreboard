@@ -4,14 +4,13 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
 
-	"./board"
-	"./board/web"
+	"github.com/iDigitalFlame/scoreboard"
+	"github.com/iDigitalFlame/scoreboard/web"
 )
 
 const (
-	version = "v2-Alpha"
+	version = "v1.2"
 )
 
 func main() {
@@ -19,13 +18,13 @@ func main() {
 	ConfigDefault := flag.Bool("d", false, "Print Default Config and Exit.")
 
 	LogFile := flag.String("log", "", "Scoreboard Log File Path.")
-	LogLevel := flag.Int("log-level", int(board.DefaultLogLevel), "Scoreboard Log Level.")
+	LogLevel := flag.Int("log-level", int(scoreboard.DefaultLogLevel), "Scoreboard Log Level.")
 
-	Tick := flag.Int("tick", int(board.DefaultTick), "Scoreboard Poll Rate. (in seconds)")
+	Tick := flag.Int("tick", int(scoreboard.DefaultTick), "Scoreboard Poll Rate. (in seconds)")
 
-	Listen := flag.String("bind", board.DefaultListen, "Address and Port to Listen on.")
+	Listen := flag.String("bind", scoreboard.DefaultListen, "Address and Port to Listen on.")
 
-	Timeout := flag.Int("timeout", int(board.DefaultTimeout), "Scoreboard Request Timeout. (in seconds)")
+	Timeout := flag.Int("timeout", int(scoreboard.DefaultTimeout), "Scoreboard Request Timeout. (in seconds)")
 
 	Scorebot := flag.String("sbe", "", "Scorebot Core Address or URL.")
 
@@ -40,7 +39,7 @@ func main() {
 	TwitterKeywords := flag.String("tw-keywords", "", "Twitter Search Keywords. (comma seperated)")
 	TwitterLanguage := flag.String("tw-lang", "", "Twitter Search Lanugage. (comma seperated)")
 
-	TwitterExpire := flag.Int("tw-expire", int(board.DefaultExpire), "Tweet Display Time. (in seconds)")
+	TwitterExpire := flag.Int("tw-expire", int(scoreboard.DefaultExpire), "Tweet Display Time. (in seconds)")
 
 	TwitterBlockWords := flag.String("tw-block-words", "", "Twitter Blocked Words. (comma seperated)")
 	TwitterBlockUsers := flag.String("tw-block-user", "", "Twitter Blocked Usernames. (comma seperated)")
@@ -54,43 +53,37 @@ func main() {
 	flag.Parse()
 
 	if *ConfigDefault {
-		fmt.Printf("%s\n", board.Defaults())
+		fmt.Printf("%s\n", scoreboard.Defaults())
 		os.Exit(0)
 	}
 
-	var c *board.Config
-
+	var c *scoreboard.Config
 	if len(*ConfigFile) > 0 {
 		var err error
-		c, err = board.Load(*ConfigFile)
+		c, err = scoreboard.Load(*ConfigFile)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 			os.Exit(1)
 		}
 	} else {
-		if len(*Directory) == 0 {
-			if d, err := filepath.Abs(filepath.Dir(os.Args[0])); err == nil {
-				*Directory = d
-			}
-		}
 		if len(*Scorebot) == 0 || len(*Listen) == 0 || *Tick <= 0 || *Timeout < 0 || *TwitterExpire <= 0 {
 			flag.Usage()
 			os.Exit(2)
 		}
-		c = &board.Config{
-			Log: &board.Log{
+		c = &scoreboard.Config{
+			Log: &scoreboard.Log{
 				File:  *LogFile,
 				Level: uint8(*LogLevel),
 			},
 			Tick:   uint16(*Tick),
 			Listen: *Listen,
-			Twitter: &board.Twitter{
+			Twitter: &scoreboard.Twitter{
 				Filter: &web.Filter{
-					Language:     board.SplitParm(*TwitterLanguage, board.ConfigSeperator),
-					Keywords:     board.SplitParm(*TwitterKeywords, board.ConfigSeperator),
-					OnlyUsers:    board.SplitParm(*TwitterOnlyUsers, board.ConfigSeperator),
-					BlockedUsers: board.SplitParm(*TwitterBlockUsers, board.ConfigSeperator),
-					BlockedWords: board.SplitParm(*TwitterBlockWords, board.ConfigSeperator),
+					Language:     scoreboard.SplitParm(*TwitterLanguage, scoreboard.ConfigSeperator),
+					Keywords:     scoreboard.SplitParm(*TwitterKeywords, scoreboard.ConfigSeperator),
+					OnlyUsers:    scoreboard.SplitParm(*TwitterOnlyUsers, scoreboard.ConfigSeperator),
+					BlockedUsers: scoreboard.SplitParm(*TwitterBlockUsers, scoreboard.ConfigSeperator),
+					BlockedWords: scoreboard.SplitParm(*TwitterBlockWords, scoreboard.ConfigSeperator),
 				},
 				Expire:  uint16(*TwitterExpire),
 				Timeout: uint16(*Timeout),
@@ -107,14 +100,16 @@ func main() {
 		}
 	}
 
-	board, err := board.NewScoreboard(c)
+	scoreboard, err := scoreboard.NewScoreboard(c)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 		os.Exit(1)
 	}
 
-	if err := board.Start(); err != nil {
+	if err := scoreboard.Start(); err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 		os.Exit(1)
 	}
+
+	os.Exit(0)
 }

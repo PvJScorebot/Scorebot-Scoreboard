@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"../../web"
+	"github.com/iDigitalFlame/scoreboard/web"
 )
 
 // Game mode constants.

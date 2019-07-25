@@ -6,9 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"../web"
-
-	"./game"
+	"github.com/iDigitalFlame/scoreboard/web"
+	"github.com/iDigitalFlame/scoreboard/control/game"
 )
 
 var (

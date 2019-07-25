@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path"
 
+	"github.com/gobuffalo/packr/v2"
 	"github.com/gorilla/websocket"
 	"golang.org/x/xerrors"
 )
@@ -12,7 +14,9 @@ import (
 // Server is a struct that supports web file browsing as well as adding
 // specific paths to functions.
 type Server struct {
-	dir  http.Handler
+	fs   http.Handler
+	box  *packr.Box
+	dir  http.FileSystem
 	bind string
 }
 
@@ -31,26 +35,21 @@ func (s *Stream) IP() string {
 	return s.RemoteAddr().String()
 }
 
-// Start starts the Server listening loop and blocks until finished.
+// Start starts the Server listening loop and returns an error if the server could not be started.
 // Only returns an error if any IO issues occur during operation.
 func (s *Server) Start() error {
 	return http.ListenAndServe(s.bind, nil)
 }
 
-// NewServer creates a Server struct from the provded listen address and directory path.
-// This function will return an error if the provded directory path is not valid.
-func NewServer(listen, dir string) (*Server, error) {
-	z, err := os.Stat(dir)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot get directory \"%s\": %w", dir, err)
+// Open satisifies the http.FileSystem interface.
+func (s *Server) Open(n string) (http.File, error) {
+	f, err := s.dir.Open(n)
+	if err != nil && s.box != nil {
+		if r, err := s.box.Open(path.Join("public", n)); err == nil {
+			return r, nil
+		}
 	}
-	if !z.IsDir() {
-		return nil, xerrors.Errorf("path \"%s\" is not a directory", dir)
-	}
-	return &Server{
-		dir:  http.FileServer(http.Dir(dir)),
-		bind: listen,
-	}, nil
+	return f, err
 }
 
 // AddHandlerFunc adds the following function to be triggered for the provded path.
@@ -65,7 +64,7 @@ func (s *Server) AddHandler(path string, handler http.Handler) {
 
 // ServeHTTP satisifies the http.Handler requirement for the interface.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	s.dir.ServeHTTP(w, r)
+	s.fs.ServeHTTP(w, r)
 }
 
 // NewWebSocket returns a WebSocket HTTP handler that can upgrade standard HTTP connections into
@@ -79,6 +78,27 @@ func NewWebSocket(bufsize int, callback func(*Stream)) http.Handler {
 			WriteBufferSize: bufsize,
 		},
 	}
+}
+
+// NewServer creates a Server struct from the provded listen address and directory path.
+// This function will return an error if the provded directory path is not valid.
+func NewServer(listen, dir string, box *packr.Box) (*Server, error) {
+	if len(dir) > 0 {
+		z, err := os.Stat(dir)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot get directory \"%s\": %w", dir, err)
+		}
+		if !z.IsDir() {
+			return nil, xerrors.Errorf("path \"%s\" is not a directory", dir)
+		}
+	}
+	s := &Server{
+		box:  box,
+		dir:  http.Dir(dir),
+		bind: listen,
+	}
+	s.fs = http.FileServer(s)
+	return s, nil
 }
 func (s *websockServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c, err := s.u.Upgrade(w, r, nil)
