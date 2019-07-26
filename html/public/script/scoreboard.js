@@ -122,6 +122,10 @@ function recv(message) {
                 navigate("auto");
                 check_mobile();
             }
+            var gt = document.getElementById("game-status-name");
+            if (gt !== null) {
+                gt.setAttribute("onclick", "return navigate('overview');");
+            }
         }
         document.sb_loaded = true;
     }
@@ -166,7 +170,7 @@ function check_mobile() {
     if (dt === null || mb === null) {
         return;
     }
-    if (dt.offsetHeight <= 20) {
+    if (dt.offsetHeight <= 25) {
         if (document.sb_tab_offset === null || (document.sb_tab_offset !== null && document.sb_tab_offset < dt.parentElement.offsetWidth)) {
             document.sb_tab_offset = null;
             mb.classList.remove("mobile");
