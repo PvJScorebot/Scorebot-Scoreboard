@@ -30,7 +30,13 @@ function init() {
     setInterval(scroll_beacons, 200);
     setInterval(scroll_team_names, 200);
     debug("Opening websocket..");
-    document.sb_socket = new WebSocket("ws://" + window.location.host + "/w");
+    var s = window.location.host + "/w";
+    if (document.location.protocol.indexOf("https") >= 0) {
+        s = "wss://" + s;
+    } else {
+        s = "ws://" + s;
+    }
+    document.sb_socket = new WebSocket(s);
     document.sb_socket.onopen = startup;
     document.sb_socket.onclose = closed;
     document.sb_socket.onmessage = recv;
