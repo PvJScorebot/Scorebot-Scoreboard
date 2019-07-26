@@ -421,7 +421,7 @@ func getTweetDifference(p *planner, new, old *web.Tweet) {
 
 // Difference returns two sets of Update arrays, the first is the required updates to build
 // the current board (for new clients) and the second is the delta updates that need to be sent to existing clients.
-func (g *Game) Difference(old *Game) (new []*Update, delta []*Update) {
+func (g *Game) Difference(old *Game) ([]*Update, []*Update) {
 	p := &planner{
 		Delta:  make([]*Update, 0),
 		Create: make([]*Update, 0),

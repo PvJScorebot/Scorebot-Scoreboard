@@ -86,7 +86,7 @@ body {
     max-width: 65%;
     display: block;
     text-align: left;
-    max-height: 150px;
+    max-height: 175px;
     border-radius: 8px;
     color: rgb(0, 0, 0);
     margin: 5px auto 5px auto;
@@ -109,6 +109,16 @@ body {
     overflow: hidden;
     max-height: 100px;
     text-overflow: ellipsis;
+}
+.tweet-image {
+    height: 100px;
+    display: block;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+.tweet-media {
+    padding: 5px;
+    overflow: hidden;
 }
 .tweet-pic div {
     width: 50px;

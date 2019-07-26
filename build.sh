@@ -1,12 +1,18 @@
 #!/usr/bin/bash
 
-OUT="scoreboard"
+o="scoreboard"
 if [ $# -ge 1 ]; then
-    OUT="$1"
+    o="$1"
 fi
 
-echo "Building..."
+which packr2 &> /dev/null
+if [ $? -ne 0 ]; then
+    printf "Installing packr..\n"
+    go get -u github.com/gobuffalo/packr/v2/...
+fi
+
+printf "Building...\n"
 packr2
-go build -o "$OUT" cmd/scoreboard/main.go
+go build -o "$o" cmd/scoreboard/main.go
 packr2 clean
-echo "Done!"
+printf "Done!\n"

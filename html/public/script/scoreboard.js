@@ -114,6 +114,7 @@ function recv(message) {
                 navigate("overview")
             } else {
                 navigate("auto");
+                check_mobile();
             }
         }
         document.sb_loaded = true;
