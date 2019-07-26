@@ -12,7 +12,7 @@ Twitter integration is also enabled in this version. Add your API keys into the 
 
 ## Download
 
-You can visit the Releases page to download a linux compiled version. The resources and images are packed into the
+You can visit the [Releases](https://github.com/iDigitalFlame/scoreboard/releases) page to download a linux compiled version. The resources and images are packed into the
 binary using [Packr](https://github.com/gobuffalo/packr/tree/master/v2). It will run as long as you point it to an active Scorebot instance.
 
 ## Building
