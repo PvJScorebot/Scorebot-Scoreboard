@@ -8,7 +8,7 @@ fi
 which packr2 &> /dev/null
 if [ $? -ne 0 ]; then
     printf "Installing packr..\n"
-    go get -u github.com/gobuffalo/packr/v2/...
+    go get -u github.com/gobuffalo/packr/v2/packr2
 fi
 
 printf "Building...\n"
