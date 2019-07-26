@@ -74,7 +74,7 @@ Usage:
 ## Config File
 
 The best way to confiure the scoreboard is to use a config file. This file will override any command line options.
-To run with the config file use the command line option" `-c <filepath>`
+To run with the config file use the command line option: `-c <filepath>`
 
 Default Config:
 

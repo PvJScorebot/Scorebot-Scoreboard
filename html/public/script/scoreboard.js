@@ -12,9 +12,9 @@ var interval_credit = 5000;
 
 function init() {
     document.sb_auto = false;
-    document.sb_debug = true;
     document.sb_loaded = false;
     document.sb_tab_offset = null;
+    document.sb_debug = document.location.toString().indexOf("?debug") > 0;
     debug("Starting init.. Selected Game id: " + game);
     if (!game) {
         debug("No game ID detected, bailing..");
@@ -315,7 +315,6 @@ function handle_update(update) {
         debug("Created element " + update.id + "..");
     }
     if (ele === null) {
-        debug("!! ELEMENT: " + update.is + " is NULL!!");
         return;
     }
     if (update.class) {
@@ -325,7 +324,6 @@ function handle_update(update) {
         }
     }
     if (!update.value) {
-        debug("!! ELEMENT: " + update.is + " is has no value!!");
         return;
     }
     if (!update.name && update.value !== null) {
@@ -336,7 +334,6 @@ function handle_update(update) {
         return;
     }
     if (update.name !== "class") {
-        debug(ele.id + " : " + update.name + " : " + update.value);
         ele.style[update.name] = update.value;
         return;
     }

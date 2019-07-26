@@ -66,6 +66,9 @@ body {
 #game-tweet {
     display: none;
 }
+#game-tweet-title {
+    display: none;
+}
 #game-tweet.selected {
     display: block;
 }
