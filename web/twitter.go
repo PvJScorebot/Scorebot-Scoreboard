@@ -1,6 +1,7 @@
 package web
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -133,6 +134,14 @@ func (t *Twitter) receive(x *twitter.Tweet) {
 		Text:      x.Text,
 		UserName:  x.User.ScreenName,
 		UserPhoto: x.User.ProfileImageURLHttps,
+	}
+	if x.Retweeted {
+		if len(r.Text) > 0 {
+			r.Text = fmt.Sprintf("%s\nRT @%s: %s", r.Text, x.RetweetedStatus.User.ScreenName, x.RetweetedStatus.Text)
+		} else {
+			r.Text = fmt.Sprintf("RT @%s: %s", x.RetweetedStatus.User.ScreenName, x.RetweetedStatus.Text)
+		}
+		//x = x.RetweetedStatus
 	}
 	if len(x.Entities.Media) > 0 {
 		r.Images = make([]string, 0, len(x.Entities.Media))
