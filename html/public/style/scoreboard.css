@@ -65,12 +65,15 @@ body {
 
 #game-tweet {
     display: none;
+    flex-wrap: wrap;
+    flex-flow: column-reverse;
+    flex-direction: column-reverse;
 }
 #game-tweet-title {
     display: none;
 }
 #game-tweet.selected {
-    display: block;
+    display: flex;
 }
 #game-tweet-tab span {
     width: 15px;
@@ -82,6 +85,7 @@ body {
 }
 
 .tweet {
+    width: 65%;
     padding: 8px;
     max-width: 65%;
     display: block;
@@ -716,20 +720,20 @@ body {
     body {
         background: rgb(11, 24, 14);
     }
-    .tweet {
-        padding: 5px;
-        max-width: 95%;
-        font-size: 14px;
-        border-radius: 5px;
-        margin: 5px 5px 5px 5px;;
-    }
-    #board {
-        margin: 0;
-    }
     #game {
         padding: 0;
         border: none;
         max-width: 100%;
+    }
+    .tweet {
+        width:95%;
+        padding: 5px;
+        max-width: 95%;
+        font-size: 14px;
+        border-radius: 5px;
+    }
+    #board {
+        margin: 0;
     }
     #console {
         display: none;
@@ -740,5 +744,13 @@ body {
         height: 90%;
         border: none;
         border-bottom: 2px solid rgb(62, 146, 46)
+    }
+    .team.selected .team-name .score-total {
+        margin: 0;
+        display: block;
+    }
+    .team.selected .team-name .score-total::before {
+        content: "";
+        margin-right: 0;
     }
 }

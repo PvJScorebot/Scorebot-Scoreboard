@@ -161,7 +161,7 @@ function check_mobile() {
         return;
     }
     if (dt.offsetHeight <= 20) {
-        if (document.sb_tab_offset !== null && document.sb_tab_offset < dt.parentElement.offsetWidth) {
+        if (document.sb_tab_offset === null || (document.sb_tab_offset !== null && document.sb_tab_offset < dt.parentElement.offsetWidth)) {
             document.sb_tab_offset = null;
             mb.classList.remove("mobile");
             dt.classList.remove("mobile");
