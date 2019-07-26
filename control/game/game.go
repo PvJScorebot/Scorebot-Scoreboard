@@ -394,19 +394,23 @@ func getTweetDifference(p *planner, new, old *web.Tweet) {
 	}
 	p.setPrefix(fmt.Sprintf("%s-tweet-t%d", p.prefix, new.ID))
 	if old != nil {
+		p.setValue("pic", "", "tweet-pic")
+		p.setProperty("pic-img", fmt.Sprintf("url('%s')", new.UserPhoto), "background-image")
 		p.setValue("user", new.User, "tweet-user")
-		p.setProperty("user", fmt.Sprintf("url('%s')", new.UserPhoto), "background-image")
 		p.setValue("user-name", new.UserName, "tweet-username")
-		p.setValue("content", new.Text, "tweet-content")
+		p.setValue("user-content", new.Text, "tweet-content")
+		p.setValue("image", "", "tweet-media")
 		for x := range new.Images {
 			p.setValue(fmt.Sprintf("image-%d", x), "", "tweet-image")
 			p.setProperty(fmt.Sprintf("image-%d", x), fmt.Sprintf("url('%s')", new.Images[x]), "background-image")
 		}
 	} else {
+		p.setDeltaValue("pic", "", "tweet-pic")
+		p.setDeltaProperty("pic-img", fmt.Sprintf("url('%s')", new.UserPhoto), "background-image")
 		p.setDeltaValue("user", new.User, "tweet-user")
-		p.setDeltaProperty("user", fmt.Sprintf("url('%s')", new.UserPhoto), "background-image")
 		p.setDeltaValue("user-name", new.UserName, "tweet-username")
-		p.setDeltaValue("content", new.Text, "tweet-content")
+		p.setDeltaValue("user-content", new.Text, "tweet-content")
+		p.setDeltaValue("image", "", "tweet-media")
 		for x := range new.Images {
 			p.setDeltaValue(fmt.Sprintf("image-%d", x), "", "tweet-image")
 			p.setDeltaProperty(fmt.Sprintf("image-%d", x), fmt.Sprintf("url('%s')", new.Images[x]), "background-image")

@@ -189,7 +189,6 @@ func (s *Scoreboard) Start() error {
 	w := make(chan os.Signal)
 	signal.Notify(w, syscall.SIGINT, syscall.SIGTERM)
 	go func(z *Scoreboard, q chan os.Signal) {
-		fmt.Printf("dd")
 		if err := s.server.Start(); err != nil {
 			z.log.Error("Web server returned error: %s", err.Error())
 			w <- syscall.SIGTERM

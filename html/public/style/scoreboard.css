@@ -63,6 +63,71 @@ body {
     color: rgb(255, 255, 255);
 }
 
+#game-tweet {
+    display: none;
+}
+#game-tweet.selected {
+    display: block;
+}
+#game-tweet-tab span {
+    width: 15px;
+    height: 15px;
+    display: inline-block;
+    background: url("/image/twitter.png");
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.tweet {
+    padding: 8px;
+    max-width: 65%;
+    display: block;
+    text-align: left;
+    max-height: 150px;
+    border-radius: 8px;
+    color: rgb(0, 0, 0);
+    margin: 5px auto 5px auto;
+    background: rgb(255, 255, 255);
+}
+.tweet-pic {
+    display: table-cell;
+}
+.tweet-user {
+    width: 100%;
+    display: table-cell;
+    vertical-align: top;
+    background-image: url("/image/twitter.png");
+    background-position-y: top;
+    background-repeat: no-repeat;
+    background-position-x: right;
+}
+.tweet-content {
+    margin-top: 4px;
+    overflow: hidden;
+    max-height: 100px;
+    text-overflow: ellipsis;
+}
+.tweet-pic div {
+    width: 50px;
+    height: 50px;
+    display: block;
+    margin-right: 5px;
+    border-radius: 50%;
+    background-position: top;
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+.tweet-username {
+    display: inline;
+}
+.tweet-username::after {
+    content: ")";
+}
+.tweet-username::before {
+    content: "(@";
+    margin-left: 4px;
+}
+
 #credits {
     display: none;
 }
@@ -637,6 +702,13 @@ body {
 @media only screen and (max-width: 859px) and (orientation:landscape), only screen and (max-width: 780px), only screen and (max-width:780px) and (orientation:portrait) {
     body {
         background: rgb(11, 24, 14);
+    }
+    .tweet {
+        padding: 5px;
+        max-width: 95%;
+        font-size: 14px;
+        border-radius: 5px;
+        margin: 5px 5px 5px 5px;;
     }
     #board {
         margin: 0;

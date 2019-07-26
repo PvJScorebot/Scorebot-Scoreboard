@@ -129,9 +129,9 @@ func (t *Twitter) receive(x *twitter.Tweet) {
 	}
 	r := &Tweet{
 		ID:        x.ID,
-		User:      x.User.ScreenName,
+		User:      x.User.Name,
 		Text:      x.Text,
-		UserName:  x.User.Name,
+		UserName:  x.User.ScreenName,
 		UserPhoto: x.User.ProfileImageURLHttps,
 	}
 	if len(x.Entities.Media) > 0 {

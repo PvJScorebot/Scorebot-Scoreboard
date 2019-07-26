@@ -315,6 +315,7 @@ function handle_update(update) {
         debug("Created element " + update.id + "..");
     }
     if (ele === null) {
+        debug("!! ELEMENT: " + update.is + " is NULL!!");
         return;
     }
     if (update.class) {
@@ -324,6 +325,7 @@ function handle_update(update) {
         }
     }
     if (!update.value) {
+        debug("!! ELEMENT: " + update.is + " is has no value!!");
         return;
     }
     if (!update.name && update.value !== null) {

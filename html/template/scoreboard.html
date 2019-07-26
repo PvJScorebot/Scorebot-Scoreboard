@@ -33,7 +33,7 @@
                     <a id="auto-tab" href="#" onclick="return navigate('auto');">Auto</a>
                     <a id="overview-tab" href="#" onclick="return navigate('overview');">Overview</a>
                     <a id="credits-tab" href="#" onclick="return navigate('credits');">Credits</a>
-                    {{if .Twitter}}<a id="game-tweet-tab" href="#" onclick="return navigate('game-tweet');">Tweets</a>{{end}}
+                    {{if .Twitter}}<a id="game-tweet-tab" href="#" onclick="return navigate('game-tweet');"><span></span></a>{{end}}
                 </div>
                 <div id="game-disconnected">Lost connection to the Scoreboard. <a href="#" onclick="document.location.reload();">Please refresh</a> to get updates.</div>
                 <div id="game-invalid">The requested Game cannot be found.</div>
@@ -245,7 +245,9 @@
                         </a>
                     </div>
                 </div>
-                <div id="game-tweet"></div>
+                <div id="game-tweet">
+                    <div id="game-tweet-title">Wh4t th3 N00bz R S4yn..</div>
+                </div>
             </div>
         </div>
         <div id="console">
