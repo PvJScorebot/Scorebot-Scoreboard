@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/iDigitalFlame/scoreboard/web"
 	"github.com/iDigitalFlame/scoreboard/control/game"
+	"github.com/iDigitalFlame/scoreboard/web"
 )
 
 var (
@@ -152,6 +152,11 @@ func (h *hello) UnmarshalJSON(b []byte) error {
 
 // NewClient attempts to add the client 'n' to the Subscription swarm.
 func (c *Collection) NewClient(n *web.Stream) {
+	defer func(l logger) {
+		if err := recover(); err != nil {
+			l.Error("Recovered from a panic: %s", err)
+		}
+	}(c.log)
 	c.log.Debug("Received a connection from \"%s\", listening for Hello..", n.IP())
 	var h hello
 	if err := n.ReadJSON(&h); err != nil {
@@ -161,7 +166,7 @@ func (c *Collection) NewClient(n *web.Stream) {
 	}
 	c.log.Debug("Received Hello with requested Game ID \"%d\" from \"%s\".", h, n.IP())
 	g, ok := c.Subscribers[int64(h)]
-	if !ok {
+	if !ok || g == nil {
 		c.log.Debug("Checking Game ID \"%d\", requested by \"%s\"..", h, n.IP())
 		var r *game.Game
 		if err := c.api.GetJSON(fmt.Sprintf("api/scoreboard/%d/", h), &r); err != nil {

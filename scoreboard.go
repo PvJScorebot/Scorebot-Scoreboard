@@ -203,6 +203,11 @@ func (s *Scoreboard) Start() error {
 	return s.collection.Stop()
 }
 func (s *Scoreboard) update() error {
+	defer func(l logging.Log) {
+		if err := recover(); err != nil {
+			l.Error("Recovered from a panic: %s", err)
+		}
+	}(s.log)
 	s.log.Debug("Starting update..")
 	if err := s.api.GetJSON("api/games/", &(s.games)); err != nil {
 		s.log.Error("Error occured during tick: %s", err.Error())
