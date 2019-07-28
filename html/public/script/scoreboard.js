@@ -1,5 +1,5 @@
 //
-//  Scoreboard v1.3
+//  Scoreboard v1.4
 //  iDigitalFlame 2019, The Scorebot Project.
 //
 //  Javascript Main File

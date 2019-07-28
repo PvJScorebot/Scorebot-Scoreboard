@@ -30,16 +30,22 @@ bash build.sh
 The Scorebord can be configured by command line options, though it's preferred to use a config file instead. (Below).
 
 ```text
-Scorebot Scoreboard v1.3
+Scorebot Scoreboard v1.4
 
 Usage:
+  -assets string
+        Secondary Assets Override URL.
   -bind string
         Address and Port to Listen on. (default "0.0.0.0:8080")
-  -c sting
+  -c string
         Scorebot Config File Path.
+  -cert string
+        Path to TLS Certificate File.
   -d    Print Default Config and Exit.
   -dir string
         Scoreboard HTML Directory Path.
+  -key string
+        Path to TLS Key File.
   -log string
         Scoreboard Log File Path.
   -log-level int
@@ -86,6 +92,7 @@ Default Config:
         "level": 2
     },
     "tick": 5,
+    "assets": "",
     "listen": "0.0.0.0:8080",
     "twitter": {
         "filter": {
@@ -110,7 +117,9 @@ Default Config:
         }
     },
     "timeout": 10,
+    "key": "",
     "scorebot": "http://scorebot",
+    "cert": "",
     "dir": "html"
 }
 ```

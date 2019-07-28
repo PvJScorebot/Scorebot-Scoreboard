@@ -40,7 +40,7 @@ func (a *API) Get(urlpath string) ([]byte, error) {
 	u.Path = fmt.Sprintf("%s/", path.Join(a.Base.Path, urlpath))
 	r, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
-		return nil, xerrors.Errorf("could not retrive URL \"%s\": %w", u.String(), err)
+		return nil, err
 	}
 	if a.timeout > 0 {
 		x, c := context.WithTimeout(context.Background(), a.timeout)
@@ -54,7 +54,7 @@ func (a *API) Get(urlpath string) ([]byte, error) {
 	}
 	o, err := a.client.Do(r)
 	if err != nil {
-		return nil, xerrors.Errorf("could not retrive URL \"%s\": %w", u.String(), err)
+		return nil, err
 	}
 	defer o.Body.Close()
 	if o.StatusCode >= 400 {
@@ -91,7 +91,7 @@ func (a *API) Post(urlpath string, data io.Reader) ([]byte, error) {
 	u.Path = fmt.Sprintf("%s/", path.Join(a.Base.Path, urlpath))
 	r, err := http.NewRequest(http.MethodPost, u.String(), data)
 	if err != nil {
-		return nil, xerrors.Errorf("could not retrive URL \"%s\": %w", u.String(), err)
+		return nil, err
 	}
 	if a.timeout > 0 {
 		x, c := context.WithTimeout(context.Background(), a.timeout)
@@ -105,7 +105,7 @@ func (a *API) Post(urlpath string, data io.Reader) ([]byte, error) {
 	}
 	o, err := a.client.Do(r)
 	if err != nil {
-		return nil, xerrors.Errorf("could not retrive URL \"%s\": %w", u.String(), err)
+		return nil, err
 	}
 	defer o.Body.Close()
 	if o.StatusCode >= 400 {

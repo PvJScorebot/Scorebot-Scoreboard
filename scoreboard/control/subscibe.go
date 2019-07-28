@@ -2,18 +2,25 @@ package control
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/iDigitalFlame/scorebot-scoreboard/scoreboard/control/game"
 	"github.com/iDigitalFlame/scorebot-scoreboard/scoreboard/web"
+	"golang.org/x/xerrors"
+)
+
+const (
+	// TweetBufferSize is the size of the incomming tweets chan buffer
+	TweetBufferSize = 2048
+	// ClientBufferSize is the size of the incomming clients chan buffer.
+	ClientBufferSize = 2048
 )
 
 var (
 	// ErrMissingGame is returned when attempting to Unmarshal a Hello struct that does not
 	// contain a Game ID mapping.
-	ErrMissingGame = errors.New("game ID is missing from JSON data")
+	ErrMissingGame = xerrors.New("game ID is missing from JSON data")
 )
 
 type hello int64
@@ -22,8 +29,10 @@ type logger interface {
 	Debug(string, ...interface{})
 	Error(string, ...interface{})
 }
-type mapper struct {
-	add, current []*web.Tweet
+type tweetbuf struct {
+	new     chan *web.Tweet
+	list    []*web.Tweet
+	timeout time.Duration
 }
 
 // Subscription is a collection of Clients that have subscripted to a specific
@@ -32,6 +41,7 @@ type Subscription struct {
 	Game int64
 
 	tag     bool
+	new     chan *web.Stream
 	last    *game.Game
 	cache   []*game.Update
 	clients []*web.Stream
@@ -44,8 +54,7 @@ type Collection struct {
 	log     logger
 	api     *web.API
 	gcb     func(*game.Game)
-	tweets  *mapper
-	timeout time.Duration
+	twitter *tweetbuf
 }
 
 // Sync informs the collection to download any updates and preform any maintainance
@@ -63,12 +72,34 @@ func (c *Collection) Sync() {
 		v.update(c)
 	}
 	if len(r) > 0 {
-		for _, x := range r {
-			delete(c.Subscribers, x)
+		for i := range r {
+			c.log.Debug("Removing unused subscription for Game \"%d\"..", r[i])
+			close(c.Subscribers[r[i]].new)
+			delete(c.Subscribers, r[i])
 		}
 	}
-	if c.tweets != nil {
-		c.expireTweets()
+	if c.twitter != nil {
+		c.twitter.update(c)
+	}
+}
+func (t *tweetbuf) addNew() {
+	for {
+		select {
+		case n := <-t.new:
+			t.list = append(t.list, n)
+		default:
+			return
+		}
+	}
+}
+func (s *Subscription) addNew() {
+	for {
+		select {
+		case n := <-s.new:
+			s.clients = append(s.clients, n)
+		default:
+			return
+		}
 	}
 }
 
@@ -78,34 +109,36 @@ func (c *Collection) Stop() error {
 	for _, v := range c.Subscribers {
 		for i := range v.clients {
 			err = v.clients[i].Close()
+			v.clients[i] = nil
 		}
+	}
+	if c.twitter != nil {
+		close(c.twitter.new)
 	}
 	return err
 }
-func (c *Collection) expireTweets() {
-	if len(c.tweets.current) == 0 && len(c.tweets.add) == 0 {
+func (t *tweetbuf) update(c *Collection) {
+	t.addNew()
+	if len(t.list) == 0 {
 		return
 	}
 	n := time.Now().Unix()
-	nl := make([]*web.Tweet, 0, len(c.tweets.current)+len(c.tweets.add))
-	for i := range c.tweets.current {
-		if c.tweets.current[i].Time > n {
-			nl = append(nl, c.tweets.current[i])
+	x := make([]*web.Tweet, 0, len(t.list))
+	for i := range t.list {
+		if t.list[i].Time > n {
+			x = append(x, t.list[i])
 		} else {
-			c.log.Debug("Removed Tweet ID \"%d\" due to timeout!", c.tweets.current[i].ID)
+			c.log.Debug("Removed Tweet ID \"%d\" due to timeout!", t.list[i].ID)
 		}
 	}
-	if len(c.tweets.add) > 0 {
-		nl = append(nl, c.tweets.add...)
-		c.tweets.add = c.tweets.add[0:0]
-	}
-	c.tweets.current = nl
+	t.list = x
 }
-func (c *Collection) receive(t *web.Tweet) {
-	t.Time = time.Now().Add(c.timeout).Unix()
-	c.tweets.add = append(c.tweets.add, t)
+func (t *tweetbuf) receive(x *web.Tweet) {
+	x.Time = time.Now().Add(t.timeout).Unix()
+	t.new <- x
 }
 func (s *Subscription) update(c *Collection) {
+	s.addNew()
 	c.log.Debug("Checking for update for subscribed Game \"%d\"..", s.Game)
 	var g *game.Game
 	if err := c.api.GetJSON(fmt.Sprintf("api/scoreboard/%d/", s.Game), &g); err != nil {
@@ -116,8 +149,8 @@ func (s *Subscription) update(c *Collection) {
 	if c.gcb != nil {
 		c.gcb(g)
 	}
-	if c.tweets != nil {
-		g.Tweets.Tweets = c.tweets.current
+	if c.twitter != nil {
+		g.Tweets.Tweets = c.twitter.list
 	}
 	g.GenerateHash()
 	c.log.Debug("Running game comparison on Game \"%d\"..", s.Game)
@@ -126,7 +159,7 @@ func (s *Subscription) update(c *Collection) {
 	s.cache = n
 	if len(u) > 0 {
 		c.log.Debug("%d Updates detected in Game \"%d\", updating clients..", len(u), s.Game)
-		x := s.clients[:0]
+		x := make([]*web.Stream, 0, len(s.clients))
 		for i := range s.clients {
 			if err := s.clients[i].WriteJSON(u); err != nil {
 				c.log.Error("Received error by client \"%s\", removing: %s", s.clients[i].IP(), err.Error())
@@ -154,7 +187,7 @@ func (h *hello) UnmarshalJSON(b []byte) error {
 func (c *Collection) NewClient(n *web.Stream) {
 	defer func(l logger) {
 		if err := recover(); err != nil {
-			l.Error("Recovered from a panic: %s", err)
+			l.Error("http gofunc: ecovered from a panic: %s", err)
 		}
 	}(c.log)
 	c.log.Debug("Received a connection from \"%s\", listening for Hello..", n.IP())
@@ -180,12 +213,17 @@ func (c *Collection) NewClient(n *web.Stream) {
 			return
 		}
 		r.Meta.ID = int64(h)
-		g = &Subscription{Game: int64(h), last: r, clients: make([]*web.Stream, 0)}
+		g = &Subscription{
+			new:     make(chan *web.Stream, ClientBufferSize),
+			last:    r,
+			Game:    int64(h),
+			clients: make([]*web.Stream, 0, 1),
+		}
 		if c.gcb != nil {
 			c.gcb(g.last)
 		}
-		if c.tweets != nil {
-			g.last.Tweets.Tweets = c.tweets.current
+		if c.twitter != nil {
+			g.last.Tweets.Tweets = c.twitter.list
 		}
 		g.last.GenerateHash()
 		g.cache, _ = g.last.Difference(nil)
@@ -197,13 +235,17 @@ func (c *Collection) NewClient(n *web.Stream) {
 // NewClient adds the client 'n' to this subscription.
 func (s *Subscription) NewClient(n *web.Stream) {
 	s.tag = false
-	s.clients = append(s.clients, n)
 	n.WriteJSON(s.cache)
+	s.new <- n
 }
 
 // NewCollection creates a collection instance from the provded logger and API.
 func NewCollection(a *web.API, l logger) *Collection {
-	return &Collection{Subscribers: make(map[int64]*Subscription), api: a, log: l}
+	return &Collection{
+		api:         a,
+		log:         l,
+		Subscribers: make(map[int64]*Subscription),
+	}
 }
 
 // GameCallback sets the callback function triggered on a received game.
@@ -213,7 +255,10 @@ func (c *Collection) GameCallback(f func(*game.Game)) {
 
 // SetupTwitter creates and starts the functions to monitor Tweets.
 func (c *Collection) SetupTwitter(t time.Duration) func(*web.Tweet) {
-	c.tweets = &mapper{add: make([]*web.Tweet, 0), current: make([]*web.Tweet, 0)}
-	c.timeout = t
-	return c.receive
+	c.twitter = &tweetbuf{
+		new:     make(chan *web.Tweet, TweetBufferSize),
+		list:    make([]*web.Tweet, 0),
+		timeout: t,
+	}
+	return c.twitter.receive
 }

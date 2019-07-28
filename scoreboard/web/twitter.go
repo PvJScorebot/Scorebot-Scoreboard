@@ -142,6 +142,9 @@ func (t *Twitter) receive(x *twitter.Tweet) {
 			r.Text = fmt.Sprintf("RT @%s: %s", x.RetweetedStatus.User.ScreenName, x.RetweetedStatus.Text)
 		}
 	}
+	if c, err := x.CreatedAtTime(); err == nil {
+		r.Time = c.Unix()
+	}
 	if len(x.Entities.Media) > 0 {
 		r.Images = make([]string, 0, len(x.Entities.Media))
 		for i := range x.Entities.Media {

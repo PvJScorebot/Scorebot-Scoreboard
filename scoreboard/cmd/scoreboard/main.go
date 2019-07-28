@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	version = "v1.3"
+	version = "v1.4"
 )
 
 func main() {
@@ -24,10 +24,14 @@ func main() {
 
 	Listen := flag.String("bind", scoreboard.DefaultListen, "Address and Port to Listen on.")
 
+	Key := flag.String("key", "", "Path to TLS Key File.")
+	Cert := flag.String("cert", "", "Path to TLS Certificate File.")
+
 	Timeout := flag.Int("timeout", int(scoreboard.DefaultTimeout), "Scoreboard Request Timeout. (in seconds)")
 
 	Scorebot := flag.String("sbe", "", "Scorebot Core Address or URL.")
 
+	Assets := flag.String("assets", "", "Secondary Assets Override URL.")
 	Directory := flag.String("dir", "", "Scoreboard HTML Directory Path.")
 
 	TwitterCosumerKey := flag.String("tw-ck", "", "Twitter Consumer API Key.")
@@ -77,6 +81,7 @@ func main() {
 			},
 			Tick:   uint16(*Tick),
 			Listen: *Listen,
+			Assets: *Assets,
 			Twitter: &scoreboard.Twitter{
 				Filter: &web.Filter{
 					Language:     scoreboard.SplitParm(*TwitterLanguage, scoreboard.ConfigSeperator),
@@ -95,7 +100,9 @@ func main() {
 				},
 			},
 			Timeout:   uint16(*Timeout),
+			KeyFile:   *Key,
 			Scorebot:  *Scorebot,
+			CertFile:  *Cert,
 			Directory: *Directory,
 		}
 	}

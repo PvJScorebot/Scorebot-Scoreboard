@@ -56,7 +56,7 @@ func (s *Score) getDifference(p *planner, old *Score) {
 		p.setValue("score-health", s.Health, "score-health score")
 	} else {
 		p.setDeltaValue("name-total", s.Total, "score-total score")
-		p.setDeltaValue("score-health", s.Health, "score-htalth score")
+		p.setDeltaValue("score-health", s.Health, "score-health score")
 	}
 }
 func (s *ScoreFlag) getDifference(p *planner, old *ScoreFlag) {

@@ -64,10 +64,13 @@ type Log struct {
 type Config struct {
 	Log       *Log     `json:"log,omitempty"`
 	Tick      uint16   `json:"tick"`
+	Assets    string   `json:"assets"`
 	Listen    string   `json:"listen"`
 	Twitter   *Twitter `json:"twitter,omitempty"`
 	Timeout   uint16   `json:"timeout"`
+	KeyFile   string   `json:"key"`
 	Scorebot  string   `json:"scorebot"`
+	CertFile  string   `json:"cert"`
 	Directory string   `json:"dir"`
 }
 type display struct {
@@ -95,6 +98,7 @@ type Scoreboard struct {
 	games      []*game.Meta
 	names      map[string]int64
 	timer      *time.Timer
+	assets string
 	server     *web.Server
 	twitter    *web.Twitter
 	timeout    time.Duration
@@ -114,6 +118,7 @@ func Defaults() string {
 			Level: DefaultLogLevel,
 		},
 		Tick:   DefaultTick,
+		Assets: "",
 		Listen: DefaultListen,
 		Twitter: &Twitter{
 			Filter: &web.Filter{
@@ -136,7 +141,9 @@ func Defaults() string {
 			},
 		},
 		Timeout:   DefaultTimeout,
+		KeyFile:   "",
 		Scorebot:  "http://scorebot",
+		CertFile:  "",
 		Directory: "html",
 	}
 	b, _ := json.MarshalIndent(c, "", "    ")
@@ -205,7 +212,7 @@ func (s *Scoreboard) Start() error {
 func (s *Scoreboard) update() error {
 	defer func(l logging.Log) {
 		if err := recover(); err != nil {
-			l.Error("Recovered from a panic: %s", err)
+			l.Error("update gofunc: recovered from a panic: %s", err)
 		}
 	}(s.log)
 	s.log.Debug("Starting update..")
@@ -261,7 +268,11 @@ func SplitParm(s, d string) []string {
 	return f
 }
 func (s *Scoreboard) updateMeta(g *game.Game) {
-	g.Scorebot = s.api.Base.String()
+	if len(s.assets) > 0 {
+		g.Scorebot = s.assets
+	} else {
+		g.Scorebot = s.api.Base.String()
+	}
 	for i := range s.games {
 		if s.games[i].ID == g.Meta.ID {
 			g.Meta.End = s.games[i].End
@@ -304,7 +315,7 @@ func NewScoreboard(c *Config) (*Scoreboard, error) {
 		getTemplate(z, "home.html", "", "home.html")
 		getTemplate(z, "scoreboard.html", "", "scoreboard.html")
 	}
-	w, err := web.NewServer(c.Listen, p, resources)
+	w, err := web.NewServer(c.Listen, p, c.CertFile, c.KeyFile, resources)
 	if err != nil {
 		return nil, xerrors.Errorf("unable to setup web server: %w", err)
 	}
@@ -313,6 +324,7 @@ func NewScoreboard(c *Config) (*Scoreboard, error) {
 		tick:    time.Duration(time.Second * time.Duration(c.Tick)),
 		html:    z,
 		names:   make(map[string]int64),
+		assets:  c.Assets,
 		server:  w,
 		timeout: x,
 	}
