@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/iDigitalFlame/scoreboard/control/game"
-	"github.com/iDigitalFlame/scoreboard/web"
+	"github.com/iDigitalFlame/scorebot-scoreboard/scoreboard/control/game"
+	"github.com/iDigitalFlame/scorebot-scoreboard/scoreboard/web"
 )
 
 var (

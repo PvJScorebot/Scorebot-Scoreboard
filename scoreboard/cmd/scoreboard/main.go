@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/iDigitalFlame/scoreboard"
-	"github.com/iDigitalFlame/scoreboard/web"
+	"github.com/iDigitalFlame/scorebot-scoreboard/scoreboard"
+	"github.com/iDigitalFlame/scorebot-scoreboard/scoreboard/web"
 )
 
 const (

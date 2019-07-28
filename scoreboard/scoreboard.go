@@ -14,10 +14,10 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/iDigitalFlame/scoreboard/control"
-	"github.com/iDigitalFlame/scoreboard/control/game"
-	"github.com/iDigitalFlame/scoreboard/logging"
-	"github.com/iDigitalFlame/scoreboard/web"
+	"github.com/iDigitalFlame/scorebot-scoreboard/scoreboard/control"
+	"github.com/iDigitalFlame/scorebot-scoreboard/scoreboard/control/game"
+	"github.com/iDigitalFlame/scorebot-scoreboard/scoreboard/logging"
+	"github.com/iDigitalFlame/scorebot-scoreboard/scoreboard/web"
 
 	"github.com/gobuffalo/packr/v2"
 	"github.com/stvp/slug"
@@ -49,7 +49,7 @@ var (
 	// ErrInvalidLevel is returned if the specified log level value is not in the bounds of [0 - 5].
 	ErrInvalidLevel = xerrors.New("level must be between 0 and 5 inclusive")
 
-	resources = packr.New("html", "./html")
+	resources = packr.New("html", "../html")
 )
 
 // Log is a struct that stores and repersents the Scoreboard Logging config

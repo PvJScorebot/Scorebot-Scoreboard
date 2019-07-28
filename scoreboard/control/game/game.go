@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/iDigitalFlame/scoreboard/web"
+	"github.com/iDigitalFlame/scorebot-scoreboard/scoreboard/web"
 )
 
 // Game mode constants.
