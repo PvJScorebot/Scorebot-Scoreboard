@@ -135,7 +135,7 @@ func (t *Team) getDifference(p *planner, old *Team) {
 				c[old.Hosts[i].ID] = &comparable{c1: old.Hosts[i]}
 			}
 			for i := range old.Beacons {
-				x[old.Beacons[i].Team] = &comparable{c1: old.Beacons[i]}
+				x[old.Beacons[i].ID] = &comparable{c1: old.Beacons[i]}
 			}
 		} else {
 			t.Score.getDifference(p, nil)
@@ -151,10 +151,10 @@ func (t *Team) getDifference(p *planner, old *Team) {
 			v.c2 = t.Hosts[i]
 		}
 		for i := range t.Beacons {
-			v, ok := x[t.Beacons[i].Team]
+			v, ok := x[t.Beacons[i].ID]
 			if !ok {
 				v = &comparable{}
-				x[t.Beacons[i].Team] = v
+				x[t.Beacons[i].ID] = v
 			}
 			v.c2 = t.Beacons[i]
 		}

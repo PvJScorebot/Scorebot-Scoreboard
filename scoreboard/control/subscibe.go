@@ -1,6 +1,7 @@
 package control
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -57,9 +58,17 @@ type Collection struct {
 	twitter *tweetbuf
 }
 
-// Sync informs the collection to download any updates and preform any maintainance
-// on the clients list, including pruning clients.
-func (c *Collection) Sync() {
+func (t *tweetbuf) addNew() {
+	for {
+		select {
+		case n := <-t.new:
+			t.list = append(t.list, n)
+		default:
+			return
+		}
+	}
+}
+func (c *Collection) tsync() {
 	r := []int64{}
 	for _, v := range c.Subscribers {
 		if len(v.clients) == 0 {
@@ -80,16 +89,6 @@ func (c *Collection) Sync() {
 	}
 	if c.twitter != nil {
 		c.twitter.update(c)
-	}
-}
-func (t *tweetbuf) addNew() {
-	for {
-		select {
-		case n := <-t.new:
-			t.list = append(t.list, n)
-		default:
-			return
-		}
 	}
 }
 func (s *Subscription) addNew() {
@@ -136,6 +135,20 @@ func (t *tweetbuf) update(c *Collection) {
 func (t *tweetbuf) receive(x *web.Tweet) {
 	x.Time = time.Now().Add(t.timeout).Unix()
 	t.new <- x
+}
+
+// Sync informs the collection to download any updates and preform any maintainance
+// on the clients list, including pruning clients.
+func (c *Collection) Sync(t time.Duration) {
+	x, f := context.WithTimeout(context.Background(), t)
+	defer f()
+	go func(o *Collection, i context.CancelFunc) {
+		o.tsync()
+	}(c, f)
+	<-x.Done()
+	if x.Err() == context.DeadlineExceeded {
+		c.log.Error("Collection Sync function ran over timeout of %s!", t.String())
+	}
 }
 func (s *Subscription) update(c *Collection) {
 	s.addNew()

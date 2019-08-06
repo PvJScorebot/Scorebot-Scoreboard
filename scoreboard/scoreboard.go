@@ -98,7 +98,7 @@ type Scoreboard struct {
 	games      []*game.Meta
 	names      map[string]int64
 	timer      *time.Timer
-	assets string
+	assets     string
 	server     *web.Server
 	twitter    *web.Twitter
 	timeout    time.Duration
@@ -231,7 +231,7 @@ func (s *Scoreboard) update() error {
 		}
 	}
 	s.log.Debug("Read %d games from scorebot, update finished.", len(s.games))
-	s.collection.Sync()
+	s.collection.Sync(s.timeout)
 	return nil
 }
 
