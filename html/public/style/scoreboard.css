@@ -152,7 +152,7 @@ body {
     display: block;
     padding: 10px 5px 0 5px;
 }
-#credits-title {
+.credits-title {
     font-size: 28px;
     font-weight: bold;
     padding: 10px 0 0 0;
@@ -186,6 +186,17 @@ body {
 #credits.selected {
     display: block;
 }
+#credits .credits-list a {
+    height: unset;
+}
+#credits .credits-header {
+    display: none;
+}
+#credits .credits-list img {
+    height: 30px;
+    max-width: 30px;
+    max-height: 30px;
+}
 .credits-corporate a {
     height: 175px;
     font-size: 20px;
@@ -200,6 +211,28 @@ body {
 .credits-list a:hover, a:visited {
     text-decoration: none;
     color: rgb(255, 255, 255);
+}
+#credits .credits-list a {
+    height: unset;
+}
+#credits .credits-header {
+    display: none;
+}
+#credits .credits-list img {
+    height: 30px;
+    max-width: 30px;
+    max-height: 30px;
+}
+#credits .credits-corporate a {
+    height: 175px;
+    font-size: 20px;
+    max-height: 175px;
+}
+#credits .credits-corporate img {
+    width: unset;
+    height: 150px;
+    max-width: 250px;
+    max-height: 150px;
 }
 
 #board {
@@ -595,6 +628,8 @@ body {
 .host {
     display: block;
     font-size: 15px;
+    overflow: hidden;
+    max-height: 20px;
     line-height: 20px;
     margin: 2px 2px 2px 2px;
 }
