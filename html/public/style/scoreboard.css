@@ -645,6 +645,7 @@ body {
     max-width: 100px;
     min-width: 100px;
     text-align: right;
+    padding-left: 20px;
     display: table-cell;
 }
 .host.offline::before {

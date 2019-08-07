@@ -147,14 +147,20 @@ func (c *Collection) tsync(z context.Context) {
 		}
 		v.update(z, c)
 	}
+	if z.Err() != nil {
+		return
+	}
 	if len(r) > 0 {
 		for i := range r {
+			if z.Err() != nil {
+				return
+			}
 			c.log.Debug("Removing unused subscription for Game \"%d\"..", r[i])
 			close(c.Subscribers[r[i]].new)
 			delete(c.Subscribers, r[i])
 		}
 	}
-	if c.twitter != nil {
+	if c.twitter != nil && z.Err() == nil {
 		c.twitter.update(c)
 	}
 }
