@@ -612,6 +612,12 @@ body {
     content: " Flags Captured";
 }
 
+.team.selected .host-name {
+    width: 150px;
+    max-width: 150px;
+    min-width: 150px;
+}
+
 .team.selected .team-beacon {
     display: table-footer-group;
 }
