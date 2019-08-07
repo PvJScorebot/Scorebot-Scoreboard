@@ -35,6 +35,10 @@ type tweetbuf struct {
 	list    []*web.Tweet
 	timeout time.Duration
 }
+type stream struct {
+	ok     bool
+	client *web.Stream
+}
 
 // Subscription is a collection of Clients that have subscripted to a specific
 // Game ID.
@@ -45,7 +49,7 @@ type Subscription struct {
 	new     chan *web.Stream
 	last    *game.Game
 	cache   []*game.Update
-	clients []*web.Stream
+	clients []*stream
 }
 
 // Collection is a struct that contains for a map of subscrbers.
@@ -68,34 +72,11 @@ func (t *tweetbuf) addNew() {
 		}
 	}
 }
-func (c *Collection) tsync() {
-	r := []int64{}
-	for _, v := range c.Subscribers {
-		if len(v.clients) == 0 {
-			if v.tag {
-				r = append(r, v.Game)
-			} else {
-				v.tag = true
-			}
-		}
-		v.update(c)
-	}
-	if len(r) > 0 {
-		for i := range r {
-			c.log.Debug("Removing unused subscription for Game \"%d\"..", r[i])
-			close(c.Subscribers[r[i]].new)
-			delete(c.Subscribers, r[i])
-		}
-	}
-	if c.twitter != nil {
-		c.twitter.update(c)
-	}
-}
 func (s *Subscription) addNew() {
 	for {
 		select {
 		case n := <-s.new:
-			s.clients = append(s.clients, n)
+			s.clients = append(s.clients, &stream{ok: true, client: n})
 		default:
 			return
 		}
@@ -107,7 +88,7 @@ func (c *Collection) Stop() error {
 	var err error
 	for _, v := range c.Subscribers {
 		for i := range v.clients {
-			err = v.clients[i].Close()
+			err = v.clients[i].client.Close()
 			v.clients[i] = nil
 		}
 	}
@@ -142,16 +123,42 @@ func (t *tweetbuf) receive(x *web.Tweet) {
 func (c *Collection) Sync(t time.Duration) {
 	x, f := context.WithTimeout(context.Background(), t)
 	defer f()
-	go func(o *Collection, i context.CancelFunc) {
-		o.tsync()
+	go func(z context.Context, i context.CancelFunc, o *Collection) {
+		o.tsync(z)
 		i()
-	}(c, f)
+	}(x, f, c)
 	<-x.Done()
 	if x.Err() == context.DeadlineExceeded {
 		c.log.Error("Collection Sync function ran over timeout of %s!", t.String())
 	}
 }
-func (s *Subscription) update(c *Collection) {
+func (c *Collection) tsync(z context.Context) {
+	r := []int64{}
+	for _, v := range c.Subscribers {
+		if len(v.clients) == 0 {
+			if v.tag {
+				r = append(r, v.Game)
+			} else {
+				v.tag = true
+			}
+		}
+		if z.Err() != nil {
+			return
+		}
+		v.update(z, c)
+	}
+	if len(r) > 0 {
+		for i := range r {
+			c.log.Debug("Removing unused subscription for Game \"%d\"..", r[i])
+			close(c.Subscribers[r[i]].new)
+			delete(c.Subscribers, r[i])
+		}
+	}
+	if c.twitter != nil {
+		c.twitter.update(c)
+	}
+}
+func (s *Subscription) update(z context.Context, c *Collection) {
 	s.addNew()
 	c.log.Debug("Checking for update for subscribed Game \"%d\"..", s.Game)
 	var g *game.Game
@@ -168,17 +175,30 @@ func (s *Subscription) update(c *Collection) {
 	}
 	g.GenerateHash()
 	c.log.Debug("Running game comparison on Game \"%d\"..", s.Game)
+	if z.Err() != nil {
+		return
+	}
 	n, u := g.Difference(s.last)
 	s.last = g
 	s.cache = n
 	if len(u) > 0 {
 		c.log.Debug("%d Updates detected in Game \"%d\", updating clients..", len(u), s.Game)
-		x := make([]*web.Stream, 0, len(s.clients))
+		x := make([]*stream, 0, len(s.clients))
 		for i := range s.clients {
-			if err := s.clients[i].WriteJSON(u); err != nil {
-				c.log.Error("Received error by client \"%s\", removing: %s", s.clients[i].IP(), err.Error())
+			if z.Err() != nil {
+				return
+			}
+			if s.clients[i].ok {
+				s.clients[i].ok = false
+				if err := s.clients[i].client.WriteJSON(u); err != nil {
+					c.log.Error("Received error by client \"%s\", removing: %s", s.clients[i].client.IP(), err.Error())
+					s.clients[i].client.Close()
+				} else {
+					s.clients[i].ok = true
+					x = append(x, s.clients[i])
+				}
 			} else {
-				x = append(x, s.clients[i])
+				s.clients[i].client.Close()
 			}
 		}
 		s.clients = x
@@ -231,7 +251,7 @@ func (c *Collection) NewClient(n *web.Stream) {
 			new:     make(chan *web.Stream, ClientBufferSize),
 			last:    r,
 			Game:    int64(h),
-			clients: make([]*web.Stream, 0, 1),
+			clients: make([]*stream, 0, 1),
 		}
 		if c.gcb != nil {
 			c.gcb(g.last)
