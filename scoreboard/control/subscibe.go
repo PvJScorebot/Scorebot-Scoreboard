@@ -144,6 +144,7 @@ func (c *Collection) Sync(t time.Duration) {
 	defer f()
 	go func(o *Collection, i context.CancelFunc) {
 		o.tsync()
+		i()
 	}(c, f)
 	<-x.Done()
 	if x.Err() == context.DeadlineExceeded {
