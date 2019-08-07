@@ -160,7 +160,7 @@ func (t *Team) getDifference(p *planner, old *Team) {
 		}
 		for k, v := range c {
 			if v.c2 == nil {
-				p.setRemove(fmt.Sprintf("h%d", k))
+				p.setRemove(fmt.Sprintf("host-h%d", k))
 			} else if v.c1 == nil {
 				v.c2.(*Host).getDifference(p, nil)
 			} else {
