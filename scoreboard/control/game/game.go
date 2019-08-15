@@ -3,6 +3,7 @@ package game
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/iDigitalFlame/scorebot-scoreboard/scoreboard/web"
@@ -82,6 +83,11 @@ type tweets struct {
 	hash uint32
 }
 
+// Len helps implement the Sort function.
+func (g *Game) Len() int {
+	return len(g.Teams)
+}
+
 // Active is a bool that returns true if the Game is no longer marked as active.
 func (m *Meta) Active() bool {
 	return m.Status != Cancled && m.Status != Completed
@@ -107,6 +113,7 @@ func (m Mode) String() string {
 // GenerateHash returns the total game hash and generates the individal hash value for each
 // sub item.
 func (g *Game) GenerateHash() {
+	sort.Sort(g)
 	h := &Hasher{}
 	if g.hash == 0 {
 		h.Hash(g.Message)
@@ -126,6 +133,11 @@ func (g *Game) GenerateHash() {
 		h.Reset()
 		g.Tweets.getHash(h)
 	}
+}
+
+// Swap helps implement the Sort function.
+func (g *Game) Swap(i, j int) {
+	g.Teams[i], g.Teams[j] = g.Teams[j], g.Teams[i]
 }
 
 // String returns the HTML formatted date/time structs based on the
@@ -162,6 +174,11 @@ func (s Status) String() string {
 		return "Completed"
 	}
 	return "Unknown"
+}
+
+// Less helps implement the Sort function.
+func (g Game) Less(i, j int) bool {
+	return g.Teams[i].ID < g.Teams[j].ID
 }
 func (m *Meta) getHash(h *Hasher) uint32 {
 	if m.hash == 0 {
@@ -242,7 +259,7 @@ func (g *Game) UnmarshalJSON(b []byte) error {
 }
 func (g *Game) getDifference(p *planner, old *Game) {
 	p.setPrefix("game")
-	if old != nil && old.hash == g.hash {
+	if old != nil && old.hash == g.hash && len(old.Teams) == len(g.Teams) {
 		p.setValue("status", "", "status")
 		p.setValue("credit", g.Credit, "game-credit")
 		p.setValue("message", g.Message, "game-message")
@@ -352,7 +369,6 @@ func (e *Events) getDifference(p *planner, old *Events) {
 	}
 }
 func (t *tweets) getDifference(p *planner, old *tweets) {
-	//p.setPrefix(fmt.Sprintf("%s-tweet", p.prefix))
 	if old != nil && old.hash == t.hash {
 		for i := range t.Tweets {
 			getTweetDifference(p, t.Tweets[i], nil)
@@ -384,7 +400,6 @@ func (t *tweets) getDifference(p *planner, old *tweets) {
 			}
 		}
 	}
-	//p.rollbackPrefix()
 }
 func getTweetDifference(p *planner, new, old *web.Tweet) {
 	if old == nil {

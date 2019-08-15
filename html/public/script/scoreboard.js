@@ -5,6 +5,24 @@
 //  Javascript Main File
 //
 
+// Close messages
+var messages = [
+    "Whatda trying to pull here?",
+    "Delete system32 to speed up your computer!",
+    "Loading reverse shell...",
+    "HACK THE PLANET!",
+    "The cake is a lie!",
+    "This statement is false!",
+    "Hey buddy, hands off!",
+    "I'm sorry Dave, I cannot do that.",
+    "This is no escape, only Zuul.",
+    "No one expects the Spanish Inquisition!",
+    "WARNING: Not intended for indoor use.",
+    "E = mc^(OMG)/wtf",
+    "Dont make me hack you scrub!",
+    "I found you IP address '127.0.0.1'! prepare to get DDoSd noob!",
+];
+
 // Auto Interval Constants
 var interval_all = 15000;
 var interval_team = 7500;
@@ -27,8 +45,7 @@ function init() {
     document.sb_message = document.getElementById("console-msg");
     document.sb_event_data = document.getElementById("event-data");
     document.sb_event_title = document.getElementById("event-title");
-    setInterval(scroll_beacons, 200);
-    setInterval(scroll_team_names, 200);
+    setInterval(scroll_elements, 200);
     debug("Opening websocket..");
     var s = window.location.host + "/w";
     if (document.location.protocol.indexOf("https") >= 0) {
@@ -55,7 +72,7 @@ function startup() {
     document.sb_socket.send(JSON.stringify({"game": game}));
 }
 function exit_game() {
-    alert("The Cake is a Lie.");
+    alert(messages[Math.floor(Math.random() * messages.length)]);
     return false;
 }
 function hamburger() {
@@ -88,6 +105,12 @@ function auto_scroll() {
     for (var i = 0; i < tm.length; i++) {
         if (tm[i].id === "auto-tab") {
             continue;
+        }
+        if (tm[i].id === "game-tweet-tab") {
+            var tc = document.getElementById("game-tweet");
+            if (tc === null || tc.children.length === 0) {
+                continue;
+            }
         }
         if (nx) {
             auto_set(tm[i], tm);
@@ -131,12 +154,27 @@ function recv(message) {
     }
 }
 function update_tabs() {
+    var ty = document.getElementById("game-tab");
+    if (ty === null || ty.length <= 3) {
+        return;
+    }
+    for (var i = 0; i < ty.children.length; i++) {
+        if (ty.children[i].id.indexOf("-team-") > 0) {
+            var tnd = document.getElementById(ty.children[i].id.replace("-tab", ""));
+            if (tnd === null) {
+                ty.children[i].remove();
+            }
+        }
+    }
     var tm = document.getElementsByClassName("team");
     for (var i = 0; i < tm.length; i++) {
+        var ele = document.getElementById(tm[i].id + "-tab");
         if (tm[i].classList.contains("mini")) {
+            if (ele !== null) {
+                ele.remove();
+            }
             continue;
         }
-        var ele = document.getElementById(tm[i].id + "-tab");
         if (ele === null) {
             ele = document.createElement("a");
             ele.id = tm[i].id + "-tab";
@@ -226,12 +264,6 @@ function display_close() {
         em.style.display = "block";
     }
 }
-function scroll_beacons() {
-    var bt = document.getElementsByClassName("team-beacon");
-    for (var bi = 0; bi < bt.length; bi++) {
-        scroll_beacon(bt[bi]);
-    }
-}
 function update_beacons() {
     var bl = document.getElementsByClassName("beacon");
     for (var bi = 0; bi < bl.length; bi++) {
@@ -251,6 +283,22 @@ function display_invalid() {
         em.style.display = "block";
     }
 }
+function scroll_elements() {
+    var bt = document.getElementsByClassName("team-beacon");
+    for (var bi = 0; bi < bt.length; bi++) {
+        scroll_beacon(bt[bi]);
+    }
+    var tn = document.getElementsByClassName("team-name-div");
+    for (var ti = 0; ti < tn.length; ti++) {
+        scroll_element(tn[ti]);
+    }
+    /* Need to figure out why Host names do not scroll, even when set as 'block'.
+    var hn = document.getElementsByClassName("host-name");
+    for (var hi = 0; hi < hn.length; hi++) {
+        scroll_element(hn[hi]);
+    }
+    */
+}
 function update_board(data) {
     var up = JSON.parse(data);
     debug("Received " + up.length + " entries...");
@@ -262,6 +310,25 @@ function update_board(data) {
     var gm = document.getElementById("game-status-name");
     if (gm !== null) {
         document.title = gm.innerText;
+    }
+}
+function scroll_element(ele) {
+    if (ele.scrollWidth === 0) {
+        ele.classList.remove("reverse");
+        return;
+    }
+    var rev = ele.classList.contains("reverse");
+    if ((ele.scrollWidth - ele.offsetWidth) == ele.scrollLeft) {
+        ele.classList.add("reverse");
+        rev = true;
+    } else if (ele.scrollLeft == 0) {
+        ele.classList.remove("reverse");
+        rev = false;
+    }
+    if (rev) {
+        ele.scrollLeft -= 2;
+    } else {
+        ele.scrollLeft += 2;
     }
 }
 function auto_set(div, divs) {
@@ -290,12 +357,6 @@ function handle_event(event) {
     if (event.value === "2") {
         handle_event_effect(event)
         return;
-    }
-}
-function scroll_team_names() {
-    var tn = document.getElementsByClassName("team-name-div");
-    for (var ti = 0; ti < tn.length; ti++) {
-        scroll_team_name(tn[ti]);
     }
 }
 function handle_update(update) {
@@ -367,7 +428,7 @@ function handle_update(update) {
 }
 function scroll_beacon(beacon) {
     var bc = beacon.children[0];
-    if (bc === null) {
+    if (bc === null || bc.length === 0) {
         return;
     }
     if (bc.offsetHeight <= beacon.offsetHeight) {
@@ -479,25 +540,6 @@ function handle_event_effect(event) {
         for (var si = 0; si < sc.length; si++) {
             eval(sc[si].text);
         }
-    }
-}
-function scroll_team_name(team_name) {
-    if (team_name.scrollWidth === 0) {
-        team_name.classList.remove("reverse");
-        return;
-    }
-    var rev = team_name.classList.contains("reverse");
-    if ((team_name.scrollWidth - team_name.offsetWidth) == team_name.scrollLeft) {
-        team_name.classList.add("reverse");
-        rev = true;
-    } else if (team_name.scrollLeft == 0) {
-        team_name.classList.remove("reverse");
-        rev = false;
-    }
-    if (rev) {
-        team_name.scrollLeft -= 2;
-    } else {
-        team_name.scrollLeft += 2;
     }
 }
 function handle_event_message(event) {

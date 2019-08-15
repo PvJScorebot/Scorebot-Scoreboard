@@ -90,7 +90,7 @@ body {
     max-width: 65%;
     display: block;
     text-align: left;
-    max-height: 175px;
+    max-height: 225px;
     border-radius: 8px;
     color: rgb(0, 0, 0);
     margin: 5px auto 5px auto;
@@ -689,10 +689,10 @@ body {
 }
 .score-flag-lost {
     margin-right: 5px;
-    color: rgb(255, 0, 0);
+    color: rgb(255, 91, 91);
 }
 .score-ticket-open {
-    color: rgb(255, 0, 0);
+    color: rgb(255, 91, 91);
 }
 .score-health::before {
     content: "";
