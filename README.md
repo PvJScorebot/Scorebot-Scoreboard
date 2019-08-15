@@ -30,7 +30,7 @@ bash build.sh
 The Scorebord can be configured by command line options, though it's preferred to use a config file instead. (Below).
 
 ```text
-Scorebot Scoreboard v1.4
+Scorebot Scoreboard v1.5
 
 Usage:
   -assets string

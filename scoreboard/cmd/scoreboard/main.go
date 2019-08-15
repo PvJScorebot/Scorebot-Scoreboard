@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	version = "v1.4"
+	version = "v1.5"
 )
 
 func main() {
@@ -51,7 +51,10 @@ func main() {
 	TwitterOnlyUsers := flag.String("tw-only-users", "", "Twitter WHitelisted Usernames. (comma seperated)")
 
 	flag.Usage = func() {
-		fmt.Printf("Scorebot Scoreboard %s\n\nUsage:\n", version)
+		fmt.Printf(
+			"Scorebot Scoreboard %s\n2019 iDigitalFlame, The Scorebot Project, CTF Factory\n\nUsage:\n",
+			version,
+		)
 		flag.PrintDefaults()
 	}
 	flag.Parse()
