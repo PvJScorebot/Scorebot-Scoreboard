@@ -235,6 +235,45 @@ body {
     max-height: 150px;
 }
 
+#callout {
+    padding: 4px;
+    z-index: 100;
+    display: none;
+    font-size: 13px;
+    max-width: 400px;
+    text-align: left;
+    max-height: 300px;
+    position: absolute;
+    background: rgb(11, 24, 14);
+    border: 2px solid rgb(62, 146, 46);
+}
+#callout-service ul {
+    padding: 0;
+    list-style: none;
+    margin: 0 5px 0 0;
+    vertical-align: middle;
+}
+#callout-service span {
+    width: 20px;
+    height: 20px;
+    max-width: 20px;
+    font-size: 15px;
+    max-height: 20px;
+    overflow: hidden;
+    line-height: 20px;
+    display: inline-block;
+    font-family: FontAwesome;
+    border-left: rgb(0, 0, 0) solid 5px;
+}
+#callout-service .err::before {
+    content: "";
+    padding-left: 4px;
+}
+#callout-service .warn::before {
+    content: "";
+    padding-left: 4px;
+}
+
 #board {
     margin: 10px auto 0 auto;
 }
@@ -380,7 +419,6 @@ body {
     background-position-y: bottom;
     background-blend-mode: luminosity;
     border: 2px solid rgb(62, 146, 46);
-
 }
 #game-tab {
     display: block;
@@ -510,8 +548,9 @@ body {
     border-top-style: solid;
 }
 .team.selected .service {
-    width: 50px;
-    max-width: 50px;
+    width: 60px;
+    max-width: 60px;
+    text-align: center;
     color: rgb(255, 255, 255);
 }
 .team.selected .team-logo {
@@ -535,6 +574,16 @@ body {
 }
 .team.selected .team-beacon {
     border-left: none;
+}
+.team.selected .err::before {
+    content: "";
+    padding-right: 3px;
+    font-family: FontAwesome;
+}
+.team.selected .warn::before {
+    content: "";
+    padding-right: 3px;
+    font-family: FontAwesome;
 }
 .team.selected .team-name-div {
     font-size: 28px;
@@ -611,6 +660,9 @@ body {
     font-family: FontAwesome;
     content: " Flags Captured";
 }
+.team.selected .port, .team.selected .err, .team.selected .warn {
+    display: inline;
+}
 
 .team.selected .host-name {
     width: 150px;
@@ -627,7 +679,7 @@ body {
 .team.selected .team-beacon-container::before {
    display: block;
    margin: 10px 0 5px 0;
-   content: "Beacons by Other Teams";
+   content: "Flares by Other Teams";
    border-bottom: 1px solid rgb(62, 146, 46);
 }
 
@@ -665,10 +717,11 @@ body {
 .service {
     width: 20px;
     height: 20px;
-    max-height: 20px;
     max-width: 20px;
     font-size: 15px;
+    max-height: 20px;
     overflow: hidden;
+    text-align: left;
     line-height: 20px;
     display: table-cell;
     color: rgba(0, 0, 0, 0);

@@ -276,6 +276,52 @@
             </div>
         </div>
         <div id="effect"></div>
+        <div id="callout">
+            <div id="callout-health">
+                This score repersents the points gained from overall system uptime.
+            </div>
+            <div id="callout-flag-open">
+                This is the current number of sensitive data flags you own on your systems.
+                Keep them safe!
+            </div>
+            <div id="callout-flag-lost">
+                This is the current number of sensitive data flags captured by attacking teams.
+            </div>
+            <div id="callout-flag-captured">
+                This is the current number of sensitive data flags your team has captured.
+            </div>
+            <div id="callout-ticket-open">
+                This is the number of Tickets that your team has opened.
+            </div>
+            <div id="callout-ticket-closed">
+                This is the number of Tickets that your team has closed.
+            </div>
+            <div id="callout-host">
+                This triangle indicator means that the current host is not reachable by ping or DNS.
+            </div>
+            <div id="callout-beacons">
+                These repersent the current number of hosts (on your network) other teams have access to and have flared from.
+                The flare color is repersentative of the team that flared from the host last.
+            </div>
+            <div id="callout-service">
+                This displays the service status. The color repersents the last known status of the service.
+                The colors repersent:
+                <ul>
+                    <li>
+                        <span class="err" style="background-color: rgb(255, 0, 0);"></span>
+                        Red: the service is down or is not responding.
+                    </li>
+                    <li>
+                        <span class="warn "style="background-color: rgb(173, 164, 21);"></span>
+                        Yellow: the service is returning content that is not correct.
+                    </li>
+                    <li>
+                        <span style="background-color: rgb(40, 111, 36);"></span>
+                        Green: the service is up and responding normally.
+                    </li>
+                </ul>
+            </div>
+        </div>
     </body>
     <!--
         Why are you looking at this?

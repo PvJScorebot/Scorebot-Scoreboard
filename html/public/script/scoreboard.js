@@ -31,6 +31,7 @@ var interval_credit = 5000;
 function init() {
     document.sb_auto = false;
     document.sb_loaded = false;
+    document.sb_callout = false;
     document.sb_tab_offset = null;
     document.sb_debug = document.location.toString().indexOf("?debug") > 0;
     debug("Starting init.. Selected Game id: " + game);
@@ -226,6 +227,10 @@ function check_mobile() {
     dt.classList.add("mobile");
     mb.classList.add("mobile");
 }
+function callout_done() {
+    document.sb_callout = false
+    setTimeout(callout_hide, 1250);
+}
 function debug(message) {
     if (document.sb_debug) {
         console.log("DEBUG: " + message);
@@ -311,6 +316,15 @@ function update_board(data) {
     if (gm !== null) {
         document.title = gm.innerText;
     }
+    callout_add("host", "callout-host");
+    callout_add("service", "callout-service");
+    callout_add("score-health", "callout-health");
+    callout_add("score-flag-open", "callout-flag-open");
+    callout_add("score-flag-lost", "callout-flag-lost");
+    callout_add("score-ticket-open", "callout-ticket-open");
+    callout_add("team-beacon-container", "callout-beacons");
+    callout_add("score-ticket-closed", "callout-ticket-closed");
+    callout_add("score-flag-captured", "callout-flag-captured");
 }
 function scroll_element(ele) {
     if (ele.scrollWidth === 0) {
@@ -340,6 +354,7 @@ function auto_set(div, divs) {
     } else {
         setTimeout(auto_scroll, interval_team);
     }
+    callout_hide(true);
     select_div(div.id.replace("-tab", ""), divs, false);
 }
 function handle_event(event) {
@@ -358,6 +373,29 @@ function handle_event(event) {
         handle_event_effect(event)
         return;
     }
+}
+function callout(event, type) {
+    if (is_mobile()) {
+        return;
+    }
+    if (type === "callout-host" && !event.fromElement.classList.contains("offline")) {
+        return;
+    }
+    var e = document.getElementById("callout");
+    if (e === null) {
+        return;
+    }
+    e.style.display = "block";
+    e.style.top = (event.clientY + 10) + "px";
+    e.style.left = (event.clientX + 10) + "px";
+    for (var ci = 0; ci < e.children.length; ci++) {
+        if (e.children[ci].id === type) {
+            e.children[ci].style.display = "block";
+        } else {
+            e.children[ci].style.display = "none";
+        }
+    }
+    document.sb_callout = true;
 }
 function handle_update(update) {
     debug("Processing '" + JSON.stringify(update) + "'...")
@@ -447,6 +485,15 @@ function scroll_beacon(beacon) {
         beacon.scrollTop -= 5;
     } else {
         beacon.scrollTop += 5;
+    }
+}
+function callout_add(elec, type) {
+    var el = document.getElementsByClassName(elec);
+    for (var ei = 0; ei < el.length; ei++) {
+        if (!el[ei].onmouseover) {
+            el[ei].setAttribute("onmouseover", "callout(event, '" + type + "');");
+            el[ei].setAttribute("onmouseout", "callout_done();");
+        }
     }
 }
 function set_beacon_image(beacon) {
@@ -576,6 +623,15 @@ function is_mobile(css_only = false) {
     }
     var mb = document.getElementById("menu");
     return mb.classList.contains("mobile");
+}
+function callout_hide(ignore = false) {
+    if (!document.sb_callout || ignore) {
+        var c = document.getElementById("callout");
+        if (c === null) {
+            return;
+        }
+        c.style.display = "none";
+    }
 }
 function select_div(panel, divs, select) {
     for (var i = 0; i < divs.length; i++) {

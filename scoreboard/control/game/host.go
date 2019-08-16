@@ -75,6 +75,17 @@ func (p Protocol) String() string {
 	}
 	return "Unknown"
 }
+func (s State) stateClass() string {
+	switch s {
+	case Red:
+		return "err"
+	case Yellow:
+		return "warn"
+	case Green:
+		return "port"
+	}
+	return "port"
+}
 func (h *Host) getHash(i *Hasher) uint32 {
 	if h.hash == 0 {
 		i.Hash(h.ID)
@@ -199,7 +210,7 @@ func (s *Service) getDifference(p *planner, old *Service) {
 	}
 	p.setPrefix(fmt.Sprintf("%s-s%d", p.prefix, s.ID))
 	if old != nil && old.hash == s.hash {
-		p.setValue("port", s.Port, "service-port")
+		p.setValue("port", s.Port, s.State.stateClass())
 		p.setValue("protocol", s.Protocol.String(), "service-protocol")
 		if s.Bonus {
 			p.setProperty("", "+bonus", "class")
@@ -208,7 +219,7 @@ func (s *Service) getDifference(p *planner, old *Service) {
 		}
 		p.setProperty("", s.State.String(), "background-color")
 	} else {
-		p.setDeltaValue("port", s.Port, "service-port")
+		p.setDeltaValue("port", s.Port, s.State.stateClass())
 		p.setDeltaValue("protocol", s.Protocol.String(), "service-protocol")
 		if s.Bonus {
 			p.setDeltaProperty("", "+bonus", "class")
