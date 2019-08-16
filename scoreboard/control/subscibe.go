@@ -191,7 +191,7 @@ func (s *Subscription) update(z context.Context, c *Collection) {
 		c.log.Debug("%d Updates detected in Game \"%d\", updating clients..", len(u), s.Game)
 		x := make([]*stream, 0, len(s.clients))
 		for i := range s.clients {
-			if z.Err() != nil {
+			if z.Err() != nil || i > len(s.clients) {
 				return
 			}
 			if s.clients[i].ok {
