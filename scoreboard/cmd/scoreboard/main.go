@@ -82,6 +82,8 @@ func main() {
 				File:  *LogFile,
 				Level: uint8(*LogLevel),
 			},
+			Key:   *Key,
+			Cert:  *Cert,
 			Tick:   uint16(*Tick),
 			Listen: *Listen,
 			Assets: *Assets,
@@ -103,9 +105,7 @@ func main() {
 				},
 			},
 			Timeout:   uint16(*Timeout),
-			KeyFile:   *Key,
 			Scorebot:  *Scorebot,
-			CertFile:  *Cert,
 			Directory: *Directory,
 		}
 	}

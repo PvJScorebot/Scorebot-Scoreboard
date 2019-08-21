@@ -25,6 +25,7 @@ import (
 	"golang.org/x/xerrors"
 )
 
+
 const (
 	// ConfigSeperator is a comma constant, used to split keyword parameters.
 	ConfigSeperator = ","
@@ -63,14 +64,14 @@ type Log struct {
 // Able to be loaded from JSON.
 type Config struct {
 	Log       *Log     `json:"log,omitempty"`
+	Key       string   `json:"key"`
+	Cert      string   `json:"cert"`
 	Tick      uint16   `json:"tick"`
 	Assets    string   `json:"assets"`
 	Listen    string   `json:"listen"`
 	Twitter   *Twitter `json:"twitter,omitempty"`
 	Timeout   uint16   `json:"timeout"`
-	KeyFile   string   `json:"key"`
 	Scorebot  string   `json:"scorebot"`
-	CertFile  string   `json:"cert"`
 	Directory string   `json:"dir"`
 }
 type display struct {
@@ -117,6 +118,8 @@ func Defaults() string {
 			File:  "",
 			Level: DefaultLogLevel,
 		},
+		Key:   "",
+		Cert:  "",
 		Tick:   DefaultTick,
 		Assets: "",
 		Listen: DefaultListen,
@@ -141,9 +144,7 @@ func Defaults() string {
 			},
 		},
 		Timeout:   DefaultTimeout,
-		KeyFile:   "",
 		Scorebot:  "http://scorebot",
-		CertFile:  "",
 		Directory: "html",
 	}
 	b, _ := json.MarshalIndent(c, "", "    ")
@@ -202,6 +203,7 @@ func (s *Scoreboard) Start() error {
 		}
 	}(s, w)
 	<-w
+	close(w)
 	s.log.Info("Stopping and shutting down..")
 	s.timer.Stop()
 	if s.twitter != nil {
@@ -315,7 +317,7 @@ func NewScoreboard(c *Config) (*Scoreboard, error) {
 		getTemplate(z, "home.html", "", "home.html")
 		getTemplate(z, "scoreboard.html", "", "scoreboard.html")
 	}
-	w, err := web.NewServer(c.Listen, p, c.CertFile, c.KeyFile, resources)
+	w, err := web.NewServer(c.Listen, p, c.Cert, c.Key, resources)
 	if err != nil {
 		return nil, xerrors.Errorf("unable to setup web server: %w", err)
 	}

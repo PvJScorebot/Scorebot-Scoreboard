@@ -25,19 +25,19 @@ var (
 )
 
 type hello int64
-type logger interface {
-	Info(string, ...interface{})
-	Debug(string, ...interface{})
-	Error(string, ...interface{})
+type stream struct {
+	ok     bool
+	client *web.Stream
 }
 type tweetbuf struct {
 	new     chan *web.Tweet
 	list    []*web.Tweet
 	timeout time.Duration
 }
-type stream struct {
-	ok     bool
-	client *web.Stream
+type logger interface {
+	Info(string, ...interface{})
+	Debug(string, ...interface{})
+	Error(string, ...interface{})
 }
 
 // Subscription is a collection of Clients that have subscripted to a specific
@@ -91,6 +91,7 @@ func (c *Collection) Stop() error {
 			err = v.clients[i].client.Close()
 			v.clients[i] = nil
 		}
+		close(v.new)
 	}
 	if c.twitter != nil {
 		close(c.twitter.new)
@@ -124,90 +125,12 @@ func (c *Collection) Sync(t time.Duration) {
 	x, f := context.WithTimeout(context.Background(), t)
 	defer f()
 	go func(z context.Context, i context.CancelFunc, o *Collection) {
-		o.tsync(z)
+		o.doSync(z)
 		i()
 	}(x, f, c)
 	<-x.Done()
 	if x.Err() == context.DeadlineExceeded {
 		c.log.Error("Collection Sync function ran over timeout of %s!", t.String())
-	}
-}
-func (c *Collection) tsync(z context.Context) {
-	r := []int64{}
-	for _, v := range c.Subscribers {
-		if len(v.clients) == 0 {
-			if v.tag {
-				r = append(r, v.Game)
-			} else {
-				v.tag = true
-			}
-		}
-		if z.Err() != nil {
-			return
-		}
-		v.update(z, c)
-	}
-	if z.Err() != nil {
-		return
-	}
-	if len(r) > 0 {
-		for i := range r {
-			if z.Err() != nil {
-				return
-			}
-			c.log.Debug("Removing unused subscription for Game \"%d\"..", r[i])
-			close(c.Subscribers[r[i]].new)
-			delete(c.Subscribers, r[i])
-		}
-	}
-	if c.twitter != nil && z.Err() == nil {
-		c.twitter.update(c)
-	}
-}
-func (s *Subscription) update(z context.Context, c *Collection) {
-	s.addNew()
-	c.log.Debug("Checking for update for subscribed Game \"%d\"..", s.Game)
-	var g *game.Game
-	if err := c.api.GetJSON(fmt.Sprintf("api/scoreboard/%d/", s.Game), &g); err != nil {
-		c.log.Error("Error retriving data for Game ID \"%d\": %s", s.Game, err.Error())
-		return
-	}
-	g.Meta.ID = s.Game
-	if c.gcb != nil {
-		c.gcb(g)
-	}
-	if c.twitter != nil {
-		g.Tweets.Tweets = c.twitter.list
-	}
-	g.GenerateHash()
-	c.log.Debug("Running game comparison on Game \"%d\"..", s.Game)
-	if z.Err() != nil {
-		return
-	}
-	n, u := g.Difference(s.last)
-	s.last = g
-	s.cache = n
-	if len(u) > 0 {
-		c.log.Debug("%d Updates detected in Game \"%d\", updating clients..", len(u), s.Game)
-		x := make([]*stream, 0, len(s.clients))
-		for i := range s.clients {
-			if z.Err() != nil || i > len(s.clients) {
-				return
-			}
-			if s.clients[i].ok {
-				s.clients[i].ok = false
-				if err := s.clients[i].client.WriteJSON(u); err != nil {
-					c.log.Error("Received error by client \"%s\", removing: %s", s.clients[i].client.IP(), err.Error())
-					s.clients[i].client.Close()
-				} else {
-					s.clients[i].ok = true
-					x = append(x, s.clients[i])
-				}
-			} else {
-				s.clients[i].client.Close()
-			}
-		}
-		s.clients = x
 	}
 }
 func (h *hello) UnmarshalJSON(b []byte) error {
@@ -237,18 +160,18 @@ func (c *Collection) NewClient(n *web.Stream) {
 		n.Close()
 		return
 	}
-	c.log.Debug("Received Hello with requested Game ID \"%d\" from \"%s\".", h, n.IP())
+	c.log.Debug("Received Hello with requested Game ID %d from \"%s\".", h, n.IP())
 	g, ok := c.Subscribers[int64(h)]
 	if !ok || g == nil {
-		c.log.Debug("Checking Game ID \"%d\", requested by \"%s\"..", h, n.IP())
+		c.log.Debug("Checking Game ID %d, requested by \"%s\"..", h, n.IP())
 		var r *game.Game
 		if err := c.api.GetJSON(fmt.Sprintf("api/scoreboard/%d/", h), &r); err != nil {
-			c.log.Error("Error retriving data for Game ID \"%d\": %s", h, err.Error())
+			c.log.Error("Error retriving data for Game ID %d: %s", h, err.Error())
 			n.Close()
 			return
 		}
 		if len(r.Meta.Name) == 0 && len(r.Teams) == 0 {
-			c.log.Error("Game ID \"%d\" is empty, ignoring!", h)
+			c.log.Error("Game ID %d is empty, ignoring!", h)
 			n.Close()
 			return
 		}
@@ -271,6 +194,38 @@ func (c *Collection) NewClient(n *web.Stream) {
 	}
 	g.NewClient(n)
 }
+func (c *Collection) doSync(z context.Context) {
+	r := []int64{}
+	for _, v := range c.Subscribers {
+		if len(v.clients) == 0 {
+			if v.tag {
+				r = append(r, v.Game)
+			} else {
+				v.tag = true
+			}
+		}
+		if z.Err() != nil {
+			return
+		}
+		v.update(z, c)
+	}
+	if z.Err() != nil {
+		return
+	}
+	if len(r) > 0 {
+		for i := range r {
+			if z.Err() != nil {
+				return
+			}
+			c.log.Debug("Removing unused subscription for Game %d..", r[i])
+			close(c.Subscribers[r[i]].new)
+			delete(c.Subscribers, r[i])
+		}
+	}
+	if c.twitter != nil && z.Err() == nil {
+		c.twitter.update(c)
+	}
+}
 
 // NewClient adds the client 'n' to this subscription.
 func (s *Subscription) NewClient(n *web.Stream) {
@@ -291,6 +246,52 @@ func NewCollection(a *web.API, l logger) *Collection {
 // GameCallback sets the callback function triggered on a received game.
 func (c *Collection) GameCallback(f func(*game.Game)) {
 	c.gcb = f
+}
+func (s *Subscription) update(z context.Context, c *Collection) {
+	s.addNew()
+	c.log.Debug("Checking for update for subscribed Game %d..", s.Game)
+	var g *game.Game
+	if err := c.api.GetJSON(fmt.Sprintf("api/scoreboard/%d/", s.Game), &g); err != nil {
+		c.log.Error("Error retriving data for Game ID %d: %s", s.Game, err.Error())
+		return
+	}
+	g.Meta.ID = s.Game
+	if c.gcb != nil {
+		c.gcb(g)
+	}
+	if c.twitter != nil {
+		g.Tweets.Tweets = c.twitter.list
+	}
+	g.GenerateHash()
+	c.log.Debug("Running game comparison on Game %d..", s.Game)
+	if z.Err() != nil {
+		return
+	}
+	n, u := g.Difference(s.last)
+	s.last = g
+	s.cache = n
+	if len(u) > 0 {
+		c.log.Debug("%d Updates detected in Game %d, updating clients..", len(u), s.Game)
+		x := make([]*stream, 0, len(s.clients))
+		for i := range s.clients {
+			if z.Err() != nil || i > len(s.clients) {
+				return
+			}
+			if s.clients[i].ok {
+				s.clients[i].ok = false
+				if err := s.clients[i].client.WriteJSON(u); err != nil {
+					c.log.Error("Received error by client \"%s\", removing: %s", s.clients[i].client.IP(), err.Error())
+					s.clients[i].client.Close()
+				} else {
+					s.clients[i].ok = true
+					x = append(x, s.clients[i])
+				}
+			} else {
+				s.clients[i].client.Close()
+			}
+		}
+		s.clients = x
+	}
 }
 
 // SetupTwitter creates and starts the functions to monitor Tweets.

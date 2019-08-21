@@ -5,10 +5,19 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"net/http/pprof"
+
 
 	"github.com/gobuffalo/packr/v2"
 	"github.com/gorilla/websocket"
 	"golang.org/x/xerrors"
+)
+
+const (
+	// Debug is a boolean that enables the pprof debugging interface.
+	// If this is enabled, the memory and profiling pages are accessable.
+	// DO NOT ENABLE DURING PRODUCTION.
+	Debug = false
 )
 
 // Server is a struct that supports web file browsing as well as adding
@@ -117,5 +126,16 @@ func NewServer(listen, dir, cert, key string, box *packr.Box) (*Server, error) {
 		},
 	}
 	s.fs = http.FileServer(s)
+	if Debug {
+		fmt.Println("WARNING: Debug Server Extenstions are Enabled!")
+		s.server.Handler.(*http.ServeMux).HandleFunc("/debug/pprof/", pprof.Index)
+		s.server.Handler.(*http.ServeMux).HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+		s.server.Handler.(*http.ServeMux).HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+		s.server.Handler.(*http.ServeMux).HandleFunc("/debug/pprof/profile", pprof.Profile)
+		s.server.Handler.(*http.ServeMux).Handle("/debug/pprof/heap", pprof.Handler("heap"))
+		s.server.Handler.(*http.ServeMux).Handle("/debug/pprof/block", pprof.Handler("block"))
+		s.server.Handler.(*http.ServeMux).Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
+		s.server.Handler.(*http.ServeMux).Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
+	}
 	return s, nil
 }

@@ -156,7 +156,7 @@ func NewAPI(baseurl string, timeout time.Duration, headers map[string]string) (*
 		a.client = &http.Client{
 			Timeout: a.timeout,
 			Transport: &http.Transport{
-				Dial:                (&net.Dialer{Timeout: a.timeout}).Dial,
+				DialContext:         (&net.Dialer{Timeout: a.timeout}).DialContext,
 				TLSHandshakeTimeout: a.timeout,
 			},
 		}
