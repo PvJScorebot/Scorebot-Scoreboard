@@ -7,6 +7,7 @@ require (
 	github.com/dghubble/oauth1 v0.6.0
 	github.com/gobuffalo/packr/v2 v2.5.2
 	github.com/gorilla/websocket v1.4.0
+	github.com/iDigitalFlame/logx/logx v0.0.0-20190906173944-19f08e71816b
 	github.com/stvp/slug v0.0.0-20150928221549-5ab8191bb1fe
 	golang.org/x/text v0.3.2 // indirect
 	golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7

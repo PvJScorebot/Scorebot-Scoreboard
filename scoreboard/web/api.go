@@ -3,6 +3,7 @@ package web
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -17,10 +18,10 @@ import (
 
 var (
 	// ErrInvalidTimeout is returned by 'NewAPI' when the given timeout is less than zero.
-	ErrInvalidTimeout = xerrors.New("timeout must be greater than or equal to zero")
+	ErrInvalidTimeout = errors.New("timeout must be greater than or equal to zero")
 )
 
-// API is a struct that repersents an API caller.
+// API is a struct that represents an API caller.
 // This struct allows for polling and getting data from a API endpoint in the form of bytes.
 // Also supports JSON data calling.
 type API struct {
@@ -31,8 +32,8 @@ type API struct {
 	timeout time.Duration
 }
 
-// Get attempts a HTTP GET request at the provded URL + the base URL. This will return an error
-// on non 200 HTTP status codes or if a timeout occurs. If sucessful, the binary data in a byte array will
+// Get attempts a HTTP GET request at the provided URL + the base URL. This will return an error
+// on non 200 HTTP status codes or if a timeout occurs. If successful, the binary data in a byte array will
 // be returned.
 func (a *API) Get(urlpath string) ([]byte, error) {
 	x := *(a.Base)
@@ -69,7 +70,7 @@ func (a *API) Get(urlpath string) ([]byte, error) {
 
 // GetJSON is similar to the 'Get' function, but instead will attempt to unmarshal the provided
 // binary data into the supplied object 'obj'. The function will return an error if the JSON
-// is not formatted corectly or a HTTP or timeout error occurs.
+// is not formatted correctly or a HTTP or timeout error occurs.
 func (a *API) GetJSON(urlpath string, obj interface{}) error {
 	r, err := a.Get(urlpath)
 	if err != nil {
@@ -81,9 +82,9 @@ func (a *API) GetJSON(urlpath string, obj interface{}) error {
 	return nil
 }
 
-// Post attempts a HTTP POST request at the provded URL + the base URL. The data Posted to the
-// server will be contained in provded io.Reader. This will return an error
-// if a timeout occurs. If sucessful, the binary data in a byte array will
+// Post attempts a HTTP POST request at the provided URL + the base URL. The data Posted to the
+// server will be contained in provided io.Reader. This will return an error
+// if a timeout occurs. If successful, the binary data in a byte array will
 // be returned.
 func (a *API) Post(urlpath string, data io.Reader) ([]byte, error) {
 	x := *(a.Base)
@@ -120,7 +121,7 @@ func (a *API) Post(urlpath string, data io.Reader) ([]byte, error) {
 
 // PostJSON is similar to the 'Post' function, but instead will attempt to unmarshal the provided
 // binary data into the supplied object 'obj'. The function will return an error if the JSON
-// is not formatted corectly or a HTTP or timeout error occurs.
+// is not formatted correctly or a HTTP or timeout error occurs.
 func (a *API) PostJSON(urlpath string, data io.Reader, obj interface{}) error {
 	r, err := a.Post(urlpath, data)
 	if err != nil {

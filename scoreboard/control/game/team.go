@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-// Team is a struct that repersents a Team object on the
+// Team is a struct that represents a Team object on the
 // Scoreboard
 type Team struct {
 	ID      int64        `json:"id"`
@@ -23,7 +23,7 @@ type Team struct {
 	total uint32
 }
 
-// Beacon is a struct that repersents a compromise on a host.
+// Beacon is a struct that represents a compromise on a host.
 type Beacon struct {
 	ID    int64  `json:"id"`
 	Team  int64  `json:"team"`

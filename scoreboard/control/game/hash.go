@@ -13,7 +13,7 @@ import (
 
 var (
 	// ErrCannotSum is an error returned by the function 'Add'. This is returned when the passed
-	// interface is not a primitave type.
+	// interface is not a primitive type.
 	ErrCannotSum = xerrors.New("cannot hash sum requested type")
 
 	bufPool = &sync.Pool{
@@ -23,7 +23,7 @@ var (
 	}
 )
 
-// Hasher is a struct that repersents a segmented
+// Hasher is a struct that represents a segmented
 // hashing mechanism in a 32bit hash format.
 type Hasher struct {
 	h hash.Hash32
@@ -59,7 +59,7 @@ func (h *Hasher) Segment() uint32 {
 }
 
 // Hash attempts to identify and convert the interface to a hashable type before
-// adding using the 'Sum' function. IF the type is not a hashable type, the error 'ErroCannotSum'
+// adding using the 'Sum' function. IF the type is not a hashable type, the error 'ErrCannotSum'
 // will be returned.
 func (h *Hasher) Hash(v interface{}) error {
 	b := bufPool.Get().([]byte)

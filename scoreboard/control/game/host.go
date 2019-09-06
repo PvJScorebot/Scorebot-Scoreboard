@@ -20,13 +20,13 @@ const (
 	ICMP Protocol = 0x2
 )
 
-// State repersents the state of a service using an integer value
+// State represents the state of a service using an integer value
 type State uint8
 
-// Protocol is an integer value that repersents a Networking protocol
+// Protocol is an integer value that represents a Networking protocol
 type Protocol uint8
 
-// Host is a struct that repersents all the properties of a Host on the
+// Host is a struct that represents all the properties of a Host on the
 // Scoreboard.
 type Host struct {
 	ID       int64      `json:"id"`
@@ -38,7 +38,7 @@ type Host struct {
 	total uint32
 }
 
-// Service is a struct that repersents all the properties of a Service on the
+// Service is a struct that represents all the properties of a Service on the
 // Scoreboard.
 type Service struct {
 	ID       int64    `json:"id"`

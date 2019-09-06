@@ -27,13 +27,13 @@ const (
 	Completed Status = 0x4
 )
 
-// Mode is an integer repersentation of the Game mode type.
+// Mode is an integer representation of the Game mode type.
 type Mode uint8
 
-// Status is an integer repersentaton of the Game running status.
+// Status is an integer representation of the Game running status.
 type Status uint8
 
-// Meta is a struct that repersents Game details, such as Name, Start
+// Meta is a struct that represents Game details, such as Name, Start
 // and End dates.
 type Meta struct {
 	ID     int64     `json:"id"`
@@ -62,14 +62,14 @@ type Game struct {
 	event uint32
 }
 
-// Event is a struct that repersents a Game style event.
+// Event is a struct that represents a Game style event.
 type Event struct {
 	ID   int64             `json:"id"`
 	Type uint8             `json:"type"`
 	Data map[string]string `json:"data"`
 }
 
-// Events is a struct that helps establish the active events and limites the types of
+// Events is a struct that helps establish the active events and limits the types of
 // events that can be active
 type Events struct {
 	Window  *Event
@@ -110,7 +110,7 @@ func (m Mode) String() string {
 	return "Unknown"
 }
 
-// GenerateHash returns the total game hash and generates the individal hash value for each
+// GenerateHash returns the total game hash and generates the individual hash value for each
 // sub item.
 func (g *Game) GenerateHash() {
 	sort.Sort(g)

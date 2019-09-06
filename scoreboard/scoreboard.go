@@ -2,6 +2,7 @@ package scoreboard
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -14,9 +15,9 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/iDigitalFlame/logx/logx"
 	"github.com/iDigitalFlame/scorebot-scoreboard/scoreboard/control"
 	"github.com/iDigitalFlame/scorebot-scoreboard/scoreboard/control/game"
-	"github.com/iDigitalFlame/scorebot-scoreboard/scoreboard/logging"
 	"github.com/iDigitalFlame/scorebot-scoreboard/scoreboard/web"
 
 	"github.com/gobuffalo/packr/v2"
@@ -24,7 +25,6 @@ import (
 
 	"golang.org/x/xerrors"
 )
-
 
 const (
 	// ConfigSeperator is a comma constant, used to split keyword parameters.
@@ -44,23 +44,23 @@ const (
 
 var (
 	// ErrInvalidTick is returned if the specified tick value is less than or equal to zero.
-	ErrInvalidTick = xerrors.New("tick rate must be grater than zero")
+	ErrInvalidTick = errors.New("tick rate must be grater than zero")
 	// ErrInvalidConfig is returned if a passed Config struct is nil.
-	ErrInvalidConfig = xerrors.New("config struct cannot be nil")
+	ErrInvalidConfig = errors.New("config struct cannot be nil")
 	// ErrInvalidLevel is returned if the specified log level value is not in the bounds of [0 - 5].
-	ErrInvalidLevel = xerrors.New("level must be between 0 and 5 inclusive")
+	ErrInvalidLevel = errors.New("level must be between 0 and 5 inclusive")
 
 	resources = packr.New("html", "../html")
 )
 
-// Log is a struct that stores and repersents the Scoreboard Logging config
+// Log is a struct that stores and represents the Scoreboard Logging config
 // Able to be loaded from JSON
 type Log struct {
 	File  string `json:"file"`
 	Level uint8  `json:"level"`
 }
 
-// Config is a struct that stores and repersents the Scoreboard config
+// Config is a struct that stores and represents the Scoreboard config
 // Able to be loaded from JSON.
 type Config struct {
 	Log       *Log     `json:"log,omitempty"`
@@ -79,7 +79,7 @@ type display struct {
 	Twitter bool
 }
 
-// Twitter is a struct that stores and repersents the Scoreboard Twitter config
+// Twitter is a struct that stores and represents the Scoreboard Twitter config
 // Able to be loaded from JSON.
 type Twitter struct {
 	Filter      *web.Filter      `json:"filter"`
@@ -88,12 +88,12 @@ type Twitter struct {
 	Credentials *web.Credentials `json:"auth"`
 }
 
-// Scoreboard is a struct that repersents the Scoreboard multiplexer.
+// Scoreboard is a struct that represents the Scoreboard multiplexer.
 // This struct is used to gather and compare Game data to push to Scoreboard
 // clients.
 type Scoreboard struct {
 	api        *web.API
-	log        logging.Log
+	log        logx.Log
 	html       *template.Template
 	tick       time.Duration
 	games      []*game.Meta
@@ -110,7 +110,7 @@ func init() {
 	slug.Replacement = '-'
 }
 
-// Defaults returns a JSON string repersentation of the default config.
+// Defaults returns a JSON string representation of the default config.
 // Used for creating and understanding the config file structure.
 func Defaults() string {
 	c := &Config{
@@ -118,8 +118,8 @@ func Defaults() string {
 			File:  "",
 			Level: DefaultLogLevel,
 		},
-		Key:   "",
-		Cert:  "",
+		Key:    "",
+		Cert:   "",
 		Tick:   DefaultTick,
 		Assets: "",
 		Listen: DefaultListen,
@@ -191,9 +191,9 @@ func (c *Config) verify() error {
 }
 
 // Start begins the listening process for the Scoreboard.  This function
-// blocks untill interrupted.
+// blocks until interrupted.
 func (s *Scoreboard) Start() error {
-	s.log.Info("Starting scoreboard service..")
+	s.log.Info("Starting scoreboard service...")
 	w := make(chan os.Signal)
 	signal.Notify(w, syscall.SIGINT, syscall.SIGTERM)
 	go func(z *Scoreboard, q chan os.Signal) {
@@ -204,7 +204,7 @@ func (s *Scoreboard) Start() error {
 	}(s, w)
 	<-w
 	close(w)
-	s.log.Info("Stopping and shutting down..")
+	s.log.Info("Stopping and shutting down...")
 	s.timer.Stop()
 	if s.twitter != nil {
 		s.twitter.Stop()
@@ -212,21 +212,24 @@ func (s *Scoreboard) Start() error {
 	return s.collection.Stop()
 }
 func (s *Scoreboard) update() error {
-	defer func(l logging.Log) {
+	defer func(l logx.Log) {
 		if err := recover(); err != nil {
 			l.Error("update gofunc: recovered from a panic: %s", err)
 		}
 	}(s.log)
-	s.log.Debug("Starting update..")
+	s.log.Debug("Starting update...")
 	if err := s.api.GetJSON("api/games/", &(s.games)); err != nil {
-		s.log.Error("Error occured during tick: %s", err.Error())
+		s.log.Error("Error occurred during tick: %s", err.Error())
 		return err
 	}
 	for i := range s.games {
+		n := slug.Clean(s.games[i].Name)
 		if !s.games[i].Active() {
+			if _, ok := s.names[n]; ok {
+				delete(s.names, n)
+			}
 			continue
 		}
-		n := slug.Clean(s.games[i].Name)
 		if _, ok := s.names[n]; !ok {
 			s.names[n] = s.games[i].ID
 			s.log.Debug("Added game name mapping \"%s\" to ID %d.", n, s.games[i].ID)
@@ -303,7 +306,7 @@ func NewScoreboard(c *Config) (*Scoreboard, error) {
 	if err != nil {
 		return nil, xerrors.Errorf("unable to setup API: %w", err)
 	}
-	p := ""
+	var p string
 	z := template.New("base")
 	if len(c.Directory) > 0 {
 		p = filepath.Join(c.Directory, "public")
@@ -332,16 +335,16 @@ func NewScoreboard(c *Config) (*Scoreboard, error) {
 	}
 	if c.Log != nil {
 		if len(c.Log.File) > 0 {
-			f, err := logging.NewFile(logging.Level(c.Log.Level), c.Log.File)
+			f, err := logx.NewFile(logx.Level(c.Log.Level), c.Log.File)
 			if err != nil {
 				return nil, fmt.Errorf("unable to create log file \"%s\": %s", c.Log.File, err.Error())
 			}
-			s.log = logging.NewStack(f, logging.NewConsole(logging.Level(c.Log.Level)))
+			s.log = logx.NewStack(f, logx.NewConsole(logx.Level(c.Log.Level)))
 		} else {
-			s.log = logging.NewConsole(logging.Level(c.Log.Level))
+			s.log = logx.NewConsole(logx.Level(c.Log.Level))
 		}
 	} else {
-		s.log = logging.NewConsole(logging.Level(DefaultLogLevel))
+		s.log = logx.NewConsole(logx.Level(DefaultLogLevel))
 	}
 	s.collection = control.NewCollection(s.api, s.log)
 	s.collection.GameCallback(s.updateMeta)
@@ -375,8 +378,9 @@ func getTemplate(t *template.Template, n, d, f string) error {
 		s := filepath.Join(d, f)
 		i, err := os.Stat(s)
 		if err == nil && !i.IsDir() {
-			_, err := t.New(n).ParseFiles(s)
-			return xerrors.Errorf("unable to parse templates \"%s\": %w", f, err)
+			if _, err := t.New(n).ParseFiles(s); err != nil {
+				return xerrors.Errorf("unable to parse templates \"%s\": %w", f, err)
+			}
 		}
 	}
 	c, err := resources.FindString(fmt.Sprintf("template/%s", f))

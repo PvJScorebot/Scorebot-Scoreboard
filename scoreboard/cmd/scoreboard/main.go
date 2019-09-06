@@ -41,7 +41,7 @@ func main() {
 	TwitterAccessSecret := flag.String("tw-as", "", "Twitter Access API Secret.")
 
 	TwitterKeywords := flag.String("tw-keywords", "", "Twitter Search Keywords. (comma seperated)")
-	TwitterLanguage := flag.String("tw-lang", "", "Twitter Search Lanugage. (comma seperated)")
+	TwitterLanguage := flag.String("tw-lang", "", "Twitter Search Language. (comma seperated)")
 
 	TwitterExpire := flag.Int("tw-expire", int(scoreboard.DefaultExpire), "Tweet Display Time. (in seconds)")
 
@@ -82,8 +82,8 @@ func main() {
 				File:  *LogFile,
 				Level: uint8(*LogLevel),
 			},
-			Key:   *Key,
-			Cert:  *Cert,
+			Key:    *Key,
+			Cert:   *Cert,
 			Tick:   uint16(*Tick),
 			Listen: *Listen,
 			Assets: *Assets,

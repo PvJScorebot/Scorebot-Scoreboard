@@ -1,6 +1,7 @@
 package web
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -13,13 +14,13 @@ import (
 var (
 	// ErrNoAuth is an error returned by the 'NewTwitter' function when the supplied
 	// credentials are nil.
-	ErrNoAuth = xerrors.New("twitter credentials cannot be nil")
+	ErrNoAuth = errors.New("twitter credentials cannot be nil")
 	// ErrEmptyFilter is an error returned by the 'NewTwitter' function when the supplied
 	// keyword filter list is empty.
-	ErrEmptyFilter = xerrors.New("twitter stream filter cannot be empty or nil")
+	ErrEmptyFilter = errors.New("twitter stream filter cannot be empty or nil")
 	// ErrAlreadyStarted is an error returned by the 'Filter' function when the filter is currently
 	// running and an attempt to start it again was made.
-	ErrAlreadyStarted = xerrors.New("twitter stream already started")
+	ErrAlreadyStarted = errors.New("twitter stream already started")
 )
 
 // Tweet is a simple struct to abstract out non-important Tweet data.

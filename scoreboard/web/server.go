@@ -3,10 +3,9 @@ package web
 import (
 	"fmt"
 	"net/http"
+	"net/http/pprof"
 	"os"
 	"path"
-	"net/http/pprof"
-
 
 	"github.com/gobuffalo/packr/v2"
 	"github.com/gorilla/websocket"
@@ -31,7 +30,7 @@ type Server struct {
 	server *http.Server
 }
 
-// Stream repersents a WebSocket connection, returned by the WebSocket upgrader.
+// Stream represents a WebSocket connection, returned by the WebSocket upgrader.
 type Stream struct {
 	*websocket.Conn
 }
@@ -41,7 +40,7 @@ type websockServer struct {
 }
 type handleFunc func(http.ResponseWriter, *http.Request)
 
-// IP returns the IP of the client comnected to this Steam.
+// IP returns the IP of the client connected to this Steam.
 func (s *Stream) IP() string {
 	return s.RemoteAddr().String()
 }
@@ -55,7 +54,7 @@ func (s *Server) Start() error {
 	return s.server.ListenAndServe()
 }
 
-// Open satisifies the http.FileSystem interface.
+// Open satisfies the http.FileSystem interface.
 func (s *Server) Open(n string) (http.File, error) {
 	f, err := s.dir.Open(n)
 	if err != nil && s.box != nil {
@@ -66,17 +65,17 @@ func (s *Server) Open(n string) (http.File, error) {
 	return f, err
 }
 
-// AddHandlerFunc adds the following function to be triggered for the provded path.
+// AddHandlerFunc adds the following function to be triggered for the provided path.
 func (s *Server) AddHandlerFunc(path string, f handleFunc) {
 	s.server.Handler.(*http.ServeMux).HandleFunc(path, f)
 }
 
-// AddHandler adds the following handler to be triggered for the provded path.
+// AddHandler adds the following handler to be triggered for the provided path.
 func (s *Server) AddHandler(path string, handler http.Handler) {
 	s.server.Handler.(*http.ServeMux).Handle(path, handler)
 }
 
-// ServeHTTP satisifies the http.Handler requirement for the interface.
+// ServeHTTP satisfies the http.Handler requirement for the interface.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.fs.ServeHTTP(w, r)
 }
@@ -103,8 +102,8 @@ func (s *websockServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// NewServer creates a Server struct from the provded listen address and directory path.
-// This function will return an error if the provded directory path is not valid.
+// NewServer creates a Server struct from the provided listen address and directory path.
+// This function will return an error if the provided directory path is not valid.
 func NewServer(listen, dir, cert, key string, box *packr.Box) (*Server, error) {
 	if len(dir) > 0 {
 		z, err := os.Stat(dir)
@@ -127,7 +126,7 @@ func NewServer(listen, dir, cert, key string, box *packr.Box) (*Server, error) {
 	}
 	s.fs = http.FileServer(s)
 	if Debug {
-		fmt.Println("WARNING: Debug Server Extenstions are Enabled!")
+		fmt.Fprintf(os.Stderr, "WARNING: Debug Server Extensions are Enabled!\n")
 		s.server.Handler.(*http.ServeMux).HandleFunc("/debug/pprof/", pprof.Index)
 		s.server.Handler.(*http.ServeMux).HandleFunc("/debug/pprof/symbol", pprof.Symbol)
 		s.server.Handler.(*http.ServeMux).HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
