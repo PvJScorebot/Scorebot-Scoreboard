@@ -12,5 +12,5 @@ if [ $? -ne 0 ]; then
 fi
 
 printf "Building...\n"
-bash -c "cd scoreboard; packr2; go build -o \"$o\" cmd/scoreboard/main.go; packr2 clean"
+bash -c "cd scoreboard; packr2; go build -trimpath -o \"$o\" cmd/scoreboard/main.go; packr2 clean"
 printf "Done!\n"
