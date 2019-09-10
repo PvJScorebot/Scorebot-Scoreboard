@@ -12,8 +12,6 @@ import (
 	"net/url"
 	"path"
 	"time"
-
-	"golang.org/x/xerrors"
 )
 
 var (
@@ -59,11 +57,11 @@ func (a *API) Get(urlpath string) ([]byte, error) {
 	}
 	defer o.Body.Close()
 	if o.StatusCode >= 400 {
-		return nil, xerrors.Errorf("request for \"%s\" returned status code \"%d\"", u.String(), o.StatusCode)
+		return nil, fmt.Errorf("request \"%s\" returned status code \"%d\"", u.String(), o.StatusCode)
 	}
 	b, err := ioutil.ReadAll(o.Body)
 	if err != nil {
-		return nil, xerrors.Errorf("could not read data from URL \"%s\": %w", u.String(), err)
+		return nil, fmt.Errorf("error reading from URL \"%s\": %w", u.String(), err)
 	}
 	return b, nil
 }
@@ -77,7 +75,7 @@ func (a *API) GetJSON(urlpath string, obj interface{}) error {
 		return err
 	}
 	if err := json.Unmarshal(r, &obj); err != nil {
-		return xerrors.Errorf("unable to unmarshal JSON: %w", err)
+		return fmt.Errorf("unable to unmarshal JSON: %w", err)
 	}
 	return nil
 }
@@ -110,11 +108,11 @@ func (a *API) Post(urlpath string, data io.Reader) ([]byte, error) {
 	}
 	defer o.Body.Close()
 	if o.StatusCode >= 400 {
-		return nil, xerrors.Errorf("request for \"%s\" returned status code \"%d\"", u.String(), o.StatusCode)
+		return nil, fmt.Errorf("request \"%s\" returned status code \"%d\"", u.String(), o.StatusCode)
 	}
 	b, err := ioutil.ReadAll(o.Body)
 	if err != nil {
-		return nil, xerrors.Errorf("could not read data from URL \"%s\": %w", u.String(), err)
+		return nil, fmt.Errorf("error reading from URL \"%s\": %w", u.String(), err)
 	}
 	return b, nil
 }
@@ -128,7 +126,7 @@ func (a *API) PostJSON(urlpath string, data io.Reader, obj interface{}) error {
 		return err
 	}
 	if err := json.Unmarshal(r, &obj); err != nil {
-		return xerrors.Errorf("unable to unmarshal JSON: %w", err)
+		return fmt.Errorf("unable to unmarshal JSON: %w", err)
 	}
 	return nil
 }
@@ -143,7 +141,7 @@ func NewAPI(baseurl string, timeout time.Duration, headers map[string]string) (*
 	}
 	u, err := url.Parse(baseurl)
 	if err != nil {
-		return nil, xerrors.Errorf("could not unpack provided baseurl \"%s\": %w", baseurl, err)
+		return nil, fmt.Errorf("could not unpack provided URL \"%s\": %w", baseurl, err)
 	}
 	if !u.IsAbs() {
 		u.Scheme = "http"
@@ -157,12 +155,25 @@ func NewAPI(baseurl string, timeout time.Duration, headers map[string]string) (*
 		a.client = &http.Client{
 			Timeout: a.timeout,
 			Transport: &http.Transport{
-				DialContext:         (&net.Dialer{Timeout: a.timeout}).DialContext,
-				TLSHandshakeTimeout: a.timeout,
+				Proxy: http.ProxyFromEnvironment,
+				DialContext: (&net.Dialer{
+					Timeout:   a.timeout,
+					KeepAlive: a.timeout,
+					DualStack: true,
+				}).DialContext,
+				IdleConnTimeout:       a.timeout,
+				TLSHandshakeTimeout:   a.timeout,
+				ExpectContinueTimeout: a.timeout,
+				ResponseHeaderTimeout: a.timeout,
 			},
 		}
 	} else {
-		a.client = &http.Client{}
+		a.client = &http.Client{
+			Transport: &http.Transport{
+				Proxy:       http.ProxyFromEnvironment,
+				DialContext: (&net.Dialer{DualStack: true}).DialContext,
+			},
+		}
 	}
 	return a, nil
 }

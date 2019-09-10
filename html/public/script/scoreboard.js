@@ -1,5 +1,5 @@
 //
-//  Scoreboard v1.5
+//  Scoreboard v1.6
 //  2019 iDigitalFlame, The Scorebot Project, CTF Factory
 //
 //  Javascript Main File
@@ -19,8 +19,8 @@ var messages = [
     "No one expects the Spanish Inquisition!",
     "WARNING: Not intended for indoor use.",
     "E = mc^(OMG)/wtf",
-    "Dont make me hack you scrub!",
-    "I found you IP address '127.0.0.1'! prepare to get DDoSd noob!",
+    "Don't make me hack you scrub!",
+    "I found your IP address '127.0.0.1'! prepare to get DDoSd noob!",
 ];
 
 // Auto Interval Constants

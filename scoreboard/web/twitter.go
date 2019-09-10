@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -8,7 +9,6 @@ import (
 
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
-	"golang.org/x/xerrors"
 )
 
 var (
@@ -47,7 +47,9 @@ type Filter struct {
 // Twitter is a struct to hold and operate with the Twitter client, including
 // using timeouts.
 type Twitter struct {
-	cb     func(*Tweet)
+	Callback func(*Tweet)
+
+	ctx    context.Context
 	filter *Filter
 	stream *twitter.Stream
 	client *twitter.Client
@@ -65,6 +67,7 @@ type Credentials struct {
 func (t *Twitter) Stop() {
 	if t.stream != nil {
 		t.stream.Stop()
+		t.stream = nil
 	}
 }
 
@@ -80,16 +83,21 @@ func (t *Twitter) Start() error {
 		StallWarnings: twitter.Bool(true),
 	})
 	if err != nil {
-		return xerrors.Errorf("unable to start Twitter filter: %w", err)
+		return fmt.Errorf("unable to start Twitter filter: %w", err)
 	}
 	t.stream = s
 	d := twitter.NewSwitchDemux()
 	d.Tweet = t.receive
 	go func(x *Twitter, q twitter.SwitchDemux) {
-		for m := range x.stream.Messages {
-			q.Handle(m)
+		for {
+			select {
+			case <-x.ctx.Done():
+				x.Stop()
+				return
+			case m := <-x.stream.Messages:
+				q.Handle(m)
+			}
 		}
-		x.stream = nil
 	}(t, d)
 	return nil
 }
@@ -117,11 +125,6 @@ func (f *Filter) match(u, c string) bool {
 		return false
 	}
 	return true
-}
-
-// Callback sets the function to be called when a Tweet matching the Filter is received.
-func (t *Twitter) Callback(f func(*Tweet)) {
-	t.cb = f
 }
 func (t *Twitter) receive(x *twitter.Tweet) {
 	if t.filter != nil {
@@ -154,14 +157,14 @@ func (t *Twitter) receive(x *twitter.Tweet) {
 			}
 		}
 	}
-	if t.cb != nil {
-		t.cb(r)
+	if t.Callback != nil {
+		t.Callback(r)
 	}
 }
 
 // NewTwitter creates and establishes a Twitter session with the provided Access and Consumer Keys/Secrets
 // and a Timeout. This function will return an error if it cannot reach Twitter or authentication failed.
-func NewTwitter(timeout time.Duration, f *Filter, a *Credentials) (*Twitter, error) {
+func NewTwitter(x context.Context, timeout time.Duration, f *Filter, a *Credentials) (*Twitter, error) {
 	if a == nil {
 		return nil, ErrNoAuth
 	}
@@ -172,11 +175,12 @@ func NewTwitter(timeout time.Duration, f *Filter, a *Credentials) (*Twitter, err
 	i := c.Client(oauth1.NoContext, oauth1.NewToken(a.AccessKey, a.AccessSecret))
 	i.Timeout = timeout
 	t := &Twitter{
+		ctx:    x,
 		filter: f,
 		client: twitter.NewClient(i),
 	}
 	if _, _, err := t.client.Accounts.VerifyCredentials(nil); err != nil {
-		return nil, xerrors.Errorf("cannot authenticate to Twitter: %w", err)
+		return nil, fmt.Errorf("cannot authenticate to Twitter: %w", err)
 	}
 	return t, nil
 }

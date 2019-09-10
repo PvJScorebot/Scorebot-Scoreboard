@@ -1,6 +1,6 @@
 module github.com/iDigitalFlame/scorebot-scoreboard/scoreboard
 
-go 1.12
+go 1.13
 
 require (
 	github.com/dghubble/go-twitter v0.0.0-20190719072343-39e5462e111f
@@ -10,5 +10,4 @@ require (
 	github.com/iDigitalFlame/logx/logx v0.0.0-20190906173944-19f08e71816b
 	github.com/stvp/slug v0.0.0-20150928221549-5ab8191bb1fe
 	golang.org/x/text v0.3.2 // indirect
-	golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7
 )

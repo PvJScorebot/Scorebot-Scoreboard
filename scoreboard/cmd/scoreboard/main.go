@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	version = "v1.5"
+	version = "v1.6"
 )
 
 func main() {
@@ -34,8 +34,8 @@ func main() {
 	Assets := flag.String("assets", "", "Secondary Assets Override URL.")
 	Directory := flag.String("dir", "", "Scoreboard HTML Directory Path.")
 
-	TwitterCosumerKey := flag.String("tw-ck", "", "Twitter Consumer API Key.")
-	TwitterCosumerSecret := flag.String("tw-cs", "", "Twitter Consumer API Secret.")
+	TwitterConsumerKey := flag.String("tw-ck", "", "Twitter Consumer API Key.")
+	TwitterConsumerSecret := flag.String("tw-cs", "", "Twitter Consumer API Secret.")
 
 	TwitterAccessKey := flag.String("tw-ak", "", "Twitter Access API Key.")
 	TwitterAccessSecret := flag.String("tw-as", "", "Twitter Access API Secret.")
@@ -89,19 +89,19 @@ func main() {
 			Assets: *Assets,
 			Twitter: &scoreboard.Twitter{
 				Filter: &web.Filter{
-					Language:     scoreboard.SplitParm(*TwitterLanguage, scoreboard.ConfigSeperator),
-					Keywords:     scoreboard.SplitParm(*TwitterKeywords, scoreboard.ConfigSeperator),
-					OnlyUsers:    scoreboard.SplitParm(*TwitterOnlyUsers, scoreboard.ConfigSeperator),
-					BlockedUsers: scoreboard.SplitParm(*TwitterBlockUsers, scoreboard.ConfigSeperator),
-					BlockedWords: scoreboard.SplitParm(*TwitterBlockWords, scoreboard.ConfigSeperator),
+					Language:     scoreboard.SplitParm(*TwitterLanguage, scoreboard.Seperator),
+					Keywords:     scoreboard.SplitParm(*TwitterKeywords, scoreboard.Seperator),
+					OnlyUsers:    scoreboard.SplitParm(*TwitterOnlyUsers, scoreboard.Seperator),
+					BlockedUsers: scoreboard.SplitParm(*TwitterBlockUsers, scoreboard.Seperator),
+					BlockedWords: scoreboard.SplitParm(*TwitterBlockWords, scoreboard.Seperator),
 				},
 				Expire:  uint16(*TwitterExpire),
 				Timeout: uint16(*Timeout),
 				Credentials: &web.Credentials{
 					AccessKey:      *TwitterAccessKey,
-					ConsumerKey:    *TwitterCosumerKey,
+					ConsumerKey:    *TwitterConsumerKey,
 					AccessSecret:   *TwitterAccessSecret,
-					ConsumerSecret: *TwitterCosumerSecret,
+					ConsumerSecret: *TwitterConsumerSecret,
 				},
 			},
 			Timeout:   uint16(*Timeout),
@@ -110,13 +110,13 @@ func main() {
 		}
 	}
 
-	scoreboard, err := scoreboard.NewScoreboard(c)
+	board, err := scoreboard.New(c)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 		os.Exit(1)
 	}
 
-	if err := scoreboard.Start(); err != nil {
+	if err := board.Start(); err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 		os.Exit(1)
 	}

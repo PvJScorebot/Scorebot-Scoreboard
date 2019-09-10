@@ -1,15 +1,17 @@
 package web
 
 import (
+	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/pprof"
 	"os"
 	"path"
+	"time"
 
 	"github.com/gobuffalo/packr/v2"
 	"github.com/gorilla/websocket"
-	"golang.org/x/xerrors"
 )
 
 const (
@@ -23,6 +25,7 @@ const (
 // specific paths to functions.
 type Server struct {
 	fs     http.Handler
+	ctx    context.Context
 	box    *packr.Box
 	dir    http.FileSystem
 	key    string
@@ -45,13 +48,20 @@ func (s *Stream) IP() string {
 	return s.RemoteAddr().String()
 }
 
-// Start starts the Server listening loop and returns an error if the server could not be started.
-// Only returns an error if any IO issues occur during operation.
+// Start starts the Server listening loop and returns an error
+// if the server could not be started. Only returns an error if any
+// IO issues occur during operation.
 func (s *Server) Start() error {
 	if len(s.cert) > 0 && len(s.key) > 0 {
 		return s.server.ListenAndServeTLS(s.cert, s.key)
 	}
 	return s.server.ListenAndServe()
+}
+
+// Close attempts to stop all server functions and close all
+// current connections.
+func (s *Server) Close() error {
+	return s.server.Shutdown(s.ctx)
 }
 
 // Open satisfies the http.FileSystem interface.
@@ -64,6 +74,9 @@ func (s *Server) Open(n string) (http.File, error) {
 	}
 	return f, err
 }
+func (s *Server) context(n net.Listener) context.Context {
+	return s.ctx
+}
 
 // AddHandlerFunc adds the following function to be triggered for the provided path.
 func (s *Server) AddHandlerFunc(path string, f handleFunc) {
@@ -75,22 +88,23 @@ func (s *Server) AddHandler(path string, handler http.Handler) {
 	s.server.Handler.(*http.ServeMux).Handle(path, handler)
 }
 
+// NewWebSocket returns a WebSocket HTTP handler that can upgrade standard
+// HTTP connections into websockets. The passed callback function will be
+// called when a websocket is created.
+func NewWebSocket(size int, callback func(*Stream)) http.Handler {
+	return &websockServer{
+		u: &websocket.Upgrader{
+			CheckOrigin:     func(r *http.Request) bool { return true },
+			ReadBufferSize:  size,
+			WriteBufferSize: size,
+		},
+		cb: callback,
+	}
+}
+
 // ServeHTTP satisfies the http.Handler requirement for the interface.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.fs.ServeHTTP(w, r)
-}
-
-// NewWebSocket returns a WebSocket HTTP handler that can upgrade standard HTTP connections into
-// websockets. The passed callback function will be called when a websocket is created.
-func NewWebSocket(bufsize int, callback func(*Stream)) http.Handler {
-	return &websockServer{
-		cb: callback,
-		u: &websocket.Upgrader{
-			CheckOrigin:     func(r *http.Request) bool { return true },
-			ReadBufferSize:  bufsize,
-			WriteBufferSize: bufsize,
-		},
-	}
 }
 func (s *websockServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c, err := s.u.Upgrade(w, r, nil)
@@ -104,27 +118,33 @@ func (s *websockServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // NewServer creates a Server struct from the provided listen address and directory path.
 // This function will return an error if the provided directory path is not valid.
-func NewServer(listen, dir, cert, key string, box *packr.Box) (*Server, error) {
+func NewServer(x context.Context, timeout time.Duration, listen, dir, cert, key string, box *packr.Box) (*Server, error) {
 	if len(dir) > 0 {
 		z, err := os.Stat(dir)
 		if err != nil {
-			return nil, xerrors.Errorf("cannot get directory \"%s\": %w", dir, err)
+			return nil, fmt.Errorf("cannot get directory \"%s\": %w", dir, err)
 		}
 		if !z.IsDir() {
-			return nil, xerrors.Errorf("path \"%s\" is not a directory", dir)
+			return nil, fmt.Errorf("path \"%s\" is not a directory", dir)
 		}
 	}
 	s := &Server{
+		ctx:  x,
 		box:  box,
 		dir:  http.Dir(dir),
 		key:  key,
 		cert: cert,
 		server: &http.Server{
-			Addr:    listen,
-			Handler: &http.ServeMux{},
+			Addr:              listen,
+			Handler:           &http.ServeMux{},
+			ReadTimeout:       timeout,
+			IdleTimeout:       timeout,
+			WriteTimeout:      timeout,
+			ReadHeaderTimeout: timeout,
 		},
 	}
 	s.fs = http.FileServer(s)
+	s.server.BaseContext = s.context
 	if Debug {
 		fmt.Fprintf(os.Stderr, "WARNING: Debug Server Extensions are Enabled!\n")
 		s.server.Handler.(*http.ServeMux).HandleFunc("/debug/pprof/", pprof.Index)

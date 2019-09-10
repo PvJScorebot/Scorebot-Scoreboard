@@ -2,19 +2,18 @@ package game
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"hash"
 	"hash/fnv"
 	"math"
 	"sync"
-
-	"golang.org/x/xerrors"
 )
 
 var (
 	// ErrCannotSum is an error returned by the function 'Add'. This is returned when the passed
 	// interface is not a primitive type.
-	ErrCannotSum = xerrors.New("cannot hash sum requested type")
+	ErrCannotSum = errors.New("cannot hash sum requested type")
 
 	bufPool = &sync.Pool{
 		New: func() interface{} {

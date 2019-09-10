@@ -50,26 +50,30 @@ type Subscription struct {
 
 // Collection is a struct that contains for a map of subscribers.
 type Collection struct {
+	Callback    func(*game.Game)
 	Subscribers map[int64]*Subscription
 
 	log     logx.Log
 	api     *web.API
-	gcb     func(*game.Game)
+	ctx     context.Context
 	twitter *tweetbuf
 }
 
 // Stop attempts to stop all WebSockets and close the connections.
 func (c *Collection) Stop() error {
 	var err error
-	for _, v := range c.Subscribers {
-		for i := range v.clients {
-			err = v.clients[i].client.Close()
-			v.clients[i] = nil
+	if len(c.Subscribers) > 0 {
+		for _, v := range c.Subscribers {
+			for i := range v.clients {
+				err = v.clients[i].client.Close()
+				v.clients[i] = nil
+			}
+			close(v.new)
 		}
-		close(v.new)
 	}
 	if c.twitter != nil {
 		close(c.twitter.new)
+		c.twitter = nil
 	}
 	return err
 }
@@ -101,7 +105,11 @@ func (t *tweetbuf) receive(x *web.Tweet) {
 // Sync informs the collection to download any updates and preform any maintainance
 // on the clients list, including pruning clients.
 func (c *Collection) Sync(t time.Duration) {
-	x, f := context.WithTimeout(context.Background(), t)
+	if c.ctx.Err() != nil {
+		c.Stop()
+		return
+	}
+	x, f := context.WithTimeout(c.ctx, t)
 	defer f()
 	go func(z context.Context, i context.CancelFunc, o *Collection) {
 		o.doSync(z)
@@ -129,7 +137,7 @@ func (h *hello) UnmarshalJSON(b []byte) error {
 func (c *Collection) NewClient(n *web.Stream) {
 	defer func(l logx.Log) {
 		if err := recover(); err != nil {
-			l.Error("newclient gofunc: recovered from a panic: %s", err)
+			l.Error("newclient function recovered from a panic: %s", err)
 		}
 	}(c.log)
 	c.log.Debug("Received a connection from \"%s\", listening for Hello.", n.IP())
@@ -161,8 +169,8 @@ func (c *Collection) NewClient(n *web.Stream) {
 			Game:    int64(h),
 			clients: make([]*stream, 0, 1),
 		}
-		if c.gcb != nil {
-			c.gcb(g.last)
+		if c.Callback != nil {
+			c.Callback(g.last)
 		}
 		if c.twitter != nil {
 			g.last.Tweets.Tweets = c.twitter.list
@@ -212,20 +220,6 @@ func (s *Subscription) NewClient(n *web.Stream) {
 	n.WriteJSON(s.cache)
 	s.new <- n
 }
-
-// GameCallback sets the callback function triggered on a received game.
-func (c *Collection) GameCallback(f func(*game.Game)) {
-	c.gcb = f
-}
-
-// NewCollection creates a collection instance from the provided logger and API.
-func NewCollection(a *web.API, l logx.Log) *Collection {
-	return &Collection{
-		api:         a,
-		log:         l,
-		Subscribers: make(map[int64]*Subscription),
-	}
-}
 func (s *Subscription) update(z context.Context, c *Collection) {
 	if len(s.new) > 0 {
 		for i := 0; len(s.new) > 0; i++ {
@@ -239,8 +233,8 @@ func (s *Subscription) update(z context.Context, c *Collection) {
 		return
 	}
 	g.Meta.ID = s.Game
-	if c.gcb != nil {
-		c.gcb(g)
+	if c.Callback != nil {
+		c.Callback(g)
 	}
 	if c.twitter != nil {
 		g.Tweets.Tweets = c.twitter.list
@@ -285,4 +279,14 @@ func (c *Collection) SetupTwitter(t time.Duration) func(*web.Tweet) {
 		timeout: t,
 	}
 	return c.twitter.receive
+}
+
+// NewCollection creates a collection instance from the provided logger and API.
+func NewCollection(x context.Context, a *web.API, l logx.Log) *Collection {
+	return &Collection{
+		api:         a,
+		log:         l,
+		ctx:         x,
+		Subscribers: make(map[int64]*Subscription),
+	}
 }
