@@ -48,7 +48,7 @@ func main() {
 	TwitterBlockWords := flag.String("tw-block-words", "", "Twitter Blocked Words. (comma seperated)")
 	TwitterBlockUsers := flag.String("tw-block-user", "", "Twitter Blocked Usernames. (comma seperated)")
 
-	TwitterOnlyUsers := flag.String("tw-only-users", "", "Twitter WHitelisted Usernames. (comma seperated)")
+	TwitterOnlyUsers := flag.String("tw-only-users", "", "Twitter Whitelisted Usernames. (comma seperated)")
 
 	flag.Usage = func() {
 		fmt.Printf(

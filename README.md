@@ -19,7 +19,7 @@ binary using [Packr](https://github.com/gobuffalo/packr/tree/master/v2). It will
 
 ```shell
 git clone https://github.com/iDigitalFlame/scorebot-scoreboard/
-cd scoreboard
+cd scorebot-scoreboard/scoreboard
 go build ./..
 cd ..
 bash build.sh
@@ -75,7 +75,7 @@ Usage:
   -tw-lang string
         Twitter Search Language. (comma separated)
   -tw-only-users string
-        Twitter WHitelisted Usernames. (comma separated)
+        Twitter Whitelisted Usernames. (comma separated)
 ```
 
 ## Config File
