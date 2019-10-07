@@ -5,9 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"hash"
-	"hash/fnv"
 	"math"
 	"sync"
+
+	"blainsmith.com/go/seahash"
 )
 
 var (
@@ -15,9 +16,14 @@ var (
 	// interface is not a primitive type.
 	ErrCannotSum = errors.New("cannot hash sum requested type")
 
-	bufPool = &sync.Pool{
+	bufs = &sync.Pool{
 		New: func() interface{} {
 			return make([]byte, 8)
+		},
+	}
+	hashers = &sync.Pool{
+		New: func() interface{} {
+			return new(Hasher)
 		},
 	}
 )
@@ -25,8 +31,7 @@ var (
 // Hasher is a struct that represents a segmented
 // hashing mechanism in a 32bit hash format.
 type Hasher struct {
-	h hash.Hash32
-	s hash.Hash32
+	h, s hash.Hash64
 }
 
 // Reset sets both the Segment and internal hashers to zero.
@@ -39,20 +44,20 @@ func (h *Hasher) Reset() {
 	}
 }
 
-// Sum32 returns the hash value of the internal hasher.
-func (h *Hasher) Sum32() uint32 {
+// Sum64 returns the hash value of the internal hasher.
+func (h *Hasher) Sum64() uint64 {
 	if h.h == nil {
 		return 0
 	}
-	return h.h.Sum32()
+	return h.h.Sum64()
 }
 
 // Segment returns the hash value of the Segment hasher and resets it for reuse.
-func (h *Hasher) Segment() uint32 {
+func (h *Hasher) Segment() uint64 {
 	if h.s == nil {
 		return 0
 	}
-	v := h.s.Sum32()
+	v := h.s.Sum64()
 	h.s.Reset()
 	return v
 }
@@ -61,7 +66,7 @@ func (h *Hasher) Segment() uint32 {
 // adding using the 'Sum' function. IF the type is not a hashable type, the error 'ErrCannotSum'
 // will be returned.
 func (h *Hasher) Hash(v interface{}) error {
-	b := bufPool.Get().([]byte)
+	b := bufs.Get().([]byte)
 	switch v.(type) {
 	case bool:
 		if v.(bool) {
@@ -115,20 +120,20 @@ func (h *Hasher) Hash(v interface{}) error {
 	case fmt.Stringer:
 		h.Write([]byte(v.(fmt.Stringer).String()))
 	default:
-		bufPool.Put(b)
+		bufs.Put(b)
 		return ErrCannotSum
 	}
-	bufPool.Put(b)
+	bufs.Put(b)
 	return nil
 }
 
 // Write is an alias to Sum and is used to fit the io.Writer interface.
 func (h *Hasher) Write(b []byte) (int, error) {
 	if h.h == nil {
-		h.h = fnv.New32()
+		h.h = seahash.New()
 	}
 	if h.s == nil {
-		h.s = fnv.New32()
+		h.s = seahash.New()
 	}
 	h.s.Write(b)
 	return h.h.Write(b)

@@ -5,7 +5,7 @@ type Score struct {
 	Total  int64 `json:"total"`
 	Health int64 `json:"health"`
 
-	hash uint32
+	hash uint64
 }
 
 // ScoreFlag is a simple integer struct that stores a Team's flag score data.
@@ -14,7 +14,7 @@ type ScoreFlag struct {
 	Lost     uint32 `json:"lost"`
 	Captured uint32 `json:"captured"`
 
-	hash uint32
+	hash uint64
 }
 
 // ScoreTicket is a simple integer struct that stores a Team's ticket score data.
@@ -22,10 +22,10 @@ type ScoreTicket struct {
 	Open   uint32 `json:"open"`
 	Closed uint32 `json:"closed"`
 
-	hash uint32
+	hash uint64
 }
 
-func (s *Score) getHash(h *Hasher) uint32 {
+func (s *Score) getHash(h *Hasher) uint64 {
 	if s.hash == 0 {
 		h.Hash(s.Total)
 		h.Hash(s.Health)
@@ -33,7 +33,7 @@ func (s *Score) getHash(h *Hasher) uint32 {
 	}
 	return s.hash
 }
-func (s *ScoreFlag) getHash(h *Hasher) uint32 {
+func (s *ScoreFlag) getHash(h *Hasher) uint64 {
 	if s.hash == 0 {
 		h.Hash(s.Open)
 		h.Hash(s.Lost)
@@ -42,7 +42,7 @@ func (s *ScoreFlag) getHash(h *Hasher) uint32 {
 	}
 	return s.hash
 }
-func (s *ScoreTicket) getHash(h *Hasher) uint32 {
+func (s *ScoreTicket) getHash(h *Hasher) uint64 {
 	if s.hash == 0 {
 		h.Hash(s.Open)
 		h.Hash(s.Closed)

@@ -378,6 +378,9 @@ function callout(event, type) {
     if (is_mobile()) {
         return;
     }
+    if (event.fromElement === null) {
+        return;
+    }
     if (type === "callout-host" && !event.fromElement.classList.contains("offline")) {
         return;
     }
@@ -550,6 +553,11 @@ function handle_event_popup(event) {
         document.sb_event_title.innerText = event.data.title;
     } else {
         document.sb_event_title.innerText = "COMPROMISE DETECTED!!!";
+    }
+    if (event.data.fullscreen && event.data.fullscreen === true) {
+        document.sb_event.class = "fullscreen";
+    } else {
+        document.sb_event.class = "";
     }
     if (event.value === "3") {
         if (!(event.data.video)) {

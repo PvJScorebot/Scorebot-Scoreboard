@@ -48,6 +48,12 @@ func (s *Stream) IP() string {
 	return s.RemoteAddr().String()
 }
 
+// Stop attempts to stop all server functions and close all
+// current connections.
+func (s *Server) Stop() error {
+	return s.server.Shutdown(s.ctx)
+}
+
 // Start starts the Server listening loop and returns an error
 // if the server could not be started. Only returns an error if any
 // IO issues occur during operation.
@@ -56,12 +62,6 @@ func (s *Server) Start() error {
 		return s.server.ListenAndServeTLS(s.cert, s.key)
 	}
 	return s.server.ListenAndServe()
-}
-
-// Close attempts to stop all server functions and close all
-// current connections.
-func (s *Server) Close() error {
-	return s.server.Shutdown(s.ctx)
 }
 
 // Open satisfies the http.FileSystem interface.

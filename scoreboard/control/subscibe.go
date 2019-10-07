@@ -30,7 +30,7 @@ type stream struct {
 	ok     bool
 	client *web.Stream
 }
-type tweetbuf struct {
+type tweets struct {
 	new     chan *web.Tweet
 	list    []*web.Tweet
 	timeout time.Duration
@@ -56,16 +56,15 @@ type Collection struct {
 	log     logx.Log
 	api     *web.API
 	ctx     context.Context
-	twitter *tweetbuf
+	twitter *tweets
 }
 
 // Stop attempts to stop all WebSockets and close the connections.
-func (c *Collection) Stop() error {
-	var err error
+func (c *Collection) Stop() {
 	if len(c.Subscribers) > 0 {
 		for _, v := range c.Subscribers {
 			for i := range v.clients {
-				err = v.clients[i].client.Close()
+				v.clients[i].client.Close()
 				v.clients[i] = nil
 			}
 			close(v.new)
@@ -75,9 +74,8 @@ func (c *Collection) Stop() error {
 		close(c.twitter.new)
 		c.twitter = nil
 	}
-	return err
 }
-func (t *tweetbuf) update(c *Collection) {
+func (t *tweets) update(c *Collection) {
 	if len(t.new) > 0 {
 		for i := 0; len(t.new) > 0; i++ {
 			t.list = append(t.list, <-t.new)
@@ -97,7 +95,7 @@ func (t *tweetbuf) update(c *Collection) {
 	}
 	t.list = x
 }
-func (t *tweetbuf) receive(x *web.Tweet) {
+func (t *tweets) receive(x *web.Tweet) {
 	x.Time = time.Now().Add(t.timeout).Unix()
 	t.new <- x
 }
@@ -111,13 +109,45 @@ func (c *Collection) Sync(t time.Duration) {
 	}
 	x, f := context.WithTimeout(c.ctx, t)
 	defer f()
-	go func(z context.Context, i context.CancelFunc, o *Collection) {
-		o.doSync(z)
-		i()
+	go func(z context.Context, y context.CancelFunc, i *Collection) {
+		i.sync(z)
+		y()
 	}(x, f, c)
 	<-x.Done()
 	if x.Err() == context.DeadlineExceeded {
 		c.log.Error("Collection Sync function ran over timeout of %s!", t.String())
+	}
+}
+func (c *Collection) sync(x context.Context) {
+	r := []int64{}
+	for _, v := range c.Subscribers {
+		if len(v.clients) == 0 {
+			if v.tag {
+				r = append(r, v.Game)
+			} else {
+				v.tag = true
+			}
+		}
+		if x.Err() != nil {
+			return
+		}
+		v.update(x, c)
+	}
+	if x.Err() != nil {
+		return
+	}
+	if len(r) > 0 {
+		for i := range r {
+			if x.Err() != nil {
+				return
+			}
+			c.log.Debug("Removing unused subscription for Game %d.", r[i])
+			close(c.Subscribers[r[i]].new)
+			delete(c.Subscribers, r[i])
+		}
+	}
+	if c.twitter != nil && x.Err() == nil {
+		c.twitter.update(c)
 	}
 }
 func (h *hello) UnmarshalJSON(b []byte) error {
@@ -181,38 +211,6 @@ func (c *Collection) NewClient(n *web.Stream) {
 	}
 	g.NewClient(n)
 }
-func (c *Collection) doSync(z context.Context) {
-	r := []int64{}
-	for _, v := range c.Subscribers {
-		if len(v.clients) == 0 {
-			if v.tag {
-				r = append(r, v.Game)
-			} else {
-				v.tag = true
-			}
-		}
-		if z.Err() != nil {
-			return
-		}
-		v.update(z, c)
-	}
-	if z.Err() != nil {
-		return
-	}
-	if len(r) > 0 {
-		for i := range r {
-			if z.Err() != nil {
-				return
-			}
-			c.log.Debug("Removing unused subscription for Game %d.", r[i])
-			close(c.Subscribers[r[i]].new)
-			delete(c.Subscribers, r[i])
-		}
-	}
-	if c.twitter != nil && z.Err() == nil {
-		c.twitter.update(c)
-	}
-}
 
 // NewClient adds the client 'n' to this subscription.
 func (s *Subscription) NewClient(n *web.Stream) {
@@ -220,11 +218,14 @@ func (s *Subscription) NewClient(n *web.Stream) {
 	n.WriteJSON(s.cache)
 	s.new <- n
 }
-func (s *Subscription) update(z context.Context, c *Collection) {
+func (s *Subscription) update(x context.Context, c *Collection) {
 	if len(s.new) > 0 {
 		for i := 0; len(s.new) > 0; i++ {
 			s.clients = append(s.clients, &stream{ok: true, client: <-s.new})
 		}
+	}
+	if x.Err() != nil {
+		return
 	}
 	c.log.Debug("Checking for update for subscribed Game %d...", s.Game)
 	var g *game.Game
@@ -241,7 +242,7 @@ func (s *Subscription) update(z context.Context, c *Collection) {
 	}
 	g.GenerateHash()
 	c.log.Debug("Running game comparison on Game %d...", s.Game)
-	if z.Err() != nil {
+	if x.Err() != nil {
 		return
 	}
 	n, u := g.Difference(s.last)
@@ -249,9 +250,9 @@ func (s *Subscription) update(z context.Context, c *Collection) {
 	s.cache = n
 	if len(u) > 0 {
 		c.log.Debug("%d Updates detected in Game %d, updating clients.", len(u), s.Game)
-		x := make([]*stream, 0, len(s.clients))
+		l := make([]*stream, 0, len(s.clients))
 		for i := range s.clients {
-			if z.Err() != nil || i > len(s.clients) {
+			if x.Err() != nil || i > len(s.clients) {
 				return
 			}
 			if s.clients[i].ok {
@@ -261,19 +262,19 @@ func (s *Subscription) update(z context.Context, c *Collection) {
 					s.clients[i].client.Close()
 				} else {
 					s.clients[i].ok = true
-					x = append(x, s.clients[i])
+					l = append(l, s.clients[i])
 				}
 			} else {
 				s.clients[i].client.Close()
 			}
 		}
-		s.clients = x
+		s.clients = l
 	}
 }
 
 // SetupTwitter creates and starts the functions to monitor Tweets.
 func (c *Collection) SetupTwitter(t time.Duration) func(*web.Tweet) {
-	c.twitter = &tweetbuf{
+	c.twitter = &tweets{
 		new:     make(chan *web.Tweet, TweetBufferSize),
 		list:    make([]*web.Tweet, 0),
 		timeout: t,

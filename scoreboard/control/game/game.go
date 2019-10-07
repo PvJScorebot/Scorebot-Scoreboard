@@ -43,7 +43,7 @@ type Meta struct {
 	Start  time.Time `json:"start"`
 	Status Status    `json:"status"`
 
-	hash uint32
+	hash uint64
 }
 
 // Game is a struct that contains all the complex Game data,
@@ -57,9 +57,9 @@ type Game struct {
 	Message  string
 	Scorebot string
 
-	hash  uint32
-	total uint32
-	event uint32
+	hash  uint64
+	total uint64
+	event uint64
 }
 
 // Event is a struct that represents a Game style event.
@@ -75,12 +75,12 @@ type Events struct {
 	Window  *Event
 	Current []*Event
 
-	hash uint32
+	hash uint64
 }
 type tweets struct {
 	Tweets []*web.Tweet
 
-	hash uint32
+	hash uint64
 }
 
 // Len helps implement the Sort function.
@@ -114,8 +114,8 @@ func (m Mode) String() string {
 // sub item.
 func (g *Game) GenerateHash() {
 	sort.Sort(g)
-	h := &Hasher{}
 	if g.hash == 0 {
+		h := hashers.Get().(*Hasher)
 		h.Hash(g.Message)
 		g.hash = h.Segment()
 		g.Meta.getHash(h)
@@ -127,11 +127,12 @@ func (g *Game) GenerateHash() {
 			}
 			g.Teams[i].getHash(h)
 		}
-		g.total = h.Sum32()
+		g.total = h.Sum64()
 		h.Reset()
 		g.Events.getHash(h)
 		h.Reset()
 		g.Tweets.getHash(h)
+		hashers.Put(h)
 	}
 }
 
@@ -180,7 +181,7 @@ func (s Status) String() string {
 func (g Game) Less(i, j int) bool {
 	return g.Teams[i].ID < g.Teams[j].ID
 }
-func (m *Meta) getHash(h *Hasher) uint32 {
+func (m *Meta) getHash(h *Hasher) uint64 {
 	if m.hash == 0 {
 		h.Hash(m.ID)
 		h.Hash(m.Mode)
@@ -192,7 +193,7 @@ func (m *Meta) getHash(h *Hasher) uint32 {
 	}
 	return m.hash
 }
-func (e *Events) getHash(h *Hasher) uint32 {
+func (e *Events) getHash(h *Hasher) uint64 {
 	if e.hash == 0 {
 		for i := range e.Current {
 			h.Hash(e.Current[i].ID)
@@ -206,7 +207,7 @@ func (e *Events) getHash(h *Hasher) uint32 {
 	}
 	return e.hash
 }
-func (t *tweets) getHash(h *Hasher) uint32 {
+func (t *tweets) getHash(h *Hasher) uint64 {
 	if t.hash == 0 {
 		for i := range t.Tweets {
 			h.Hash(t.Tweets[i].ID)

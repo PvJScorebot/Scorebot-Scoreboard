@@ -20,7 +20,7 @@ var (
 	ErrEmptyFilter = errors.New("twitter stream filter cannot be empty or nil")
 	// ErrAlreadyStarted is an error returned by the 'Filter' function when the filter is currently
 	// running and an attempt to start it again was made.
-	ErrAlreadyStarted = errors.New("twitter stream already started")
+	//ErrAlreadyStarted = errors.New("twitter stream already started")
 )
 
 // Tweet is a simple struct to abstract out non-important Tweet data.
@@ -51,8 +51,8 @@ type Twitter struct {
 
 	ctx    context.Context
 	filter *Filter
-	stream *twitter.Stream
 	client *twitter.Client
+	cancel context.CancelFunc
 }
 
 // Credentials is a struct used to store and access the Twitter API keys.
@@ -65,40 +65,35 @@ type Credentials struct {
 
 // Stop will stop the filter process, if running.
 func (t *Twitter) Stop() {
-	if t.stream != nil {
-		t.stream.Stop()
-		t.stream = nil
-	}
+	t.cancel()
 }
 
 // Start kicks off the Twitter stream filter and receiver. This function DOES NOT block and returns an
 // error of nil if successful.
 func (t *Twitter) Start() error {
-	if t.stream != nil {
-		return ErrAlreadyStarted
-	}
-	s, err := t.client.Streams.Filter(&twitter.StreamFilterParams{
-		Track:         t.filter.Keywords,
-		Language:      t.filter.Language,
-		StallWarnings: twitter.Bool(true),
-	})
+	s, err := t.client.Streams.Filter(
+		&twitter.StreamFilterParams{
+			Track:         t.filter.Keywords,
+			Language:      t.filter.Language,
+			StallWarnings: twitter.Bool(true),
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("unable to start Twitter filter: %w", err)
 	}
-	t.stream = s
 	d := twitter.NewSwitchDemux()
 	d.Tweet = t.receive
-	go func(x *Twitter, q twitter.SwitchDemux) {
+	go func(x context.Context, e twitter.SwitchDemux, h *twitter.Stream) {
 		for {
 			select {
-			case <-x.ctx.Done():
-				x.Stop()
+			case <-x.Done():
+				h.Stop()
 				return
-			case m := <-x.stream.Messages:
-				q.Handle(m)
+			case m := <-h.Messages:
+				e.Handle(m)
 			}
 		}
-	}(t, d)
+	}(t.ctx, d, s)
 	return nil
 }
 func (f *Filter) match(u, c string) bool {
@@ -175,12 +170,12 @@ func NewTwitter(x context.Context, timeout time.Duration, f *Filter, a *Credenti
 	i := c.Client(oauth1.NoContext, oauth1.NewToken(a.AccessKey, a.AccessSecret))
 	i.Timeout = timeout
 	t := &Twitter{
-		ctx:    x,
 		filter: f,
 		client: twitter.NewClient(i),
 	}
 	if _, _, err := t.client.Accounts.VerifyCredentials(nil); err != nil {
 		return nil, fmt.Errorf("cannot authenticate to Twitter: %w", err)
 	}
+	t.ctx, t.cancel = context.WithCancel(x)
 	return t, nil
 }

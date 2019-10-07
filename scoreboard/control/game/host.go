@@ -34,8 +34,8 @@ type Host struct {
 	Online   bool       `json:"online"`
 	Services []*Service `json:"services"`
 
-	hash  uint32
-	total uint32
+	hash  uint64
+	total uint64
 }
 
 // Service is a struct that represents all the properties of a Service on the
@@ -47,7 +47,7 @@ type Service struct {
 	Bonus    bool     `json:"bool"`
 	Protocol Protocol `json:"protocol"`
 
-	hash uint32
+	hash uint64
 }
 
 // String returns the proper name of this Service State.
@@ -86,7 +86,7 @@ func (s State) stateClass() string {
 	}
 	return "port"
 }
-func (h *Host) getHash(i *Hasher) uint32 {
+func (h *Host) getHash(i *Hasher) uint64 {
 	if h.hash == 0 {
 		i.Hash(h.ID)
 		i.Hash(h.Name)
@@ -99,7 +99,7 @@ func (h *Host) getHash(i *Hasher) uint32 {
 	}
 	return h.hash
 }
-func (s *Service) getHash(h *Hasher) uint32 {
+func (s *Service) getHash(h *Hasher) uint64 {
 	if s.hash == 0 {
 		h.Hash(s.ID)
 		h.Hash(s.Port)

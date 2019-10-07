@@ -19,8 +19,8 @@ type Team struct {
 	Minimal bool         `json:"minimal"`
 	Beacons []*Beacon    `json:"beacons"`
 
-	hash  uint32
-	total uint32
+	hash  uint64
+	total uint64
 }
 
 // Beacon is a struct that represents a compromise on a host.
@@ -29,10 +29,10 @@ type Beacon struct {
 	Team  int64  `json:"team"`
 	Color string `json:"color"`
 
-	hash uint32
+	hash uint64
 }
 
-func (t *Team) getHash(h *Hasher) uint32 {
+func (t *Team) getHash(h *Hasher) uint64 {
 	if t.hash == 0 {
 		h.Hash(t.ID)
 		h.Hash(t.Name)
@@ -54,7 +54,7 @@ func (t *Team) getHash(h *Hasher) uint32 {
 	t.total += t.Tickets.getHash(h)
 	return t.hash
 }
-func (b *Beacon) getHash(h *Hasher) uint32 {
+func (b *Beacon) getHash(h *Hasher) uint64 {
 	if b.hash == 0 {
 		h.Hash(b.ID)
 		h.Hash(b.Team)

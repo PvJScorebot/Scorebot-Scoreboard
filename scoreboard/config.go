@@ -7,7 +7,21 @@ import (
 	"os"
 	"strings"
 
+	"github.com/iDigitalFlame/logx/logx"
 	"github.com/iDigitalFlame/scorebot-scoreboard/scoreboard/web"
+)
+
+const (
+	// DefaultTick is the default tick time in seconds. Used if the tick setting is missing.
+	DefaultTick uint16 = 5
+	// DefaultExpire is the default tweet timeout. Used if the Twitter.expire setting is missing.
+	DefaultExpire uint16 = 45
+	// DefaultListen is the default listen address. Used if the listen setting is missing.
+	DefaultListen string = "0.0.0.0:8080"
+	// DefaultTimeout is the default timeout in seconds. Used if the timeout setting is missing.
+	DefaultTimeout uint16 = 10
+	// DefaultLogLevel is the default log level. Used if the log.level setting is missing.
+	DefaultLogLevel uint8 = 2
 )
 
 // Log is a struct that stores and represents the Scoreboard Logging config
@@ -89,11 +103,14 @@ func (c *Config) verify() error {
 		return web.ErrInvalidTimeout
 	}
 	if c.Log != nil {
-		if c.Log.Level < 0 || c.Log.Level > 5 {
+		if c.Log.Level < uint8(logx.LTrace) || c.Log.Level > uint8(logx.LFatal) {
 			return ErrInvalidLevel
 		}
 	} else {
 		c.Log = &Log{Level: DefaultLogLevel}
+	}
+	if len(c.Listen) == 0 {
+		c.Listen = DefaultListen
 	}
 	if c.Twitter != nil {
 		v := true

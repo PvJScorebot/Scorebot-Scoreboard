@@ -26,16 +26,6 @@ import (
 const (
 	// Seperator is a comma constant, used to split keyword parameters.
 	Seperator = ","
-	// DefaultTick is the default tick time in seconds. Used if the tick setting is missing.
-	DefaultTick uint16 = 5
-	// DefaultExpire is the default tweet timeout. Used if the Twitter.expire setting is missing.
-	DefaultExpire uint16 = 45
-	// DefaultListen is the default listen address. Used if the listen setting is missing.
-	DefaultListen string = "0.0.0.0:8080"
-	// DefaultTimeout is the default timeout in seconds. Used if the timeout setting is missing.
-	DefaultTimeout uint16 = 10
-	// DefaultLogLevel is the default log level. Used if the log.level setting is missing.
-	DefaultLogLevel uint8 = 2
 
 	webSocketBufferSize = 2048
 )
@@ -62,6 +52,7 @@ type display struct {
 type Scoreboard struct {
 	ctx        context.Context
 	api        *web.API
+	err        error
 	log        logx.Log
 	html       *template.Template
 	tick       time.Duration
@@ -69,6 +60,7 @@ type Scoreboard struct {
 	names      map[string]int64
 	timer      *time.Timer
 	assets     string
+	signal     chan os.Signal
 	cancel     context.CancelFunc
 	server     *web.Server
 	twitter    *web.Twitter
@@ -84,29 +76,30 @@ func init() {
 // blocks until interrupted.
 func (s *Scoreboard) Start() error {
 	s.log.Info("Starting Scoreboard service...")
-	w := make(chan os.Signal)
-	signal.Notify(w, syscall.SIGINT, syscall.SIGTERM)
-	go func(z *Scoreboard, q chan os.Signal) {
+	go func(i *Scoreboard) {
 		defer func() { recover() }()
-		if err := s.server.Start(); err != nil {
-			z.log.Error("Web server returned error: %s", err.Error())
-			if z.ctx.Err() == nil {
-				w <- syscall.SIGTERM
+		if err := i.server.Start(); err != nil && err != http.ErrServerClosed {
+			i.log.Error("Web server returned error: %s", err.Error())
+			if i.ctx.Err() == nil {
+				i.err = err
+				i.signal <- syscall.SIGTERM
 			}
 		}
-	}(s, w)
+	}(s)
 	select {
-	case <-w:
+	case <-s.signal:
 	case <-s.ctx.Done():
 	}
 	s.log.Info("Stopping and shutting down...")
 	s.cancel()
-	close(w)
 	s.timer.Stop()
+	s.server.Stop()
+	close(s.signal)
 	if s.twitter != nil {
 		s.twitter.Stop()
 	}
-	return s.collection.Stop()
+	s.collection.Stop()
+	return s.err
 }
 func (s *Scoreboard) update() error {
 	defer func(l logx.Log) {
@@ -114,7 +107,7 @@ func (s *Scoreboard) update() error {
 			l.Error("Update function recovered from a panic: %s", err)
 		}
 	}(s.log)
-	s.log.Debug("Starting update...")
+	s.log.Trace("Starting update...")
 	if err := s.api.GetJSON("api/games/", &(s.games)); err != nil {
 		s.log.Error("Error occurred during tick: %s", err.Error())
 		return err
@@ -146,16 +139,12 @@ func New(c *Config) (*Scoreboard, error) {
 	if err := c.verify(); err != nil {
 		return nil, err
 	}
-	if len(c.Listen) == 0 {
-		c.Listen = DefaultListen
-	}
 	x := time.Second * time.Duration(c.Timeout)
 	a, err := web.NewAPI(c.Scorebot, x, nil)
 	if err != nil {
 		return nil, fmt.Errorf("unable to setup API: %w", err)
 	}
 	var p, t string
-	z := template.New("base")
 	if len(c.Directory) > 0 {
 		p = filepath.Join(c.Directory, "public")
 		if d, err := os.Stat(p); err != nil || !d.IsDir() {
@@ -163,10 +152,11 @@ func New(c *Config) (*Scoreboard, error) {
 		}
 		t = filepath.Join(c.Directory, "template")
 	}
-	if err := getTemplate(z, "home.html", t, "home.html"); err != nil {
+	z := template.New("base")
+	if err := getTemplate(z, t, "home.html"); err != nil {
 		return nil, err
 	}
-	if err := getTemplate(z, "scoreboard.html", t, "scoreboard.html"); err != nil {
+	if err := getTemplate(z, t, "scoreboard.html"); err != nil {
 		return nil, err
 	}
 	s := &Scoreboard{
@@ -175,24 +165,22 @@ func New(c *Config) (*Scoreboard, error) {
 		html:    z,
 		names:   make(map[string]int64),
 		assets:  c.Assets,
+		signal:  make(chan os.Signal),
 		timeout: x,
 	}
 	s.ctx, s.cancel = context.WithCancel(context.Background())
+	signal.Notify(s.signal, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGKILL)
 	if s.server, err = web.NewServer(s.ctx, x, c.Listen, p, c.Cert, c.Key, resources); err != nil {
 		return nil, fmt.Errorf("unable to setup web server: %w", err)
 	}
-	if c.Log != nil {
-		if len(c.Log.File) > 0 {
-			f, err := logx.NewFile(logx.Level(c.Log.Level), c.Log.File)
-			if err != nil {
-				return nil, fmt.Errorf("unable to create log file \"%s\": %s", c.Log.File, err.Error())
-			}
-			s.log = logx.NewStack(f, logx.NewConsole(logx.Level(c.Log.Level)))
-		} else {
-			s.log = logx.NewConsole(logx.Level(c.Log.Level))
+	if len(c.Log.File) > 0 {
+		f, err := logx.NewFile(logx.Level(c.Log.Level), c.Log.File)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create log file \"%s\": %w", c.Log.File, err)
 		}
+		s.log = logx.NewStack(f, logx.NewConsole(logx.Level(c.Log.Level)))
 	} else {
-		s.log = logx.NewConsole(logx.Level(DefaultLogLevel))
+		s.log = logx.NewConsole(logx.Level(c.Log.Level))
 	}
 	s.collection = control.NewCollection(s.ctx, s.api, s.log)
 	s.collection.Callback = s.updateMeta
@@ -217,7 +205,9 @@ func New(c *Config) (*Scoreboard, error) {
 	}
 	s.timer = time.AfterFunc(s.tick, func() {
 		s.update()
-		s.timer.Reset(s.tick)
+		if s.ctx.Err() == nil {
+			s.timer.Reset(s.tick)
+		}
 	})
 	return s, nil
 }
@@ -236,21 +226,23 @@ func (s *Scoreboard) updateMeta(g *game.Game) {
 		}
 	}
 }
-func getTemplate(t *template.Template, n, d, f string) error {
+func getTemplate(t *template.Template, d, f string) error {
 	if len(d) > 0 {
 		s := filepath.Join(d, f)
 		if i, err := os.Stat(s); err == nil && !i.IsDir() {
-			if _, err := t.New(n).ParseFiles(s); err != nil {
+			_, err := t.New(f).ParseFiles(s)
+			if err != nil {
 				return fmt.Errorf("unable to parse templates \"%s\": %w", f, err)
 			}
+			return nil
 		}
 	}
 	c, err := resources.FindString(fmt.Sprintf("template/%s", f))
 	if err != nil {
 		return fmt.Errorf("could not find template \"%s\": %w", f, err)
 	}
-	if _, err := t.New(n).Parse(c); err != nil {
-		return fmt.Errorf("unable to parse scorebot template \"%s\": %w", n, err)
+	if _, err := t.New(f).Parse(c); err != nil {
+		return fmt.Errorf("unable to parse scorebot template \"%s\": %w", f, err)
 	}
 	return nil
 }
