@@ -61,9 +61,9 @@ Usage:
   -tw-as string
         Twitter Access API Secret.
   -tw-block-user string
-        Twitter Blocked Usernames. (comma seperated)
+        Twitter Blocked Usernames. (comma separated)
   -tw-block-words string
-        Twitter Blocked Words. (comma seperated)
+        Twitter Blocked Words. (comma separated)
   -tw-ck string
         Twitter Consumer API Key.
   -tw-cs string
@@ -71,17 +71,17 @@ Usage:
   -tw-expire int
         Tweet Display Time. (in seconds) (default 45)
   -tw-keywords string
-        Twitter Search Keywords. (comma seperated)
+        Twitter Search Keywords. (comma separated)
   -tw-lang string
-        Twitter Search Lanugage. (comma seperated)
+        Twitter Search Language. (comma separated)
   -tw-only-users string
-        Twitter WHitelisted Usernames. (comma seperated)
+        Twitter WHitelisted Usernames. (comma separated)
 ```
 
 ## Config File
 
-The best way to confiure the scoreboard is to use a config file. This file will override any command line options.
-To run with the config file use the command line option: `-c <filepath>`
+The best way to configure the scoreboard is to use a config file. This file will override any command line options.
+To run with the config file use the command line option: `-c <file_path>`
 
 Default Config:
 
@@ -111,9 +111,9 @@ Default Config:
         "timeout": 10,
         "auth": {
             "access_key": "",
-            "consomer_key": "",
+            "consumer_key": "",
             "access_secret": "",
-            "consomer_secret": ""
+            "consumer_secret": ""
         }
     },
     "timeout": 10,

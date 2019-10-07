@@ -58,9 +58,9 @@ type Twitter struct {
 // Credentials is a struct used to store and access the Twitter API keys.
 type Credentials struct {
 	AccessKey      string `json:"access_key"`
-	ConsumerKey    string `json:"consomer_key"`
+	ConsumerKey    string `json:"consumer_key"`
 	AccessSecret   string `json:"access_secret"`
-	ConsumerSecret string `json:"consomer_secret"`
+	ConsumerSecret string `json:"consumer_secret"`
 }
 
 // Stop will stop the filter process, if running.
