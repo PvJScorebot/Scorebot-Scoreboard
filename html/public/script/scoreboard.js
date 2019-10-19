@@ -554,10 +554,10 @@ function handle_event_popup(event) {
     } else {
         document.sb_event_title.innerText = "COMPROMISE DETECTED!!!";
     }
-    if (event.data.fullscreen && event.data.fullscreen === true) {
-        document.sb_event.class = "fullscreen";
+    if (!event.data.fullscreen || event.data.fullscreen.toLowerCase() === "false") {
+        document.sb_event.classList.remove("fullscreen");
     } else {
-        document.sb_event.class = "";
+        document.sb_event.classList.add("fullscreen");
     }
     if (event.value === "3") {
         if (!(event.data.video)) {
