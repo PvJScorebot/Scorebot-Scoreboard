@@ -8,74 +8,40 @@ import (
 
 // Service State constants.
 const (
-	Red    State = 0x2
-	Green  State = 0x0
-	Yellow State = 0x1
+	Red    state = 0x2
+	Green  state = 0x0
+	Yellow state = 0x1
 )
 
 // Service Protocol constants.
 const (
-	TCP  Protocol = 0x0
-	UDP  Protocol = 0x1
-	ICMP Protocol = 0x2
+	TCP  protocol = 0x0
+	UDP  protocol = 0x1
+	ICMP protocol = 0x2
 )
 
-// State represents the state of a service using an integer value
-type State uint8
-
-// Protocol is an integer value that represents a Networking protocol
-type Protocol uint8
-
-// Host is a struct that represents all the properties of a Host on the
-// Scoreboard.
-type Host struct {
+type state uint8
+type host struct {
 	ID       int64      `json:"id"`
 	Name     string     `json:"name"`
 	Online   bool       `json:"online"`
-	Services []*Service `json:"services"`
+	Services []*service `json:"services"`
 
 	hash  uint64
 	total uint64
 }
-
-// Service is a struct that represents all the properties of a Service on the
-// Scoreboard.
-type Service struct {
+type protocol uint8
+type service struct {
 	ID       int64    `json:"id"`
 	Port     uint16   `json:"port"`
-	State    State    `json:"status"`
+	State    state    `json:"status"`
 	Bonus    bool     `json:"bool"`
-	Protocol Protocol `json:"protocol"`
+	Protocol protocol `json:"protocol"`
 
 	hash uint64
 }
 
-// String returns the proper name of this Service State.
-func (s State) String() string {
-	switch s {
-	case Red:
-		return "rgb(255, 0, 0)"
-	case Yellow:
-		return "rgb(173, 164, 21)"
-	case Green:
-		return "rgb(40, 111, 36)"
-	}
-	return "rgb(255, 0, 0)"
-}
-
-// String returns the proper name of this Service Protocol.
-func (p Protocol) String() string {
-	switch p {
-	case TCP:
-		return "TCP"
-	case UDP:
-		return "UDP"
-	case ICMP:
-		return "ICMP"
-	}
-	return "Unknown"
-}
-func (s State) stateClass() string {
+func (s state) class() string {
 	switch s {
 	case Red:
 		return "err"
@@ -86,7 +52,29 @@ func (s State) stateClass() string {
 	}
 	return "port"
 }
-func (h *Host) getHash(i *Hasher) uint64 {
+func (s state) String() string {
+	switch s {
+	case Red:
+		return "rgb(255, 0, 0)"
+	case Yellow:
+		return "rgb(173, 164, 21)"
+	case Green:
+		return "rgb(40, 111, 36)"
+	}
+	return "rgb(255, 0, 0)"
+}
+func (p protocol) String() string {
+	switch p {
+	case TCP:
+		return "TCP"
+	case UDP:
+		return "UDP"
+	case ICMP:
+		return "ICMP"
+	}
+	return "Unknown"
+}
+func (h *host) getHash(i *Hasher) uint64 {
 	if h.hash == 0 {
 		i.Hash(h.ID)
 		i.Hash(h.Name)
@@ -99,7 +87,7 @@ func (h *Host) getHash(i *Hasher) uint64 {
 	}
 	return h.hash
 }
-func (s *Service) getHash(h *Hasher) uint64 {
+func (s *service) getHash(h *Hasher) uint64 {
 	if s.hash == 0 {
 		h.Hash(s.ID)
 		h.Hash(s.Port)
@@ -110,9 +98,7 @@ func (s *Service) getHash(h *Hasher) uint64 {
 	}
 	return s.hash
 }
-
-// UnmarshalJSON attempts to get the Service State value from a simple JSON string.
-func (s *State) UnmarshalJSON(b []byte) error {
+func (s *state) UnmarshalJSON(b []byte) error {
 	var v string
 	if err := json.Unmarshal(b, &v); err != nil {
 		return err
@@ -129,9 +115,7 @@ func (s *State) UnmarshalJSON(b []byte) error {
 	}
 	return nil
 }
-
-// UnmarshalJSON attempts to get the Service Protocol value from a simple JSON string.
-func (p *Protocol) UnmarshalJSON(b []byte) error {
+func (p *protocol) UnmarshalJSON(b []byte) error {
 	var v string
 	if err := json.Unmarshal(b, &v); err != nil {
 		return err
@@ -148,7 +132,7 @@ func (p *Protocol) UnmarshalJSON(b []byte) error {
 	}
 	return nil
 }
-func (h *Host) getDifference(p *planner, old *Host) {
+func (h *host) getDifference(p *planner, old *host) {
 	if old == nil {
 		p.setDeltaValue(fmt.Sprintf("host-h%d", h.ID), "", "host")
 	} else {
@@ -194,15 +178,15 @@ func (h *Host) getDifference(p *planner, old *Host) {
 			if v.c2 == nil {
 				p.setRemove(fmt.Sprintf("s%d", k))
 			} else if v.c1 == nil {
-				v.c2.(*Service).getDifference(p, nil)
+				v.c2.(*service).getDifference(p, nil)
 			} else {
-				v.c2.(*Service).getDifference(p, v.c1.(*Service))
+				v.c2.(*service).getDifference(p, v.c1.(*service))
 			}
 		}
 	}
 	p.rollbackPrefix()
 }
-func (s *Service) getDifference(p *planner, old *Service) {
+func (s service) getDifference(p *planner, old *service) {
 	if old == nil {
 		p.setDeltaValue(fmt.Sprintf("s%d", s.ID), "", "service")
 	} else {
@@ -210,7 +194,7 @@ func (s *Service) getDifference(p *planner, old *Service) {
 	}
 	p.setPrefix(fmt.Sprintf("%s-s%d", p.prefix, s.ID))
 	if old != nil && old.hash == s.hash {
-		p.setValue("port", s.Port, s.State.stateClass())
+		p.setValue("port", s.Port, s.State.class())
 		p.setValue("protocol", s.Protocol.String(), "service-protocol")
 		if s.Bonus {
 			p.setProperty("", "+bonus", "class")
@@ -219,7 +203,7 @@ func (s *Service) getDifference(p *planner, old *Service) {
 		}
 		p.setProperty("", s.State.String(), "background-color")
 	} else {
-		p.setDeltaValue("port", s.Port, s.State.stateClass())
+		p.setDeltaValue("port", s.Port, s.State.class())
 		p.setDeltaValue("protocol", s.Protocol.String(), "service-protocol")
 		if s.Bonus {
 			p.setDeltaProperty("", "+bonus", "class")

@@ -90,7 +90,7 @@ func (t *tweets) update(c *Collection) {
 		if t.list[i].Time > n {
 			x = append(x, t.list[i])
 		} else {
-			c.log.Debug("Removed Tweet ID \"%d\" due to timeout!", t.list[i].ID)
+			c.log.Debug("Removed Tweet ID \"%X\" due to timeout!", t.list[i].ID)
 		}
 	}
 	t.list = x
@@ -205,7 +205,6 @@ func (c *Collection) NewClient(n *web.Stream) {
 		if c.twitter != nil {
 			g.last.Tweets.Tweets = c.twitter.list
 		}
-		g.last.GenerateHash()
 		g.cache, _ = g.last.Difference(nil)
 		c.Subscribers[int64(h)] = g
 	}
@@ -240,14 +239,13 @@ func (s *Subscription) update(x context.Context, c *Collection) {
 	if c.twitter != nil {
 		g.Tweets.Tweets = c.twitter.list
 	}
-	g.GenerateHash()
 	c.log.Debug("Running game comparison on Game %d...", s.Game)
 	if x.Err() != nil {
 		return
 	}
-	n, u := g.Difference(s.last)
+	var u []*game.Update
+	s.cache, u = g.Difference(s.last)
 	s.last = g
-	s.cache = n
 	if len(u) > 0 {
 		c.log.Debug("%d Updates detected in Game %d, updating clients.", len(u), s.Game)
 		l := make([]*stream, 0, len(s.clients))

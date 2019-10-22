@@ -11,27 +11,24 @@ import (
 
 // Game mode constants.
 const (
-	RedBlue  Mode = 0x0
-	BlueBlue Mode = 0x1
-	King     Mode = 0x2
-	Rush     Mode = 0x3
-	Defend   Mode = 0x4
+	RedBlue  mode = 0x0
+	BlueBlue mode = 0x1
+	King     mode = 0x2
+	Rush     mode = 0x3
+	Defend   mode = 0x4
 )
 
 // Game status constants.
 const (
-	Stopped   Status = 0x0
-	Running   Status = 0x1
-	Paused    Status = 0x2
-	Cancled   Status = 0x3
-	Completed Status = 0x4
+	Stopped   status = 0x0
+	Running   status = 0x1
+	Paused    status = 0x2
+	Cancled   status = 0x3
+	Completed status = 0x4
 )
 
-// Mode is an integer representation of the Game mode type.
-type Mode uint8
-
-// Status is an integer representation of the Game running status.
-type Status uint8
+type mode uint8
+type status uint8
 
 // Meta is a struct that represents Game details, such as Name, Start
 // and End dates.
@@ -39,9 +36,9 @@ type Meta struct {
 	ID     int64     `json:"id"`
 	End    time.Time `json:"end"`
 	Name   string    `json:"name"`
-	Mode   Mode      `json:"mode"`
+	Mode   mode      `json:"mode"`
 	Start  time.Time `json:"start"`
-	Status Status    `json:"status"`
+	Status status    `json:"status"`
 
 	hash uint64
 }
@@ -50,30 +47,23 @@ type Meta struct {
 // including Hosts and Team information.
 type Game struct {
 	Meta     *Meta
-	Teams    []*Team
+	Teams    []*team
 	Tweets   *tweets
-	Events   *Events
+	Events   *events
 	Credit   string
 	Message  string
 	Scorebot string
 
-	hash  uint64
-	total uint64
-	event uint64
+	hash, total, event uint64
 }
-
-// Event is a struct that represents a Game style event.
-type Event struct {
+type event struct {
 	ID   int64             `json:"id"`
 	Type uint8             `json:"type"`
 	Data map[string]string `json:"data"`
 }
-
-// Events is a struct that helps establish the active events and limits the types of
-// events that can be active
-type Events struct {
-	Window  *Event
-	Current []*Event
+type events struct {
+	Window  *event
+	Current []*event
 
 	hash uint64
 }
@@ -89,12 +79,10 @@ func (g *Game) Len() int {
 }
 
 // Active is a bool that returns true if the Game is no longer marked as active.
-func (m *Meta) Active() bool {
+func (m Meta) Active() bool {
 	return m.Status != Cancled && m.Status != Completed
 }
-
-// String returns the proper name for this Mode.
-func (m Mode) String() string {
+func (m mode) String() string {
 	switch m {
 	case RedBlue:
 		return "Red vs Blue"
@@ -109,10 +97,7 @@ func (m Mode) String() string {
 	}
 	return "Unknown"
 }
-
-// GenerateHash returns the total game hash and generates the individual hash value for each
-// sub item.
-func (g *Game) GenerateHash() {
+func (g *Game) generateHash() {
 	sort.Sort(g)
 	if g.hash == 0 {
 		h := hashers.Get().(*Hasher)
@@ -143,7 +128,7 @@ func (g *Game) Swap(i, j int) {
 
 // String returns the HTML formatted date/time structs based on the
 // null values of this Meta struct.
-func (m *Meta) String() string {
+func (m Meta) String() string {
 	if m.Start.IsZero() {
 		return ""
 	}
@@ -159,9 +144,7 @@ func (m *Meta) String() string {
 		m.End.In(time.UTC).Format("03:04 Jan 2 2006"),
 	)
 }
-
-// String returns the proper name for this Status type.
-func (s Status) String() string {
+func (s status) String() string {
 	switch s {
 	case Stopped:
 		return "Stopped"
@@ -178,7 +161,7 @@ func (s Status) String() string {
 }
 
 // Less helps implement the Sort function.
-func (g Game) Less(i, j int) bool {
+func (g *Game) Less(i, j int) bool {
 	return g.Teams[i].ID < g.Teams[j].ID
 }
 func (m *Meta) getHash(h *Hasher) uint64 {
@@ -193,7 +176,7 @@ func (m *Meta) getHash(h *Hasher) uint64 {
 	}
 	return m.hash
 }
-func (e *Events) getHash(h *Hasher) uint64 {
+func (e *events) getHash(h *Hasher) uint64 {
 	if e.hash == 0 {
 		for i := range e.Current {
 			h.Hash(e.Current[i].ID)
@@ -225,7 +208,7 @@ func (g *Game) UnmarshalJSON(b []byte) error {
 	}
 	g.Meta = &Meta{}
 	g.Tweets = &tweets{}
-	g.Events = &Events{Current: make([]*Event, 0)}
+	g.Events = &events{Current: make([]*event, 0)}
 	if x, ok := m["name"]; ok {
 		if err := json.Unmarshal(x, &(g.Meta.Name)); err != nil {
 			return err
@@ -299,9 +282,9 @@ func (g *Game) getDifference(p *planner, old *Game) {
 			if v.c2 == nil {
 				p.setRemove(fmt.Sprintf("team-t%d", k))
 			} else if v.c1 == nil {
-				v.c2.(*Team).getDifference(p, nil)
+				v.c2.(*team).getDifference(p, nil)
 			} else {
-				v.c2.(*Team).getDifference(p, v.c1.(*Team))
+				v.c2.(*team).getDifference(p, v.c1.(*team))
 			}
 		}
 	}
@@ -318,7 +301,7 @@ func (m *Meta) getDifference(p *planner, old *Meta) {
 		p.setDeltaValue("status-status", m.Status, "game-status")
 	}
 }
-func (e *Events) setWindowEvent(p *planner, w *Event) {
+func (e *events) setWindowEvent(p *planner, w *event) {
 	if w.Type <= 0 {
 		return
 	}
@@ -330,7 +313,7 @@ func (e *Events) setWindowEvent(p *planner, w *Event) {
 	}
 	e.Window = w
 }
-func (e *Events) getDifference(p *planner, old *Events) {
+func (e *events) getDifference(p *planner, old *events) {
 	if old != nil {
 		e.Window = old.Window
 	}
@@ -355,16 +338,16 @@ func (e *Events) getDifference(p *planner, old *Events) {
 		}
 		for k, v := range c {
 			if v.c2 == nil {
-				p.setRemoveEvent(k, v.c1.(*Event).Type)
+				p.setRemoveEvent(k, v.c1.(*event).Type)
 				continue
 			}
-			if v.c2.(*Event).Type > 0 {
-				e.setWindowEvent(p, v.c2.(*Event))
+			if v.c2.(*event).Type > 0 {
+				e.setWindowEvent(p, v.c2.(*event))
 			}
 			if v.c1 == nil {
-				p.setDeltaEvent(k, v.c2.(*Event).Type, v.c2.(*Event).Data)
+				p.setDeltaEvent(k, v.c2.(*event).Type, v.c2.(*event).Data)
 			} else {
-				p.setEvent(k, v.c2.(*Event).Type, v.c2.(*Event).Data)
+				p.setEvent(k, v.c2.(*event).Type, v.c2.(*event).Data)
 			}
 		}
 	}
@@ -442,6 +425,7 @@ func (g *Game) Difference(old *Game) ([]*Update, []*Update) {
 		Delta:  make([]*Update, 0),
 		Create: make([]*Update, 0),
 	}
+	g.generateHash()
 	g.getDifference(p, old)
 	return p.Create, p.Delta
 }

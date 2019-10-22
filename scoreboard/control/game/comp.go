@@ -20,15 +20,15 @@ type planner struct {
 	Delta  []*Update
 	Create []*Update
 
-	prefix  string
-	lprefix []string
+	last   []string
+	prefix string
 }
 type comparable struct {
 	c1, c2 interface{}
 }
 
 func (p *planner) rollbackPrefix() {
-	p.prefix, p.lprefix = p.lprefix[len(p.lprefix)-1], p.lprefix[:len(p.lprefix)-1]
+	p.prefix, p.last = p.last[len(p.last)-1], p.last[:len(p.last)-1]
 }
 func printStr(v interface{}) string {
 	var s string
@@ -63,7 +63,7 @@ func printStr(v interface{}) string {
 	return s
 }
 func (p *planner) setPrefix(s string) {
-	p.lprefix = append(p.lprefix, p.prefix)
+	p.last = append(p.last, p.prefix)
 	p.prefix = s
 }
 func (p *planner) setRemove(id interface{}) {

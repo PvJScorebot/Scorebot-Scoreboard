@@ -23,21 +23,19 @@ var (
 // This struct allows for polling and getting data from a API endpoint in the form of bytes.
 // Also supports JSON data calling.
 type API struct {
-	Base *url.URL
-
 	client  *http.Client
 	headers map[string]string
 	timeout time.Duration
+
+	url.URL
 }
 
 // Get attempts a HTTP GET request at the provided URL + the base URL. This will return an error
 // on non 200 HTTP status codes or if a timeout occurs. If successful, the binary data in a byte array will
 // be returned.
-func (a *API) Get(urlpath string) ([]byte, error) {
-	x := *(a.Base)
-	u := &x
-	u.Path = fmt.Sprintf("%s/", path.Join(a.Base.Path, urlpath))
-	r, err := http.NewRequest(http.MethodGet, u.String(), nil)
+func (a API) Get(urlpath string) ([]byte, error) {
+	a.Path = fmt.Sprintf("%s/", path.Join(a.Path, urlpath))
+	r, err := http.NewRequest(http.MethodGet, a.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -57,11 +55,11 @@ func (a *API) Get(urlpath string) ([]byte, error) {
 	}
 	defer o.Body.Close()
 	if o.StatusCode >= 400 {
-		return nil, fmt.Errorf("request \"%s\" returned status code \"%d\"", u.String(), o.StatusCode)
+		return nil, fmt.Errorf("request \"%s\" returned status code \"%d\"", a.String(), o.StatusCode)
 	}
 	b, err := ioutil.ReadAll(o.Body)
 	if err != nil {
-		return nil, fmt.Errorf("error reading from URL \"%s\": %w", u.String(), err)
+		return nil, fmt.Errorf("error reading from URL \"%s\": %w", a.String(), err)
 	}
 	return b, nil
 }
@@ -69,7 +67,7 @@ func (a *API) Get(urlpath string) ([]byte, error) {
 // GetJSON is similar to the 'Get' function, but instead will attempt to unmarshal the provided
 // binary data into the supplied object 'obj'. The function will return an error if the JSON
 // is not formatted correctly or a HTTP or timeout error occurs.
-func (a *API) GetJSON(urlpath string, obj interface{}) error {
+func (a API) GetJSON(urlpath string, obj interface{}) error {
 	r, err := a.Get(urlpath)
 	if err != nil {
 		return err
@@ -84,11 +82,9 @@ func (a *API) GetJSON(urlpath string, obj interface{}) error {
 // server will be contained in provided io.Reader. This will return an error
 // if a timeout occurs. If successful, the binary data in a byte array will
 // be returned.
-func (a *API) Post(urlpath string, data io.Reader) ([]byte, error) {
-	x := *(a.Base)
-	u := &x
-	u.Path = fmt.Sprintf("%s/", path.Join(a.Base.Path, urlpath))
-	r, err := http.NewRequest(http.MethodPost, u.String(), data)
+func (a API) Post(urlpath string, data io.Reader) ([]byte, error) {
+	a.Path = fmt.Sprintf("%s/", path.Join(a.Path, urlpath))
+	r, err := http.NewRequest(http.MethodPost, a.String(), data)
 	if err != nil {
 		return nil, err
 	}
@@ -108,11 +104,11 @@ func (a *API) Post(urlpath string, data io.Reader) ([]byte, error) {
 	}
 	defer o.Body.Close()
 	if o.StatusCode >= 400 {
-		return nil, fmt.Errorf("request \"%s\" returned status code \"%d\"", u.String(), o.StatusCode)
+		return nil, fmt.Errorf("request \"%s\" returned status code \"%d\"", a.String(), o.StatusCode)
 	}
 	b, err := ioutil.ReadAll(o.Body)
 	if err != nil {
-		return nil, fmt.Errorf("error reading from URL \"%s\": %w", u.String(), err)
+		return nil, fmt.Errorf("error reading from URL \"%s\": %w", a.String(), err)
 	}
 	return b, nil
 }
@@ -120,7 +116,7 @@ func (a *API) Post(urlpath string, data io.Reader) ([]byte, error) {
 // PostJSON is similar to the 'Post' function, but instead will attempt to unmarshal the provided
 // binary data into the supplied object 'obj'. The function will return an error if the JSON
 // is not formatted correctly or a HTTP or timeout error occurs.
-func (a *API) PostJSON(urlpath string, data io.Reader, obj interface{}) error {
+func (a API) PostJSON(urlpath string, data io.Reader, obj interface{}) error {
 	r, err := a.Post(urlpath, data)
 	if err != nil {
 		return err
@@ -147,7 +143,7 @@ func NewAPI(baseurl string, timeout time.Duration, headers map[string]string) (*
 		u.Scheme = "http"
 	}
 	a := &API{
-		Base:    u,
+		URL:     *u,
 		headers: headers,
 		timeout: timeout,
 	}

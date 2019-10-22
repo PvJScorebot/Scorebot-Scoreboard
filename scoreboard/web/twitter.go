@@ -96,7 +96,7 @@ func (t *Twitter) Start() error {
 	}(t.ctx, d, s)
 	return nil
 }
-func (f *Filter) match(u, c string) bool {
+func (f Filter) match(u, c string) bool {
 	if len(f.BlockedUsers) > 0 {
 		for i := range f.BlockedUsers {
 			if strings.ToLower(f.BlockedUsers[i]) == u {

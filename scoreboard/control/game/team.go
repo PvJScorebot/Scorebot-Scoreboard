@@ -4,27 +4,22 @@ import (
 	"fmt"
 )
 
-// Team is a struct that represents a Team object on the
-// Scoreboard
-type Team struct {
+type team struct {
 	ID      int64        `json:"id"`
 	Name    string       `json:"name"`
 	Logo    string       `json:"logo"`
 	Color   string       `json:"color"`
-	Flags   *ScoreFlag   `json:"flags"`
-	Hosts   []*Host      `json:"hosts"`
-	Score   *Score       `json:"score"`
-	Tickets *ScoreTicket `json:"tickets"`
+	Flags   *scoreFlag   `json:"flags"`
+	Hosts   []*host      `json:"hosts"`
+	Score   *score       `json:"score"`
+	Tickets *scoreTicket `json:"tickets"`
 	Offense bool         `json:"offense"`
 	Minimal bool         `json:"minimal"`
-	Beacons []*Beacon    `json:"beacons"`
+	Beacons []*beacon    `json:"beacons"`
 
-	hash  uint64
-	total uint64
+	hash, total uint64
 }
-
-// Beacon is a struct that represents a compromise on a host.
-type Beacon struct {
+type beacon struct {
 	ID    int64  `json:"id"`
 	Team  int64  `json:"team"`
 	Color string `json:"color"`
@@ -32,7 +27,7 @@ type Beacon struct {
 	hash uint64
 }
 
-func (t *Team) getHash(h *Hasher) uint64 {
+func (t *team) getHash(h *Hasher) uint64 {
 	if t.hash == 0 {
 		h.Hash(t.ID)
 		h.Hash(t.Name)
@@ -54,7 +49,7 @@ func (t *Team) getHash(h *Hasher) uint64 {
 	t.total += t.Tickets.getHash(h)
 	return t.hash
 }
-func (b *Beacon) getHash(h *Hasher) uint64 {
+func (b *beacon) getHash(h *Hasher) uint64 {
 	if b.hash == 0 {
 		h.Hash(b.ID)
 		h.Hash(b.Team)
@@ -63,7 +58,7 @@ func (b *Beacon) getHash(h *Hasher) uint64 {
 	}
 	return b.hash
 }
-func (t *Team) getDifference(p *planner, old *Team) {
+func (t *team) getDifference(p *planner, old *team) {
 	if old == nil {
 		p.setDeltaValue(fmt.Sprintf("team-t%d", t.ID), "", "team")
 	} else {
@@ -162,24 +157,24 @@ func (t *Team) getDifference(p *planner, old *Team) {
 			if v.c2 == nil {
 				p.setRemove(fmt.Sprintf("host-h%d", k))
 			} else if v.c1 == nil {
-				v.c2.(*Host).getDifference(p, nil)
+				v.c2.(*host).getDifference(p, nil)
 			} else {
-				v.c2.(*Host).getDifference(p, v.c1.(*Host))
+				v.c2.(*host).getDifference(p, v.c1.(*host))
 			}
 		}
 		for k, v := range x {
 			if v.c2 == nil {
 				p.setRemove(fmt.Sprintf("beacon-con-b%d", k))
 			} else if v.c1 == nil {
-				v.c2.(*Beacon).getDifference(p, nil)
+				v.c2.(*beacon).getDifference(p, nil)
 			} else {
-				v.c2.(*Beacon).getDifference(p, v.c1.(*Beacon))
+				v.c2.(*beacon).getDifference(p, v.c1.(*beacon))
 			}
 		}
 	}
 	p.rollbackPrefix()
 }
-func (b *Beacon) getDifference(p *planner, old *Beacon) {
+func (b beacon) getDifference(p *planner, old *beacon) {
 	if old == nil {
 		p.setDeltaValue(fmt.Sprintf("beacon-con-b%d", b.ID), "", "beacon")
 	} else {

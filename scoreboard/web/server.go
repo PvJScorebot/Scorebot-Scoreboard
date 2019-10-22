@@ -44,7 +44,7 @@ type websockServer struct {
 type handleFunc func(http.ResponseWriter, *http.Request)
 
 // IP returns the IP of the client connected to this Steam.
-func (s *Stream) IP() string {
+func (s Stream) IP() string {
 	return s.RemoteAddr().String()
 }
 
@@ -65,7 +65,7 @@ func (s *Server) Start() error {
 }
 
 // Open satisfies the http.FileSystem interface.
-func (s *Server) Open(n string) (http.File, error) {
+func (s Server) Open(n string) (http.File, error) {
 	f, err := s.dir.Open(n)
 	if err != nil && s.box != nil {
 		if r, err := s.box.Open(path.Join("public", n)); err == nil {
@@ -74,7 +74,7 @@ func (s *Server) Open(n string) (http.File, error) {
 	}
 	return f, err
 }
-func (s *Server) context(n net.Listener) context.Context {
+func (s Server) context(n net.Listener) context.Context {
 	return s.ctx
 }
 
@@ -103,10 +103,10 @@ func NewWebSocket(size int, callback func(*Stream)) http.Handler {
 }
 
 // ServeHTTP satisfies the http.Handler requirement for the interface.
-func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.fs.ServeHTTP(w, r)
 }
-func (s *websockServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (s websockServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c, err := s.u.Upgrade(w, r, nil)
 	if err == nil {
 		s.cb(&Stream{c})

@@ -211,11 +211,11 @@ func New(c *Config) (*Scoreboard, error) {
 	})
 	return s, nil
 }
-func (s *Scoreboard) updateMeta(g *game.Game) {
+func (s Scoreboard) updateMeta(g *game.Game) {
 	if len(s.assets) > 0 {
 		g.Scorebot = s.assets
 	} else {
-		g.Scorebot = s.api.Base.String()
+		g.Scorebot = s.api.String()
 	}
 	for i := range s.games {
 		if s.games[i].ID == g.Meta.ID {
