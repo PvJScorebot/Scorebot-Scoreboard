@@ -431,6 +431,7 @@ function handle_update(update) {
         return;
     }
     if (update.class) {
+        ele.className = "";
         var cl = update.class.split(" ");
         for (var ci = 0; ci < cl.length; ci++) {
             ele.classList.add(cl[ci]);
