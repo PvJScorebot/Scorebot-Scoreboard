@@ -174,7 +174,7 @@ func (t *team) getDifference(p *planner, old *team) {
 	}
 	p.rollbackPrefix()
 }
-func (b beacon) getDifference(p *planner, old *beacon) {
+func (b *beacon) getDifference(p *planner, old *beacon) {
 	if old == nil {
 		p.setDeltaValue(fmt.Sprintf("beacon-con-b%d", b.ID), "", "beacon")
 	} else {

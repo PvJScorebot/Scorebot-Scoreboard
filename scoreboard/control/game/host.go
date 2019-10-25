@@ -186,7 +186,7 @@ func (h *host) getDifference(p *planner, old *host) {
 	}
 	p.rollbackPrefix()
 }
-func (s service) getDifference(p *planner, old *service) {
+func (s *service) getDifference(p *planner, old *service) {
 	if old == nil {
 		p.setDeltaValue(fmt.Sprintf("s%d", s.ID), "", "service")
 	} else {
