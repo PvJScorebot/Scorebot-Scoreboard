@@ -18,9 +18,6 @@ var (
 	// ErrEmptyFilter is an error returned by the 'NewTwitter' function when the supplied
 	// keyword filter list is empty.
 	ErrEmptyFilter = errors.New("twitter stream filter cannot be empty or nil")
-	// ErrAlreadyStarted is an error returned by the 'Filter' function when the filter is currently
-	// running and an attempt to start it again was made.
-	//ErrAlreadyStarted = errors.New("twitter stream already started")
 )
 
 // Tweet is a simple struct to abstract out non-important Tweet data.
@@ -121,7 +118,7 @@ func (f Filter) match(u, c string) bool {
 	}
 	return true
 }
-func (t *Twitter) receive(x *twitter.Tweet) {
+func (t Twitter) receive(x *twitter.Tweet) {
 	if t.filter != nil {
 		if !t.filter.match(strings.ToLower(x.User.ScreenName), x.Text) {
 			return

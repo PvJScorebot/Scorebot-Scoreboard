@@ -121,7 +121,7 @@ func (h *Hasher) Hash(v interface{}) error {
 		h.Write([]byte(v.(fmt.Stringer).String()))
 	default:
 		bufs.Put(b)
-		return ErrCannotSum
+		return fmt.Errorf("type %T: %w", v, ErrCannotSum)
 	}
 	bufs.Put(b)
 	return nil

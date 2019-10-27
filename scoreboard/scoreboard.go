@@ -27,7 +27,7 @@ const (
 	// Seperator is a comma constant, used to split keyword parameters.
 	Seperator = ","
 
-	webSocketBufferSize = 2048
+	webSockBufferSize = 2048
 )
 
 var (
@@ -185,7 +185,7 @@ func New(c *Config) (*Scoreboard, error) {
 	s.collection = control.NewCollection(s.ctx, s.api, s.log)
 	s.collection.Callback = s.updateMeta
 	s.server.AddHandlerFunc("/", s.http)
-	s.server.AddHandler("/w", web.NewWebSocket(webSocketBufferSize, s.collection.NewClient))
+	s.server.AddHandler("/w", web.NewWebSocket(webSockBufferSize, s.collection.NewClient))
 	if err := s.update(); err != nil {
 		s.log.Warning("Initial connection was unable to connect to scorebot \"%s\": %s", c.Scorebot, err.Error())
 	}
@@ -211,7 +211,7 @@ func New(c *Config) (*Scoreboard, error) {
 	})
 	return s, nil
 }
-func (s *Scoreboard) updateMeta(g *game.Game) {
+func (s Scoreboard) updateMeta(g *game.Game) {
 	if len(s.assets) > 0 {
 		g.Scorebot = s.assets
 	} else {

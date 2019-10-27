@@ -23,7 +23,7 @@ const (
 	Stopped   status = 0x0
 	Running   status = 0x1
 	Paused    status = 0x2
-	Cancled   status = 0x3
+	Cancelled status = 0x3
 	Completed status = 0x4
 )
 
@@ -74,13 +74,13 @@ type tweets struct {
 }
 
 // Len helps implement the Sort function.
-func (g *Game) Len() int {
+func (g Game) Len() int {
 	return len(g.Teams)
 }
 
 // Active is a bool that returns true if the Game is no longer marked as active.
 func (m Meta) Active() bool {
-	return m.Status != Cancled && m.Status != Completed
+	return m.Status != Cancelled && m.Status != Completed
 }
 func (m mode) String() string {
 	switch m {
@@ -152,8 +152,8 @@ func (s status) String() string {
 		return "Running"
 	case Paused:
 		return "Paused"
-	case Cancled:
-		return "Cancled"
+	case Cancelled:
+		return "Cancelled"
 	case Completed:
 		return "Completed"
 	}
@@ -161,7 +161,7 @@ func (s status) String() string {
 }
 
 // Less helps implement the Sort function.
-func (g *Game) Less(i, j int) bool {
+func (g Game) Less(i, j int) bool {
 	return g.Teams[i].ID < g.Teams[j].ID
 }
 func (m *Meta) getHash(h *Hasher) uint64 {

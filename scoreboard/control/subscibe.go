@@ -13,10 +13,8 @@ import (
 )
 
 const (
-	// TweetBufferSize is the size of the incoming tweets chan buffer
-	TweetBufferSize = 2048
-	// ClientBufferSize is the size of the incoming clients chan buffer.
-	ClientBufferSize = 2048
+	tweetBufferSize  = 2048
+	clientBufferSize = 2048
 )
 
 var (
@@ -194,7 +192,7 @@ func (c *Collection) NewClient(n *web.Stream) {
 		}
 		r.Meta.ID = int64(h)
 		g = &Subscription{
-			new:     make(chan *web.Stream, ClientBufferSize),
+			new:     make(chan *web.Stream, clientBufferSize),
 			last:    r,
 			Game:    int64(h),
 			clients: make([]*stream, 0, 1),
@@ -273,7 +271,7 @@ func (s *Subscription) update(x context.Context, c *Collection) {
 // SetupTwitter creates and starts the functions to monitor Tweets.
 func (c *Collection) SetupTwitter(t time.Duration) func(*web.Tweet) {
 	c.twitter = &tweets{
-		new:     make(chan *web.Tweet, TweetBufferSize),
+		new:     make(chan *web.Tweet, tweetBufferSize),
 		list:    make([]*web.Tweet, 0),
 		timeout: t,
 	}
