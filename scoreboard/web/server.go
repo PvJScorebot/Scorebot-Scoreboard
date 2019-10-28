@@ -74,7 +74,7 @@ func (s Server) Open(n string) (http.File, error) {
 	}
 	return f, err
 }
-func (s Server) context(n net.Listener) context.Context {
+func (s *Server) context(_ net.Listener) context.Context {
 	return s.ctx
 }
 
