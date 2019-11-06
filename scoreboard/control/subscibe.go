@@ -84,6 +84,7 @@ func (t *tweets) update(c *Collection) {
 	}
 	n := time.Now().Unix()
 	x := make([]*web.Tweet, 0, len(t.list))
+	_ = t.list[len(t.list)-1] // Bounds Check Elimination
 	for i := range t.list {
 		if t.list[i].Time > n {
 			x = append(x, t.list[i])
@@ -247,6 +248,7 @@ func (s *Subscription) update(x context.Context, c *Collection) {
 	if len(u) > 0 {
 		c.log.Debug("%d Updates detected in Game %d, updating clients.", len(u), s.Game)
 		l := make([]*stream, 0, len(s.clients))
+		_ = s.clients[len(s.clients)-1] // Bounds Check Elimination
 		for i := range s.clients {
 			if x.Err() != nil || i > len(s.clients) {
 				return
