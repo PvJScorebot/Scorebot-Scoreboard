@@ -216,6 +216,11 @@ func (s *Subscription) NewClient(n *web.Stream) {
 	s.new <- n
 }
 func (s *Subscription) update(x context.Context, c *Collection) {
+	defer func(l logx.Log) {
+		if err := recover(); err != nil {
+			l.Error("update function recovered from a panic: %s", err)
+		}
+	}(c.log)
 	if len(s.new) > 0 {
 		for i := 0; len(s.new) > 0; i++ {
 			s.clients = append(s.clients, &stream{ok: true, client: <-s.new})
