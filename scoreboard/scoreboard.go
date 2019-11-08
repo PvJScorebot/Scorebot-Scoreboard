@@ -211,7 +211,7 @@ func New(c *Config) (*Scoreboard, error) {
 	})
 	return s, nil
 }
-func (s Scoreboard) updateMeta(g *game.Game) {
+func (s *Scoreboard) updateMeta(g *game.Game) {
 	if len(s.assets) > 0 {
 		g.Scorebot = s.assets
 	} else {
