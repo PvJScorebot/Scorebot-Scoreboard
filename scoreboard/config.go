@@ -18,171 +18,194 @@ package scoreboard
 
 import (
 	"encoding/json"
+	"errors"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
 
-	"github.com/iDigitalFlame/logx/logx"
-	"github.com/iDigitalFlame/scorebot-scoreboard/scoreboard/web"
+	"github.com/PurpleSec/logx"
 )
 
 const (
-	// DefaultTick is the default tick time in seconds. Used if the tick setting is missing.
-	DefaultTick uint16 = 5
-	// DefaultExpire is the default tweet timeout. Used if the Twitter.expire setting is missing.
-	DefaultExpire uint16 = 45
-	// DefaultListen is the default listen address. Used if the listen setting is missing.
-	DefaultListen string = "0.0.0.0:8080"
-	// DefaultTimeout is the default timeout in seconds. Used if the timeout setting is missing.
-	DefaultTimeout uint16 = 10
-	// DefaultLogLevel is the default log level. Used if the log.level setting is missing.
-	DefaultLogLevel uint8 = 2
+	defaultTick     = 5
+	defaultExpire   = 45
+	defaultListen   = "0.0.0.0:8080"
+	defaultTimeout  = 10
+	defaultloglevel = int(logx.Warning)
 )
 
-// Log is a struct that stores and represents the Scoreboard Logging config
-// Able to be loaded from JSON
-type Log struct {
-	File  string `json:"file"`
-	Level uint8  `json:"level"`
+var errInvalidNumber = errors.New("specified number is invalid")
+
+type config struct {
+	Log       configLog     `json:"log,omitempty"`
+	Key       string        `json:"key,omitempty"`
+	Cert      string        `json:"cert,omitempty"`
+	Tick      int           `json:"tick"`
+	Assets    string        `json:"assets"`
+	Listen    string        `json:"listen"`
+	Twitter   configTwitter `json:"twitter,omitempty"`
+	Timeout   int           `json:"timeout"`
+	Scorebot  string        `json:"scorebot"`
+	Directory string        `json:"dir,omitempty"`
+
+	twitter bool
+}
+type configLog struct {
+	File  string `json:"file,omitempty"`
+	Level int    `json:"level"`
+}
+type configCreds struct {
+	AccessKey      string `json:"access_key"`
+	ConsumerKey    string `json:"consumer_key"`
+	AccessSecret   string `json:"access_secret"`
+	ConsumerSecret string `json:"consumer_secret"`
+}
+type configFilter struct {
+	Language     []string `json:"language"`
+	Keywords     []string `json:"keywords"`
+	OnlyUsers    []string `json:"only_users"`
+	BlockedUsers []string `json:"blocked_users"`
+	BlockedWords []string `json:"banned_words"`
+}
+type configTwitter struct {
+	Filter      configFilter `json:"filter"`
+	Expire      int          `json:"expire"`
+	Timeout     int          `json:"timeout"`
+	Credentials configCreds  `json:"auth"`
 }
 
-// Config is a struct that stores and represents the Scoreboard config
-// Able to be loaded from JSON.
-type Config struct {
-	Log       *Log     `json:"log,omitempty"`
-	Key       string   `json:"key"`
-	Cert      string   `json:"cert"`
-	Tick      uint16   `json:"tick"`
-	Assets    string   `json:"assets"`
-	Listen    string   `json:"listen"`
-	Twitter   *Twitter `json:"twitter,omitempty"`
-	Timeout   uint16   `json:"timeout"`
-	Scorebot  string   `json:"scorebot"`
-	Directory string   `json:"dir"`
-}
-
-// Twitter is a struct that stores and represents the Scoreboard Twitter config
-// Able to be loaded from JSON.
-type Twitter struct {
-	Filter      *web.Filter      `json:"filter"`
-	Expire      uint16           `json:"expire"`
-	Timeout     uint16           `json:"timeout"`
-	Credentials *web.Credentials `json:"auth"`
-}
-
-// Defaults returns a JSON string representation of the default config.
-// Used for creating and understanding the config file structure.
-func Defaults() string {
-	c := &Config{
-		Log: &Log{
-			File:  "",
-			Level: DefaultLogLevel,
-		},
-		Key:    "",
-		Cert:   "",
-		Tick:   DefaultTick,
-		Assets: "",
-		Listen: DefaultListen,
-		Twitter: &Twitter{
-			Filter: &web.Filter{
-				Language: []string{"en"},
-				Keywords: []string{
-					"pvj",
-					"ctf",
-				},
-				OnlyUsers:    []string{},
-				BlockedUsers: []string{},
-				BlockedWords: []string{},
-			},
-			Expire:  DefaultExpire,
-			Timeout: DefaultTimeout,
-			Credentials: &web.Credentials{
-				AccessKey:      "",
-				ConsumerKey:    "",
-				AccessSecret:   "",
-				ConsumerSecret: "",
-			},
-		},
-		Timeout:   DefaultTimeout,
-		Scorebot:  "http://scorebot",
-		Directory: "html",
-	}
+func defaults() {
+	var c config
+	c.Listen = defaultListen
+	c.Scorebot = "http://scorebot"
+	c.Twitter.Expire = defaultExpire
+	c.Twitter.Filter.OnlyUsers = []string{}
+	c.Twitter.Filter.Language = []string{"en"}
+	c.Log.File, c.Log.Level = "scoreboard.log", 2
+	c.Tick, c.Timeout = defaultTick, defaultTimeout
+	c.Twitter.Filter.Keywords = []string{"pvj", "ctf"}
+	c.Twitter.Filter.BlockedUsers, c.Twitter.Filter.BlockedWords = []string{}, []string{}
 	b, _ := json.MarshalIndent(c, "", "    ")
-	return string(b)
+	fmt.Fprintln(os.Stdout, string(b))
 }
-func (c *Config) verify() error {
-	if c.Tick <= 0 {
-		return ErrInvalidTick
+func split(s string) []string {
+	if len(s) == 0 {
+		return []string{}
+	}
+	o := strings.Split(s, ",")
+	for i := range o {
+		o[i] = strings.TrimSpace(o[i])
+	}
+	return o
+}
+func (c *config) verify() error {
+	if c.Tick < 0 {
+		return fmt.Errorf("tick cannot be less than or equal to zero: %w", errInvalidNumber)
 	}
 	if c.Timeout < 0 {
-		return web.ErrInvalidTimeout
+		return fmt.Errorf("timeout cannot be less than or equal to zero: %w", errInvalidNumber)
 	}
-	if c.Log != nil {
-		if c.Log.Level < uint8(logx.LTrace) || c.Log.Level > uint8(logx.LFatal) {
-			return ErrInvalidLevel
-		}
-	} else {
-		c.Log = &Log{Level: DefaultLogLevel}
+	if c.Log.Level < int(logx.Trace) || c.Log.Level > int(logx.Fatal) {
+		return fmt.Errorf("log level must be between zero and five: %w", errInvalidNumber)
 	}
 	if len(c.Listen) == 0 {
-		c.Listen = DefaultListen
+		c.Listen = defaultListen
 	}
-	if c.Twitter != nil {
-		v := true
-		if c.Twitter.Credentials != nil {
-			if len(c.Twitter.Credentials.AccessKey) == 0 || len(c.Twitter.Credentials.AccessSecret) == 0 {
-				v = false
-			}
-			if len(c.Twitter.Credentials.ConsumerKey) == 0 || len(c.Twitter.Credentials.ConsumerSecret) == 0 {
-				v = false
-			}
-		} else {
-			v = false
-		}
-		if c.Twitter.Filter != nil {
-			if len(c.Twitter.Filter.Language) == 0 || len(c.Twitter.Filter.Keywords) == 0 {
-				v = false
-			}
-		} else {
-			v = false
-		}
-		if !v {
-			c.Twitter = nil
-		}
+	c.twitter = true
+	if len(c.Twitter.Filter.Language) == 0 || len(c.Twitter.Filter.Keywords) == 0 {
+		c.twitter = false
+	}
+	if len(c.Twitter.Credentials.AccessKey) == 0 || len(c.Twitter.Credentials.AccessSecret) == 0 {
+		c.twitter = false
+	}
+	if len(c.Twitter.Credentials.ConsumerKey) == 0 || len(c.Twitter.Credentials.ConsumerSecret) == 0 {
+		c.twitter = false
 	}
 	return nil
 }
 
-// Load loads the config from the specified file path 's'
-func Load(s string) (*Config, error) {
-	f, err := os.Stat(s)
+// Cmdline is a function that will create a Scoreboard instance from the supplied Cmdline
+// parameters. This function will attempt to load the specified config file (if any) and fill in
+// the proper settings. This function returns an error if any issues occur. If both returns are nil
+// this means that the defaults are being printed and to bail out with a success status.
+func Cmdline() (*Scoreboard, error) {
+	var (
+		c                     config
+		d                     bool
+		args                  = flag.NewFlagSet(fmt.Sprintf("Scorebot Scoreboard v%.1f", version), flag.ExitOnError)
+		twbWords, twoUsers    string
+		s, twk, twl, twbUsers string
+	)
+	args.Usage = func() {
+		fmt.Fprintf(os.Stderr, usage, version, os.Args[0])
+		os.Exit(2)
+	}
+	args.StringVar(&s, "c", "", "scoreboard config file path.")
+	args.BoolVar(&d, "d", false, "Print default configuration and exit.")
+	args.StringVar(&c.Scorebot, "sbe", "", "Scorebot core address or URL (Required without -c).")
+	args.StringVar(&c.Assets, "assets", "", "Scoreboard secondary assets override URL.")
+	args.StringVar(&c.Directory, "dir", "", "Scoreboard HTML directory path.")
+	args.StringVar(&c.Log.File, "log", "", "Scoreboard log file path.")
+	args.IntVar(&c.Log.Level, "log-level", defaultloglevel, "Scoreboard logging level (Default 2).")
+	args.IntVar(&c.Tick, "tick", defaultTick, "Scorebot poll rate, in seconds (Default 5).")
+	args.IntVar(&c.Timeout, "timeout", defaultTimeout, "Scoreboard request timeout, in seconds (Default 10).")
+	args.StringVar(&c.Listen, "bind", defaultListen, "Address and port to listen on (Default 0.0.0.0:8080).")
+	args.StringVar(&c.Key, "key", "", "Path to TLS key file.")
+	args.StringVar(&c.Cert, "cert", "", "Path to TLS certificate file.")
+	args.StringVar(&c.Twitter.Credentials.ConsumerKey, "tw-ck", "", "Twitter Consumer API key.")
+	args.StringVar(&c.Twitter.Credentials.ConsumerSecret, "tw-cs", "", "Twitter Consumer API secret.")
+	args.StringVar(&c.Twitter.Credentials.AccessKey, "tw-ak", "", "Twitter Access API key.")
+	args.StringVar(&c.Twitter.Credentials.AccessSecret, "tw-as", "", "Twitter Access API secret.")
+	args.StringVar(&twk, "tw-keywords", "", "Twitter search keywords (Comma seperated)")
+	args.StringVar(&twl, "tw-lang", "", "Twitter search language (Comma seperated)")
+	args.IntVar(&c.Twitter.Expire, "tw-expire", defaultExpire, "Tweet display time, in seconds (Default 45).")
+	args.StringVar(&twbWords, "tw-block-words", "", "Twitter blocked words (Comma seperated).")
+	args.StringVar(&twbUsers, "tw-block-user", "", "Twitter blocked Usernames (Comma seperated).")
+	args.StringVar(&twoUsers, "tw-only-users", "", "Twitter whitelisted Usernames (Comma seperated).")
+	if err := args.Parse(os.Args[1:]); err != nil {
+		fmt.Fprintf(os.Stderr, usage, version, os.Args[0])
+		return nil, flag.ErrHelp
+	}
+	if d {
+		defaults()
+		return nil, nil
+	}
+	if len(s) == 0 && len(c.Scorebot) == 0 {
+		fmt.Fprintf(os.Stderr, usage, version, os.Args[0])
+		return nil, flag.ErrHelp
+	}
+	c.Twitter.Filter.OnlyUsers = split(twoUsers)
+	c.Twitter.Filter.Language, c.Twitter.Filter.Keywords = split(twl), split(twk)
+	c.Twitter.Filter.BlockedUsers, c.Twitter.Filter.BlockedWords = split(twbUsers), split(twbWords)
+	if len(s) > 0 {
+		if err := loadFile(s, &c); err != nil {
+			return nil, err
+		}
+	}
+	if err := c.verify(); err != nil {
+		return nil, err
+	}
+	return c.new()
+}
+func loadFile(s string, c *config) error {
+	var (
+		p      = os.ExpandEnv(s)
+		f, err = os.Stat(p)
+	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load file \"%s\": %w", s, err)
+		return fmt.Errorf("cannot load file %q: %w", p, err)
 	}
 	if f.IsDir() {
-		return nil, fmt.Errorf("cannot load \"%s\": path is not a file", s)
+		return fmt.Errorf("cannot load %q: path is not a file", p)
 	}
-	b, err := ioutil.ReadFile(s)
+	b, err := ioutil.ReadFile(p)
 	if err != nil {
-		return nil, fmt.Errorf("cannot read file \"%s\": %w", s, err)
+		return fmt.Errorf("cannot read file %q: %w", p, err)
 	}
-	var c *Config
 	if err := json.Unmarshal(b, &c); err != nil {
-		return nil, fmt.Errorf("cannot read file \"%s\" into JSON: %w", s, err)
+		return fmt.Errorf("cannot read file %q from JSON: %w", p, err)
 	}
-	return c, nil
-}
-
-// SplitParm returns a string array from a comma seperated list.
-// This function also trims the string lengths of excess spaces.
-func SplitParm(s, d string) []string {
-	if len(s) == 0 {
-		return []string{}
-	}
-	f := strings.Split(s, d)
-	for i := range f {
-		f[i] = strings.TrimSpace(f[i])
-	}
-	return f
+	return nil
 }

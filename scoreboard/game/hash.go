@@ -17,7 +17,6 @@
 package game
 
 import (
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"hash"
@@ -28,30 +27,23 @@ import (
 )
 
 var (
-	// ErrCannotSum is an error returned by the function 'Add'. This is returned when the passed
-	// interface is not a primitive type.
+	// ErrCannotSum is an error returned by the function 'Add'. This is returned when the passed interface is
+	// not a primitive type.
 	ErrCannotSum = errors.New("cannot hash the requested type")
 
-	bufs = &sync.Pool{
+	bufs = sync.Pool{
 		New: func() interface{} {
-			return make([]byte, 8)
-		},
-	}
-	hashers = &sync.Pool{
-		New: func() interface{} {
-			return new(Hasher)
+			b := make([]byte, 8)
+			return b
 		},
 	}
 )
 
-// Hasher is a struct that represents a segmented
-// hashing mechanism in a 32bit hash format.
-type Hasher struct {
+type hasher struct {
 	h, s hash.Hash64
 }
 
-// Reset sets both the Segment and internal hashers to zero.
-func (h *Hasher) Reset() {
+func (h *hasher) Reset() {
 	if h.h != nil {
 		h.h.Reset()
 	}
@@ -59,17 +51,13 @@ func (h *Hasher) Reset() {
 		h.s.Reset()
 	}
 }
-
-// Sum64 returns the hash value of the internal hasher.
-func (h Hasher) Sum64() uint64 {
+func (h hasher) Sum64() uint64 {
 	if h.h == nil {
 		return 0
 	}
 	return h.h.Sum64()
 }
-
-// Segment returns the hash value of the Segment hasher and resets it for reuse.
-func (h *Hasher) Segment() uint64 {
+func (h *hasher) Segment() uint64 {
 	if h.s == nil {
 		return 0
 	}
@@ -77,74 +65,87 @@ func (h *Hasher) Segment() uint64 {
 	h.s.Reset()
 	return v
 }
-
-// Hash attempts to identify and convert the interface to a hashable type before
-// adding using the 'Sum' function. IF the type is not a hashable type, the error 'ErrCannotSum'
-// will be returned.
-func (h *Hasher) Hash(v interface{}) error {
-	b := bufs.Get().([]byte)
-	switch v.(type) {
+func (h *hasher) Hash(v interface{}) error {
+	b := *bufs.Get().(*[]byte)
+	_ = b[7]
+	switch i := v.(type) {
 	case bool:
-		if v.(bool) {
+		if i {
 			b[0] = 1
 		} else {
 			b[0] = 0
 		}
 		h.Write(b[:1])
 	case []byte:
-		h.Write(v.([]byte))
+		h.Write(i)
 	case string:
-		h.Write([]byte(v.(string)))
+		h.Write([]byte(i))
 	case float32:
-		f := math.Float32bits(v.(float32))
-		binary.BigEndian.PutUint32(b, f)
+		n := math.Float32bits(i)
+		b[0], b[1] = byte(n>>24), byte(n>>16)
+		b[2], b[3] = byte(n>>8), byte(n)
 		h.Write(b[:4])
 	case float64:
-		f := math.Float64bits(v.(float64))
-		binary.BigEndian.PutUint64(b, f)
+		n := math.Float64bits(i)
+		b[0], b[1] = byte(n>>56), byte(n>>48)
+		b[2], b[3] = byte(n>>40), byte(n>>32)
+		b[4], b[5] = byte(n>>24), byte(n>>16)
+		b[6], b[7] = byte(n>>8), byte(n)
 		h.Write(b)
 	case int8:
-		b[0] = uint8(v.(int8))
+		b[0] = uint8(i)
 		h.Write(b[:1])
 	case uint8:
-		b[0] = v.(uint8)
+		b[0] = i
 		h.Write(b[:1])
 	case int16:
-		binary.BigEndian.PutUint16(b, uint16(v.(int16)))
+		b[0], b[1] = byte(i>>8), byte(i)
 		h.Write(b[:2])
 	case uint16:
-		binary.BigEndian.PutUint16(b, v.(uint16))
+		b[0], b[1] = byte(i>>8), byte(i)
 		h.Write(b[:2])
 	case int32:
-		binary.BigEndian.PutUint32(b, uint32(v.(int32)))
+		b[0], b[1] = byte(i>>24), byte(i>>16)
+		b[2], b[3] = byte(i>>8), byte(i)
 		h.Write(b[:4])
 	case uint32:
-		binary.BigEndian.PutUint32(b, v.(uint32))
+		b[0], b[1] = byte(i>>24), byte(i>>16)
+		b[2], b[3] = byte(i>>8), byte(i)
 		h.Write(b[:4])
 	case int64:
-		binary.BigEndian.PutUint64(b, uint64(v.(int64)))
+		b[0], b[1] = byte(i>>56), byte(i>>48)
+		b[2], b[3] = byte(i>>40), byte(i>>32)
+		b[4], b[5] = byte(i>>24), byte(i>>16)
+		b[6], b[7] = byte(i>>8), byte(i)
 		h.Write(b)
 	case uint64:
-		binary.BigEndian.PutUint64(b, v.(uint64))
+		b[0], b[1] = byte(i>>56), byte(i>>48)
+		b[2], b[3] = byte(i>>40), byte(i>>32)
+		b[4], b[5] = byte(i>>24), byte(i>>16)
+		b[6], b[7] = byte(i>>8), byte(i)
 		h.Write(b)
 	case int:
-		binary.BigEndian.PutUint64(b, uint64(v.(int)))
+		b[0], b[1] = byte(i>>56), byte(i>>48)
+		b[2], b[3] = byte(i>>40), byte(i>>32)
+		b[4], b[5] = byte(i>>24), byte(i>>16)
+		b[6], b[7] = byte(i>>8), byte(i)
 		h.Write(b)
 	case uint:
-		binary.BigEndian.PutUint64(b, uint64(v.(uint)))
+		b[0], b[1] = byte(i>>56), byte(i>>48)
+		b[2], b[3] = byte(i>>40), byte(i>>32)
+		b[4], b[5] = byte(i>>24), byte(i>>16)
+		b[6], b[7] = byte(i>>8), byte(i)
 		h.Write(b)
 	case fmt.Stringer:
 		h.Write([]byte(v.(fmt.Stringer).String()))
 	default:
-		bufs.Put(b)
+		bufs.Put(&b)
 		return fmt.Errorf("type %T: %w", v, ErrCannotSum)
 	}
-	bufs.Put(b)
+	bufs.Put(&b)
 	return nil
 }
-
-// Write is an alias to Sum and is used to fit the io.Writer interface.
-func (h *Hasher) Write(b []byte) (int, error) {
+func (h *hasher) Write(b []byte) (int, error) {
 	if h.h == nil {
 		h.h = seahash.New()
 	}
