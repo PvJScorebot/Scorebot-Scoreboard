@@ -31,13 +31,13 @@ import (
 	"time"
 
 	"github.com/PurpleSec/logx"
+	"github.com/PurpleSec/parseurl"
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/gorilla/websocket"
 	"github.com/stvp/slug"
 )
 
-// ErrMissingGame is returned when attempting to Unmarshal a Hello struct that does not contain a Game ID mapping.
-var ErrMissingGame = errors.New("game ID is missing from JSON data")
+var errMissingGame = errors.New("game ID is missing from JSON data")
 
 type hello uint64
 type tweet struct {
@@ -133,11 +133,11 @@ func (m *Manager) New(n *websocket.Conn) {
 	if !ok || s == nil {
 		m.log.Debug("Checking Game ID %d, requested by %q...", h, n.RemoteAddr().String())
 		var g game
-		//if err := m.getJSON(context.Background(), fmt.Sprintf("api/scoreboard/%d/", h), &g); err != nil {
-		//	m.log.Error("Error retriving data for Game ID %d: %s!", h, err.Error())
-		//	n.Close()
-		//	return
-		//}
+		if err := m.getJSON(context.Background(), fmt.Sprintf("api/scoreboard/%d/", h), &g); err != nil {
+			m.log.Error("Error retriving data for Game ID %d: %s!", h, err.Error())
+			n.Close()
+			return
+		}
 		if len(g.Meta.Name) == 0 && len(g.Teams) == 0 {
 			m.log.Error("Game ID %d is empty, ignoring!", h)
 			n.Close()
@@ -245,7 +245,7 @@ func (h *hello) UnmarshalJSON(b []byte) error {
 	}
 	v, ok := m["game"]
 	if !ok {
-		return ErrMissingGame
+		return errMissingGame
 	}
 	*h = hello(v)
 	return nil
@@ -439,7 +439,7 @@ func (m Manager) getJSON(x context.Context, u string, o interface{}) error {
 
 // New creates a collection instance from the provided logger, timeout and API URL endpoint.
 func New(burl, d string, tick, t time.Duration, l logx.Log) (*Manager, error) {
-	u, err := url.Parse(burl)
+	u, err := parseurl.Parse(burl)
 	if err != nil {
 		return nil, fmt.Errorf("could not unpack provided URL %q: %w", burl, err)
 	}

@@ -27,9 +27,7 @@ import (
 )
 
 var (
-	// ErrCannotSum is an error returned by the function 'Add'. This is returned when the passed interface is
-	// not a primitive type.
-	ErrCannotSum = errors.New("cannot hash the requested type")
+	errCannotSum = errors.New("cannot hash the requested type")
 
 	bufs = sync.Pool{
 		New: func() interface{} {
@@ -140,7 +138,7 @@ func (h *hasher) Hash(v interface{}) error {
 		h.Write([]byte(v.(fmt.Stringer).String()))
 	default:
 		bufs.Put(&b)
-		return fmt.Errorf("type %T: %w", v, ErrCannotSum)
+		return fmt.Errorf("type %T: %w", v, errCannotSum)
 	}
 	bufs.Put(&b)
 	return nil
