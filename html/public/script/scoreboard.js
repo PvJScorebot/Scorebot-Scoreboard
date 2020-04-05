@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.If not, see <https://www.gnu.org/licenses/>.
 //
-//  Scoreboard v2.0
+//  Scoreboard v2.0.2
 //  2019 iDigitalFlame, The Scorebot Project, CTF Factory
 //
 //  Javascript Main File

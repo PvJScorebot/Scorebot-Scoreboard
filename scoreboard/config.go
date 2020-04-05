@@ -72,7 +72,6 @@ type configFilter struct {
 type configTwitter struct {
 	Filter      configFilter `json:"filter"`
 	Expire      int          `json:"expire"`
-	Timeout     int          `json:"timeout"`
 	Credentials configCreds  `json:"auth"`
 }
 
@@ -84,8 +83,8 @@ func defaults() {
 	c.Twitter.Filter.OnlyUsers = []string{}
 	c.Twitter.Filter.Language = []string{"en"}
 	c.Log.File, c.Log.Level = "scoreboard.log", 2
-	c.Tick, c.Timeout = defaultTick, defaultTimeout
 	c.Twitter.Filter.Keywords = []string{"pvj", "ctf"}
+	c.Tick, c.Timeout, c.Twitter.Expire = defaultTick, defaultTimeout, defaultExpire
 	c.Twitter.Filter.BlockedUsers, c.Twitter.Filter.BlockedWords = []string{}, []string{}
 	b, _ := json.MarshalIndent(c, "", "    ")
 	fmt.Fprintln(os.Stdout, string(b))
@@ -101,10 +100,10 @@ func split(s string) []string {
 	return o
 }
 func (c *config) verify() error {
-	if c.Tick < 0 {
+	if c.Tick <= 0 {
 		return fmt.Errorf("tick cannot be less than or equal to zero: %w", errInvalidNumber)
 	}
-	if c.Timeout < 0 {
+	if c.Timeout <= 0 {
 		return fmt.Errorf("timeout cannot be less than or equal to zero: %w", errInvalidNumber)
 	}
 	if c.Log.Level < int(logx.Trace) || c.Log.Level > int(logx.Fatal) {
@@ -122,6 +121,9 @@ func (c *config) verify() error {
 	}
 	if len(c.Twitter.Credentials.ConsumerKey) == 0 || len(c.Twitter.Credentials.ConsumerSecret) == 0 {
 		c.twitter = false
+	}
+	if c.twitter && c.Twitter.Expire <= 0 {
+		return fmt.Errorf("tweet expire time cannot be less than or equal to zero: %w", errInvalidNumber)
 	}
 	return nil
 }
@@ -158,12 +160,12 @@ func Cmdline() (*Scoreboard, error) {
 	args.StringVar(&c.Twitter.Credentials.ConsumerSecret, "tw-cs", "", "Twitter Consumer API secret.")
 	args.StringVar(&c.Twitter.Credentials.AccessKey, "tw-ak", "", "Twitter Access API key.")
 	args.StringVar(&c.Twitter.Credentials.AccessSecret, "tw-as", "", "Twitter Access API secret.")
-	args.StringVar(&twk, "tw-keywords", "", "Twitter search keywords (Comma seperated)")
-	args.StringVar(&twl, "tw-lang", "", "Twitter search language (Comma seperated)")
+	args.StringVar(&twk, "tw-keywords", "", "Twitter search keywords (Comma separated)")
+	args.StringVar(&twl, "tw-lang", "", "Twitter search language (Comma separated)")
 	args.IntVar(&c.Twitter.Expire, "tw-expire", defaultExpire, "Tweet display time, in seconds (Default 45).")
-	args.StringVar(&twbWords, "tw-block-words", "", "Twitter blocked words (Comma seperated).")
-	args.StringVar(&twbUsers, "tw-block-user", "", "Twitter blocked Usernames (Comma seperated).")
-	args.StringVar(&twoUsers, "tw-only-users", "", "Twitter whitelisted Usernames (Comma seperated).")
+	args.StringVar(&twbWords, "tw-block-words", "", "Twitter blocked words (Comma separated).")
+	args.StringVar(&twbUsers, "tw-block-user", "", "Twitter blocked Usernames (Comma separated).")
+	args.StringVar(&twoUsers, "tw-only-users", "", "Twitter whitelisted Usernames (Comma separated).")
 	if err := args.Parse(os.Args[1:]); err != nil {
 		fmt.Fprintf(os.Stderr, usage, version, os.Args[0])
 		return nil, flag.ErrHelp

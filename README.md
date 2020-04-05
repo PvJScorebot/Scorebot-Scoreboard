@@ -27,55 +27,39 @@ bash build.sh
 
 ## Parameters
 
-The Scorebord can be configured by command line options, though it's preferred to use a config file instead. (Below).
+The Scoreboard can be configured by command line options, though it's preferred to use a config file instead. (Below).
 
 ```text
-Scorebot Scoreboard v2.0
+Scorebot Scoreboard v2.0.2
 
-Usage:
-  -assets string
-        Secondary Assets Override URL.
-  -bind string
-        Address and Port to Listen on. (default "0.0.0.0:8080")
-  -c string
-        Scorebot Config File Path.
-  -cert string
-        Path to TLS Certificate File.
-  -d    Print Default Config and Exit.
-  -dir string
-        Scoreboard HTML Directory Path.
-  -key string
-        Path to TLS Key File.
-  -log string
-        Scoreboard Log File Path.
-  -log-level int
-        Scoreboard Log Level. (default 2)
-  -sbe string
-        Scorebot Core Address or URL.
-  -tick int
-        Scoreboard Poll Rate. (in seconds) (default 5)
-  -timeout int
-        Scoreboard Request Timeout. (in seconds) (default 10)
-  -tw-ak string
-        Twitter Access API Key.
-  -tw-as string
-        Twitter Access API Secret.
-  -tw-block-user string
-        Twitter Blocked Usernames. (comma separated)
-  -tw-block-words string
-        Twitter Blocked Words. (comma separated)
-  -tw-ck string
-        Twitter Consumer API Key.
-  -tw-cs string
-        Twitter Consumer API Secret.
-  -tw-expire int
-        Tweet Display Time. (in seconds) (default 45)
-  -tw-keywords string
-        Twitter Search Keywords. (comma separated)
-  -tw-lang string
-        Twitter Search Language. (comma separated)
-  -tw-only-users string
-        Twitter Whitelisted Usernames. (comma separated)
+Leaving any of the required Twitter options empty in command
+line or config will result in Twitter functionality being disabled.
+Required Twitter options: 'Consumer Key and Secret', 'Access Key and Secret',
+'Twitter Keywords' and 'Twitter Language'.
+
+Usage of scorebot-scoreboard:
+  -c <file>                 Scorebot configuration file path.
+  -d                        Print default configuration and exit.
+  -sbe <url>                Scorebot core address or URL (Required without "-c").
+  -assets <dir>             Scoreboard secondary assets override URL.
+  -dir <directory>          Scoreboard HTML override directory path.
+  -log <file>               Scoreboard log file path.
+  -log-level <number [0-5]> Scoreboard logging level (Default 2).
+  -tick <seconds>           Scorebot poll tate, in seconds (Default 5).
+  -timeout <seconds>        Scoreboard request timeout, in seconds (Default 10).
+  -bind <socket>            Address and port to listen on (Default "0.0.0.0:8080").
+  -cert <file>              Path to TLS certificate file.
+  -key <file>               Path to TLS key file.
+  -tw-ck <key>              Twitter Consumer API key.
+  -tw-cs <secret>           Twitter Consumer API secret.
+  -tw-ak <key>              Twitter Access API key.
+  -tw-as <secret>           Twitter Access API secret.
+  -tw-keywords <list>       Twitter search keywords (Comma separated)
+  -tw-lang <list>           Twitter search language (Comma separated)
+  -tw-expire <seconds>      Tweet display time, in seconds (Default 45).
+  -tw-block-words <list>    Twitter blocked words (Comma separated).
+  -tw-block-user <list>     Twitter blocked Usernames (Comma separated).
+  -tw-only-users <list>     Twitter whitelisted Usernames (Comma separated).
 ```
 
 ## Config File
@@ -88,7 +72,7 @@ Default Config:
 ```json
 {
     "log": {
-        "file": "",
+        "file": "scoreboard.log",
         "level": 2
     },
     "tick": 5,
@@ -108,7 +92,6 @@ Default Config:
             "banned_words": []
         },
         "expire": 45,
-        "timeout": 10,
         "auth": {
             "access_key": "",
             "consumer_key": "",

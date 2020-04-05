@@ -47,7 +47,7 @@ const (
 	usage = `Scorebot Scoreboard v%.1f
 
 Leaving any of the required Twitter options empty in command
-line or config will result in Twiter functionality being disabled.
+line or config will result in Twitter functionality being disabled.
 Required Twitter options: 'Consumer Key and Secret', 'Access Key and Secret',
 'Twitter Keywords' and 'Twitter Language'.
 
@@ -71,9 +71,9 @@ Usage of %s:
   -tw-keywords <list>       Twitter search keywords (Comma separated)
   -tw-lang <list>           Twitter search language (Comma separated)
   -tw-expire <seconds>      Tweet display time, in seconds (Default 45).
-  -tw-block-words <list>    Twitter blocked words (Comma seperated).
-  -tw-block-user <list>     Twitter blocked Usernames (Comma seperated).
-  -tw-only-users <list>     Twitter whitelisted Usernames (Comma seperated).
+  -tw-block-words <list>    Twitter blocked words (Comma separated).
+  -tw-block-user <list>     Twitter blocked Usernames (Comma separated).
+  -tw-only-users <list>     Twitter whitelisted Usernames (Comma separated).
 
 Copyright (C) 2020 iDigitalFlame
 
@@ -91,7 +91,7 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 `
-	version = 2.0
+	version = 2.02
 )
 
 var resources = packr.New("html", "../html")
