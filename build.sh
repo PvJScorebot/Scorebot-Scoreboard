@@ -27,7 +27,7 @@ if [ $? -ne 0 ]; then
 fi
 
 printf "Building...\n"
-bash -c "cd scoreboard; packr2; go build -race -trimpath -ldflags '-s -w' -o '$output' cmd/main.go; packr2 clean"
+bash -c "cd scoreboard; packr2; go build -trimpath -ldflags '-s -w' -o '$output' cmd/main.go; packr2 clean"
 
 which upx &> /dev/null
 if [ $? -eq 0 ] && [ -f "$output" ]; then
