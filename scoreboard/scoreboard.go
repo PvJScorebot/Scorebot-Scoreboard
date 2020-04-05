@@ -319,13 +319,13 @@ func (s *Scoreboard) RunContext(ctx context.Context) error {
 }
 func (s *Scoreboard) http(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		//http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
 	if len(r.URL.Path) <= 1 || r.URL.Path == "/" {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		if err := s.html.ExecuteTemplate(w, "home.html", s.Manager.Games); err != nil {
-			//http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			s.log.Error("Error during request from %q: %s", r.RemoteAddr, err.Error())
 		}
 		return
@@ -354,14 +354,14 @@ func (s *Scoreboard) http(w http.ResponseWriter, r *http.Request) {
 	s.log.Debug("Received scoreboard request from %q...", r.RemoteAddr)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := s.html.ExecuteTemplate(w, "scoreboard.html", &display{Game: v, Twitter: s.feed != nil}); err != nil {
-		//http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		s.log.Error("Error during request from %q: %s!", r.RemoteAddr, err.Error())
 	}
 }
 func (s *Scoreboard) httpWebsocket(w http.ResponseWriter, r *http.Request) {
 	c, err := s.ws.Upgrade(w, r, nil)
 	if err != nil {
-		//http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 	s.Manager.New(c)
