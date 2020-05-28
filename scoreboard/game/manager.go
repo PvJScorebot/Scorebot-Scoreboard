@@ -192,7 +192,7 @@ func (m *Manager) update(x context.Context) {
 	}
 	for i := range m.Games {
 		n := slug.Clean(m.Games[i].Name)
-		if !m.Games[i].active() {
+		if !m.Games[i].Active() {
 			delete(m.active, n)
 			continue
 		}

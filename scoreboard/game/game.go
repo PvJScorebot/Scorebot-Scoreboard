@@ -74,7 +74,7 @@ type game struct {
 func (g game) Len() int {
 	return len(g.Teams)
 }
-func (m meta) active() bool {
+func (m meta) Active() bool {
 	return m.Status != cancelled && m.Status != completed
 }
 func (m mode) String() string {
