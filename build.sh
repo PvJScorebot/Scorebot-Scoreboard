@@ -27,6 +27,11 @@ if [ $? -ne 0 ]; then
 fi
 
 packr=$(which packr2)
+if [ -z "$packr" ]; then
+    printf "Could not find 'packr2' in your \$PATH!\nMake sure your \$GOPATH is in \$PATH!\n"
+    exit 1
+fi
+
 printf "Building...\n"
 bash -c "cd scoreboard; $packr"
 cat <<EOF > scoreboard/scoreboard-packr.go
