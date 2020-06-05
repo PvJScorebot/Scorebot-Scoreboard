@@ -311,11 +311,12 @@ func (s *Scoreboard) RunContext(ctx context.Context) error {
 	s.log.Info("Stopping and shutting down...")
 	f, u := context.WithTimeout(x, s.ReadTimeout)
 	s.Server.Shutdown(f)
+	err := s.Server.Close()
 	u()
 	c()
 	close(e)
 	close(w)
-	return s.Server.Close()
+	return err
 }
 func (s *Scoreboard) http(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {

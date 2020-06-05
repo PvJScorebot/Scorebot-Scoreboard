@@ -26,8 +26,16 @@ if [ $? -ne 0 ]; then
     bash -c "cd scoreboard; go get -u github.com/gobuffalo/packr/v2/packr2"
 fi
 
+packr=$(which packr2)
 printf "Building...\n"
-bash -c "cd scoreboard; packr2; go build -trimpath -ldflags '-s -w' -o '$output' cmd/main.go; packr2 clean"
+bash -c "cd scoreboard; $packr"
+cat <<EOF > scoreboard/scoreboard-packr.go
+// +build !skippackr
+package scoreboard
+
+import _ "github.com/iDigitalFlame/scorebot-scoreboard/scoreboard/packrd"
+EOF
+bash -c "cd scoreboard; go build -trimpath -ldflags '-s -w' -o '$output' cmd/main.go; $packr clean"
 
 which upx &> /dev/null
 if [ $? -eq 0 ] && [ -f "$output" ]; then

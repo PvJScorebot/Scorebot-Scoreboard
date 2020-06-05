@@ -32,7 +32,7 @@ var (
 	bufs = sync.Pool{
 		New: func() interface{} {
 			b := make([]byte, 8)
-			return b
+			return &b
 		},
 	}
 )
