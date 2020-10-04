@@ -16,7 +16,7 @@
 
 package game
 
-import "fmt"
+import "strconv"
 
 var (
 	emptyTweet  tweet
@@ -54,34 +54,34 @@ func (e *events) Hash(h *hasher) uint64 {
 }
 func compareTweet(p *planner, n, o tweet) {
 	if o.ID == 0 {
-		p.DeltaValue(fmt.Sprintf("tweet-t%d", n.ID), "", "tweet")
+		p.DeltaValue("tweet-t"+strconv.FormatUint(n.ID, 64), "", "tweet")
 	} else {
-		p.Value(fmt.Sprintf("tweet-t%d", n.ID), "", "tweet")
+		p.Value("tweet-t"+strconv.FormatUint(n.ID, 64), "", "tweet")
 	}
-	p.Prefix(fmt.Sprintf("%s-tweet-t%d", p.prefix, n.ID))
+	p.Prefix(p.prefix + "-tweet-t" + strconv.FormatUint(n.ID, 64))
 	if o.ID > 0 {
 		p.Value("pic", "", "tweet-pic")
-		p.Property("pic-img", fmt.Sprintf("url('%s')", n.UserPhoto), "background-image")
+		p.Property("pic-img", "url('"+n.UserPhoto+"')", "background-image")
 		p.Value("user", n.User, "tweet-user")
 		p.Value("user-name", n.UserName, "tweet-username")
 		p.Value("user-content", n.Text, "tweet-content")
 		p.Value("image", "", "tweet-media")
 		for x := range n.Images {
-			p.Value(fmt.Sprintf("image-%d", x), "", "tweet-image")
-			p.Property(fmt.Sprintf("image-%d", x), fmt.Sprintf("url('%s')", n.Images[x]), "background-image")
+			p.Value("image-"+strconv.Itoa(x), "", "tweet-image")
+			p.Property("image-"+strconv.Itoa(x), "url('"+n.Images[x]+"')", "background-image")
 		}
 		p.rollbackPrefix()
 		return
 	}
 	p.DeltaValue("pic", "", "tweet-pic")
-	p.DeltaProperty("pic-img", fmt.Sprintf("url('%s')", n.UserPhoto), "background-image")
+	p.DeltaProperty("pic-img", "url('"+n.UserPhoto+"')", "background-image")
 	p.DeltaValue("user", n.User, "tweet-user")
 	p.DeltaValue("user-name", n.UserName, "tweet-username")
 	p.DeltaValue("user-content", n.Text, "tweet-content")
 	p.DeltaValue("image", "", "tweet-media")
 	for x := range n.Images {
-		p.DeltaValue(fmt.Sprintf("image-%d", x), "", "tweet-image")
-		p.DeltaProperty(fmt.Sprintf("image-%d", x), fmt.Sprintf("url('%s')", n.Images[x]), "background-image")
+		p.DeltaValue("image-"+strconv.Itoa(x), "", "tweet-image")
+		p.DeltaProperty("image-"+strconv.Itoa(x), "url('"+n.Images[x]+"')", "background-image")
 	}
 	p.rollbackPrefix()
 }
@@ -113,7 +113,7 @@ func (g game) compareTweets(p *planner, o *game) {
 	for k, v := range c {
 		switch {
 		case !v.Second():
-			p.Remove(fmt.Sprintf("tweet-t%d", k))
+			p.Remove("tweet-t" + strconv.FormatUint(k, 64))
 		case !v.First():
 			compareTweet(p, v.B.(tweet), emptyTweet)
 		default:
@@ -154,10 +154,7 @@ func (e *events) Compare(p *planner, o events) {
 	}
 }
 func (e *events) setWindowEvent(p *planner, w event) {
-	if w.Type <= 0 {
-		return
-	}
-	if e.Window.ID == w.ID {
+	if w.Type <= 0 || e.Window.ID == w.ID {
 		return
 	}
 	if e.Window.ID > 0 {

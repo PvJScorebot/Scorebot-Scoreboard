@@ -18,7 +18,7 @@ package game
 
 import (
 	"encoding/json"
-	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -123,11 +123,11 @@ func (s *service) Hash(h *hasher) uint64 {
 }
 func (h host) Compare(p *planner, o host) {
 	if o.ID == 0 {
-		p.DeltaValue(fmt.Sprintf("host-h%d", h.ID), "", "host")
+		p.DeltaValue("host-h"+strconv.FormatUint(h.ID, 64), "", "host")
 	} else {
-		p.Value(fmt.Sprintf("host-h%d", h.ID), "", "host")
+		p.Value("host-h"+strconv.FormatUint(h.ID, 64), "", "host")
 	}
-	p.Prefix(fmt.Sprintf("%s-host-h%d", p.prefix, h.ID))
+	p.Prefix(p.prefix + "-host-h" + strconv.FormatUint(h.ID, 64))
 	if o.hash == h.hash {
 		p.Value("name", h.Name, "host-name")
 		if h.Online {
@@ -159,7 +159,7 @@ func (h host) Compare(p *planner, o host) {
 		for k, v := range c {
 			switch {
 			case !v.Second():
-				p.Remove(fmt.Sprintf("s%d", k))
+				p.Remove("s" + strconv.FormatUint(k, 64))
 			case !v.First():
 				v.B.(service).Compare(p, emptyService)
 			default:
@@ -188,11 +188,11 @@ func (s *state) UnmarshalJSON(b []byte) error {
 }
 func (s service) Compare(p *planner, o service) {
 	if o.ID == 0 {
-		p.DeltaValue(fmt.Sprintf("s%d", s.ID), "", "service")
+		p.DeltaValue("s"+strconv.FormatUint(s.ID, 64), "", "service")
 	} else {
-		p.Value(fmt.Sprintf("s%d", s.ID), "", "service")
+		p.Value("s"+strconv.FormatUint(s.ID, 64), "", "service")
 	}
-	p.Prefix(fmt.Sprintf("%s-s%d", p.prefix, s.ID))
+	p.Prefix(p.prefix + "-s" + strconv.FormatUint(s.ID, 64))
 	if o.hash == s.hash {
 		p.Value("port", s.Port, s.State.class())
 		p.Value("protocol", s.Protocol.String(), "service-protocol")

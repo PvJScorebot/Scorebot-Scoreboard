@@ -18,8 +18,8 @@ package game
 
 import (
 	"encoding/json"
-	"fmt"
 	"sort"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -51,14 +51,15 @@ var (
 type mode uint8
 type status uint8
 type meta struct {
-	ID     uint64    `json:"id"`
-	End    time.Time `json:"end"`
-	Name   string    `json:"name"`
-	Mode   mode      `json:"mode"`
-	Start  time.Time `json:"start"`
-	Status status    `json:"status"`
+	End   time.Time `json:"end"`
+	Start time.Time `json:"start"`
+	Name  string    `json:"name"`
 
+	ID   uint64 `json:"id"`
 	hash uint64
+
+	Mode   mode   `json:"mode"`
+	Status status `json:"status"`
 }
 type game struct {
 	Meta    meta
@@ -100,15 +101,10 @@ func (m meta) String() string {
 		return ""
 	}
 	if m.End.IsZero() {
-		return fmt.Sprintf(
-			"<span>%s</span>", m.Start.In(time.UTC).Format("03:04 Jan 2 2006"),
-		)
+		return "<span>" + m.Start.In(time.UTC).Format("03:04 Jan 2 2006") + "</span>"
 	}
-	return fmt.Sprintf(
-		"<span>%s</span> to <span>%s</span>",
-		m.Start.In(time.UTC).Format("03:04 Jan 2 2006"),
-		m.End.In(time.UTC).Format("03:04 Jan 2 2006"),
-	)
+	return "<span>" + m.Start.In(time.UTC).Format("03:04 Jan 2 2006") + "</span> to <span>" +
+		m.End.In(time.UTC).Format("03:04 Jan 2 2006") + "</span>"
 }
 func (s status) String() string {
 	switch s {
@@ -214,7 +210,7 @@ func (g *game) Compare(p *planner, o *game) {
 	for k, v := range c {
 		switch {
 		case !v.Second():
-			p.Remove(fmt.Sprintf("team-t%d", k))
+			p.Remove("team-t" + strconv.FormatUint(k, 64))
 		case !v.First():
 			v.B.(team).Compare(p, emptyTeam)
 		default:
@@ -246,7 +242,7 @@ func (g *game) Delta(s string, old *game) ([]update, []update) {
 			if g.Teams[i].Logo == "default.png" || len(g.Teams[i].Logo) == 0 {
 				g.Teams[i].Logo = "/image/team.png"
 			} else {
-				g.Teams[i].Logo = fmt.Sprintf("%s%s", s, g.Teams[i].Logo)
+				g.Teams[i].Logo = s + g.Teams[i].Logo
 			}
 			g.Teams[i].Hash(h)
 		}

@@ -26,16 +26,12 @@ import (
 	"blainsmith.com/go/seahash"
 )
 
-var (
-	errCannotSum = errors.New("cannot hash the requested type")
-
-	bufs = sync.Pool{
-		New: func() interface{} {
-			b := make([]byte, 8)
-			return &b
-		},
-	}
-)
+var bufs = sync.Pool{
+	New: func() interface{} {
+		b := make([]byte, 8)
+		return &b
+	},
+}
 
 type hasher struct {
 	h, s hash.Hash64
@@ -138,7 +134,7 @@ func (h *hasher) Hash(v interface{}) error {
 		h.Write([]byte(v.(fmt.Stringer).String()))
 	default:
 		bufs.Put(&b)
-		return fmt.Errorf("type %T: %w", v, errCannotSum)
+		return errors.New("cannot hash the requested type: " + fmt.Sprintf("%T", v))
 	}
 	bufs.Put(&b)
 	return nil

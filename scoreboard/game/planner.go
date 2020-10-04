@@ -78,25 +78,27 @@ func printStr(v interface{}) string {
 	case int:
 		s = strconv.Itoa(i)
 	case uint:
-		s = strconv.Itoa(int(i))
+		s = strconv.FormatUint(uint64(i), 64)
 	case int8:
 		s = strconv.Itoa(int(i))
 	case uint8:
-		s = strconv.Itoa(int(i))
+		s = strconv.FormatUint(uint64(i), 8)
 	case int16:
 		s = strconv.Itoa(int(i))
 	case uint16:
-		s = strconv.Itoa(int(i))
+		s = strconv.FormatUint(uint64(i), 16)
 	case int32:
 		s = strconv.Itoa(int(i))
 	case uint32:
-		s = strconv.Itoa(int(i))
+		s = strconv.FormatUint(uint64(i), 32)
 	case int64:
 		s = strconv.Itoa(int(i))
 	case uint64:
-		s = strconv.Itoa(int(i))
-	case float32, float64:
-		s = fmt.Sprintf("%.02f", v)
+		s = strconv.FormatUint(uint64(i), 64)
+	case float32:
+		s = strconv.FormatFloat(float64(i), 'f', 2, 32)
+	case float64:
+		s = strconv.FormatFloat(i, 'f', 2, 64)
 	default:
 		s = fmt.Sprintf("%s", v)
 	}
@@ -107,7 +109,7 @@ func (p *planner) Remove(i interface{}) {
 	if len(u.ID) == 0 {
 		u.ID = p.prefix
 	} else if len(p.prefix) > 0 {
-		u.ID = fmt.Sprintf("%s-%s", p.prefix, u.ID)
+		u.ID = p.prefix + "-" + u.ID
 	}
 	p.Delta = append(p.Delta, u)
 }
@@ -124,7 +126,7 @@ func (p *planner) Value(i, v interface{}, c string) {
 	if len(u.ID) == 0 {
 		u.ID = p.prefix
 	} else if len(p.prefix) > 0 {
-		u.ID = fmt.Sprintf("%s-%s", p.prefix, u.ID)
+		u.ID = p.prefix + "-" + u.ID
 	}
 	p.Create = append(p.Create, u)
 }
@@ -133,7 +135,7 @@ func (p *planner) Property(i, v interface{}, s string) {
 	if len(u.ID) == 0 {
 		u.ID = p.prefix
 	} else if len(p.prefix) > 0 {
-		u.ID = fmt.Sprintf("%s-%s", p.prefix, u.ID)
+		u.ID = p.prefix + "-" + u.ID
 	}
 	p.Create = append(p.Create, u)
 }
@@ -142,7 +144,7 @@ func (p *planner) DeltaValue(i, v interface{}, c string) {
 	if len(u.ID) == 0 {
 		u.ID = p.prefix
 	} else if len(p.prefix) > 0 {
-		u.ID = fmt.Sprintf("%s-%s", p.prefix, u.ID)
+		u.ID = p.prefix + "-" + u.ID
 	}
 	p.Delta = append(p.Delta, u)
 	p.Create = append(p.Create, u)
@@ -152,7 +154,7 @@ func (p *planner) DeltaProperty(i, v interface{}, s string) {
 	if len(u.ID) == 0 {
 		u.ID = p.prefix
 	} else if len(p.prefix) > 0 {
-		u.ID = fmt.Sprintf("%s-%s", p.prefix, u.ID)
+		u.ID = p.prefix + "-" + u.ID
 	}
 	p.Delta = append(p.Delta, u)
 	p.Create = append(p.Create, u)
@@ -167,10 +169,10 @@ func (p *planner) Event(i uint64, t uint8, d map[string]string) {
 }
 func (p *planner) DeltaEvent(i uint64, t uint8, d map[string]string) {
 	u := update{
-		ID:    strconv.Itoa(int(i)),
+		ID:    strconv.FormatUint(i, 64),
 		Data:  d,
 		Event: true,
-		Value: strconv.Itoa(int(t)),
+		Value: strconv.FormatUint(uint64(t), 8),
 	}
 	p.Delta = append(p.Delta, u)
 	p.Create = append(p.Create, u)

@@ -20,12 +20,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
 	"path"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -133,7 +133,7 @@ func (m *Manager) New(n *websocket.Conn) {
 	if !ok || s == nil {
 		m.log.Debug("Checking Game ID %d, requested by %q...", h, n.RemoteAddr().String())
 		var g game
-		if err := m.getJSON(context.Background(), fmt.Sprintf("api/scoreboard/%d/", h), &g); err != nil {
+		if err := m.getJSON(context.Background(), "api/scoreboard/"+strconv.FormatUint(uint64(h), 64)+"/", &g); err != nil {
 			m.log.Error("Error retriving data for Game ID %d: %s!", h, err.Error())
 			n.Close()
 			return
@@ -294,9 +294,9 @@ func (t *tweets) update(x context.Context, m *Manager) {
 		)
 		if x.Retweeted {
 			if len(r.Text) > 0 {
-				r.Text = fmt.Sprintf("%s\nRT @%s: %s", r.Text, x.RetweetedStatus.User.ScreenName, x.RetweetedStatus.Text)
+				r.Text = r.Text + "\nRT @" + x.RetweetedStatus.User.ScreenName + ": " + x.RetweetedStatus.Text
 			} else {
-				r.Text = fmt.Sprintf("RT @%s: %s", x.RetweetedStatus.User.ScreenName, x.RetweetedStatus.Text)
+				r.Text = "RT @" + x.RetweetedStatus.User.ScreenName + ": " + x.RetweetedStatus.Text
 			}
 		}
 		if len(x.Entities.Media) > 0 {
@@ -339,7 +339,7 @@ func (s *subscription) update(x context.Context, m *Manager) {
 	}
 	m.log.Debug("Checking for update for subscribed Game %d...", s.ID)
 	var g game
-	if err := m.getJSON(x, fmt.Sprintf("api/scoreboard/%d/", s.ID), &g); err != nil {
+	if err := m.getJSON(x, "api/scoreboard/"+strconv.FormatUint(s.ID, 64), &g); err != nil {
 		m.log.Error("Error retriving data for Game ID %d: %s!", s.ID, err.Error())
 		return
 	}
@@ -400,7 +400,7 @@ func (m *Manager) Twitter(t time.Duration) chan *twitter.Tweet {
 	return m.twitter.new
 }
 func (m Manager) get(x context.Context, u string) ([]byte, error) {
-	m.url.Path = fmt.Sprintf("%s/", path.Join(m.url.Path, u))
+	m.url.Path = path.Join(m.url.Path, u) + "/"
 	var (
 		c, f   = context.WithTimeout(x, m.timeout)
 		r, err = http.NewRequestWithContext(c, http.MethodGet, m.url.String(), nil)
@@ -414,15 +414,15 @@ func (m Manager) get(x context.Context, u string) ([]byte, error) {
 		return nil, err
 	}
 	if o.Body == nil {
-		return nil, fmt.Errorf("request %q returned an empty body", m.url.String())
+		return nil, errors.New(`request "` + m.url.String() + `" returned an empty body`)
 	}
 	defer o.Body.Close()
 	if o.StatusCode >= 400 {
-		return nil, fmt.Errorf("request %q returned status code %d", m.url.String(), o.StatusCode)
+		return nil, errors.New(`request "` + m.url.String() + `" returned status code ` + strconv.Itoa(o.StatusCode))
 	}
 	b, err := ioutil.ReadAll(o.Body)
 	if err != nil {
-		return nil, fmt.Errorf("error reading from URL %q: %w", m.url.String(), err)
+		return nil, errors.New(`error reading from the URL "` + m.url.String() + `": ` + err.Error())
 	}
 	return b, nil
 }
@@ -432,7 +432,7 @@ func (m Manager) getJSON(x context.Context, u string, o interface{}) error {
 		return err
 	}
 	if err := json.Unmarshal(r, &o); err != nil {
-		return fmt.Errorf("unable to unmarshal JSON: %w", err)
+		return errors.New(`unable to unmarshal JSON from "` + u + `": ` + err.Error())
 	}
 	return nil
 }
@@ -441,7 +441,7 @@ func (m Manager) getJSON(x context.Context, u string, o interface{}) error {
 func New(burl, d string, tick, t time.Duration, l logx.Log) (*Manager, error) {
 	u, err := parseurl.Parse(burl)
 	if err != nil {
-		return nil, fmt.Errorf("could not unpack provided URL %q: %w", burl, err)
+		return nil, errors.New(`could not unpack URL "` + burl + `": ` + err.Error())
 	}
 	if !u.IsAbs() {
 		u.Scheme = "http"

@@ -18,9 +18,8 @@ package scoreboard
 
 import (
 	"context"
-	"fmt"
 	"net/http"
-	"net/http/pprof"
+	"net/url"
 	"os"
 	"os/signal"
 	"path"
@@ -39,19 +38,15 @@ import (
 	"github.com/iDigitalFlame/scorebot-scoreboard/scoreboard/game"
 )
 
-// Debug is a boolean that enables the pprof debugging interface. If this is enabled, the memory
-// and profiling pages are accessable. DO NOT ENABLE DURING PRODUCTION.
-const Debug = false
-
 const (
-	usage = `Scorebot Scoreboard v%.1f
+	usage = `Scorebot Scoreboard
 
 Leaving any of the required Twitter options empty in command
 line or config will result in Twitter functionality being disabled.
 Required Twitter options: 'Consumer Key and Secret', 'Access Key and Secret',
 'Twitter Keywords' and 'Twitter Language'.
 
-Usage of %s:
+Usage of scoreboard:
   -c <file>                 Scorebot configuration file path.
   -d                        Print default configuration and exit.
   -sbe <url>                Scorebot core address or URL (Required without "-c").
@@ -91,7 +86,7 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 `
-	version = 2.02
+	version = 2.2
 )
 
 var resources = packr.New("html", "../html")
@@ -99,6 +94,10 @@ var resources = packr.New("html", "../html")
 type display struct {
 	Game    uint64
 	Twitter bool
+}
+type errorval struct {
+	e error
+	s string
 }
 
 // Scoreboard is a struct that represents the Scoreboard multiplexer. This struct is used to gather and
@@ -112,7 +111,7 @@ type Scoreboard struct {
 	cert   string
 	feed   *twitter.Stream
 	html   *template.Template
-	filter configFilter
+	filter filter
 	expire time.Duration
 	*game.Manager
 	*http.Server
@@ -124,7 +123,21 @@ type Scoreboard struct {
 func (s *Scoreboard) Run() error {
 	return s.RunContext(context.Background())
 }
-func (c config) new() (*Scoreboard, error) {
+func (e errorval) Error() string {
+	if e.e == nil {
+		return e.s
+	}
+	return e.s + ": " + e.e.Error()
+}
+func (e errorval) Unwrap() error {
+	return e.e
+}
+
+// New creates a new scoreboard instance from the provided Config struct. Any errors during setup will be returned.
+func (c Config) New() (*Scoreboard, error) {
+	if err := c.verify(); err != nil {
+		return nil, err
+	}
 	var (
 		t    = time.Second * time.Duration(c.Timeout)
 		err  error
@@ -134,10 +147,10 @@ func (c config) new() (*Scoreboard, error) {
 		p = filepath.Join(c.Directory, "public")
 		d, err := os.Stat(p)
 		if err != nil {
-			return nil, fmt.Errorf("public directory %q does not exist: %w", p, err)
+			return nil, &errorval{s: `public directory "` + p + `" does not exist`, e: err}
 		}
 		if !d.IsDir() {
-			return nil, fmt.Errorf("public directory %q is not a directory", p)
+			return nil, &errorval{s: `public directory "` + p + `" is not a directory`}
 		}
 		x = filepath.Join(c.Directory, "template")
 	}
@@ -145,7 +158,7 @@ func (c config) new() (*Scoreboard, error) {
 	if len(c.Log.File) > 0 {
 		f, err := logx.File(c.Log.File, logx.Level(c.Log.Level))
 		if err != nil {
-			return nil, fmt.Errorf("unable to create log file %q: %w", c.Log.File, err)
+			return nil, &errorval{s: `unable to create log file "` + c.Log.File + `"`, e: err}
 		}
 		s.log = logx.Multiple(f, logx.Console(logx.Level(c.Log.Level)))
 	} else {
@@ -153,16 +166,13 @@ func (c config) new() (*Scoreboard, error) {
 	}
 	s.html = template.New("base")
 	if err = getTemplate(s.html, x, "home.html"); err != nil {
-		return nil, fmt.Errorf("unable to load home template: %w", err)
+		return nil, &errorval{s: "unable to load home template", e: err}
 	}
 	if err = getTemplate(s.html, x, "scoreboard.html"); err != nil {
-		return nil, fmt.Errorf("unable to load scoreboard template: %w", err)
+		return nil, &errorval{s: "unable to load scoreboard template", e: err}
 	}
-	s.Manager, err = game.New(
-		c.Scorebot, c.Assets, time.Duration(c.Tick)*time.Second, t, s.log,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("unable to setup game manager: %w", err)
+	if s.Manager, err = game.New(c.Scorebot, c.Assets, time.Duration(c.Tick)*time.Second, t, s.log); err != nil {
+		return nil, &errorval{s: "unable to setup game manager", e: err}
 	}
 	s.Server = &http.Server{
 		Addr:              c.Listen,
@@ -179,19 +189,14 @@ func (c config) new() (*Scoreboard, error) {
 		HandshakeTimeout: t,
 	}
 	if c.twitter {
-		var (
-			o = oauth1.NewConfig(
-				c.Twitter.Credentials.ConsumerKey, c.Twitter.Credentials.ConsumerSecret,
-			)
-			z = o.Client(
-				oauth1.NoContext,
+		y := twitter.NewClient(
+			oauth1.NewConfig(c.Twitter.Credentials.ConsumerKey, c.Twitter.Credentials.ConsumerSecret).Client(
+				context.Background(),
 				oauth1.NewToken(c.Twitter.Credentials.AccessKey, c.Twitter.Credentials.AccessSecret),
-			)
+			),
 		)
-		z.Timeout = t
-		y := twitter.NewClient(z)
 		if _, _, err := y.Accounts.VerifyCredentials(nil); err != nil {
-			return nil, fmt.Errorf("cannot authenticate to Twitter: %w", err)
+			return nil, &errorval{s: "cannot authenticate to Twitter: %w", e: err}
 		}
 		s.feed, err = y.Streams.Filter(
 			&twitter.StreamFilterParams{
@@ -201,46 +206,52 @@ func (c config) new() (*Scoreboard, error) {
 			},
 		)
 		if err != nil {
-			return nil, fmt.Errorf("unable to start Twitter filter: %w", err)
+			return nil, &errorval{s: "unable to start Twitter filter", e: err}
 		}
 		s.filter, s.expire = c.Twitter.Filter, time.Duration(c.Twitter.Expire)*time.Second
-		s.log.Info("Twitter setup complete.")
+		s.log.Info("Twitter setup successful!")
 	} else {
-		s.log.Info("Missing Twitter keys and/or filter parameters, skipping Twitter setup!")
+		s.log.Warning("Missing Twitter keys and/or filter parameters, skipping Twitter setup!")
 	}
 	s.key, s.cert = c.Key, c.Cert
 	s.fs, s.dir = http.FileServer(&s), http.Dir(p)
 	s.Server.Handler.(*http.ServeMux).HandleFunc("/", s.http)
 	s.Server.Handler.(*http.ServeMux).HandleFunc("/w", s.httpWebsocket)
-	if Debug {
-		s.log.Warning("Server Debug Extensions are Enabled at \"/debug/pprof/\"!")
-		s.Server.Handler.(*http.ServeMux).HandleFunc("/debug/pprof/", pprof.Index)
-		s.Server.Handler.(*http.ServeMux).HandleFunc("/debug/pprof/symbol", pprof.Symbol)
-		s.Server.Handler.(*http.ServeMux).HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
-		s.Server.Handler.(*http.ServeMux).HandleFunc("/debug/pprof/profile", pprof.Profile)
-		s.Server.Handler.(*http.ServeMux).Handle("/debug/pprof/heap", pprof.Handler("heap"))
-		s.Server.Handler.(*http.ServeMux).Handle("/debug/pprof/block", pprof.Handler("block"))
-		s.Server.Handler.(*http.ServeMux).Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
-		s.Server.Handler.(*http.ServeMux).Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
-	}
 	return &s, nil
 }
 func (s *Scoreboard) startTwitter(x context.Context) {
-	var (
-		d = twitter.NewSwitchDemux()
-		c = s.Manager.Twitter(s.expire)
-	)
-	d.Tweet = func(n *twitter.Tweet) {
-		c <- n
-	}
-	for {
+	for c := s.Manager.Twitter(s.expire); ; {
 		select {
 		case <-x.Done():
 			close(c)
 			s.feed.Stop()
 			return
-		case t := <-s.feed.Messages:
-			d.Handle(t)
+		case n := <-s.feed.Messages:
+			switch t := n.(type) {
+			case *twitter.Tweet:
+				c <- t
+			case *twitter.Event:
+			case *twitter.FriendsList:
+			case *twitter.UserWithheld:
+			case *twitter.DirectMessage:
+			case *twitter.StatusDeletion:
+			case *twitter.StatusWithheld:
+			case *twitter.LocationDeletion:
+			case *twitter.StreamLimit:
+				s.log.Warning("Twitter stream thread received a StreamLimit message of %d!", t.Track)
+			case *twitter.StallWarning:
+				s.log.Warning("Twitter stream thread received a StallWarning message: %s!", t.Message)
+			case *twitter.StreamDisconnect:
+				s.log.Error("Twitter stream thread received a StreamDisconnect message: %s!", t.Reason)
+				return
+			case *url.Error:
+				s.log.Error("Twitter stream thread received an error: %s!", t.Error())
+				return
+			default:
+				if t != nil {
+					s.log.Warning("Twitter stream thread received an unrecognized message (%T): %s\n", t, t)
+				}
+			}
 		}
 	}
 }
@@ -258,34 +269,33 @@ func getTemplate(t *template.Template, d, f string) error {
 	if len(d) > 0 {
 		s := filepath.Join(d, f)
 		if i, err := os.Stat(s); err == nil && !i.IsDir() {
-			_, err := t.New(f).ParseFiles(s)
-			if err != nil {
-				return fmt.Errorf("unable to parse template %q: %w", f, err)
+			if _, err = t.New(f).ParseFiles(s); err != nil {
+				return &errorval{s: `unable to parse template "` + f + `"`, e: err}
 			}
 			return nil
 		}
 	}
-	c, err := resources.FindString(fmt.Sprintf("template/%s", f))
+	c, err := resources.FindString("template/" + f)
 	if err != nil {
-		return fmt.Errorf("could not find template %q: %w", f, err)
+		return &errorval{s: `could not find template "` + f + `"`, e: err}
 	}
 	if _, err := t.New(f).Parse(c); err != nil {
-		return fmt.Errorf("unable to parse scorebot template %q: %w", f, err)
+		return &errorval{s: `unable to parse scorebot template "` + f + `"`, e: err}
 	}
 	return nil
 }
 
 // RunContext begins the listening process for the Scoreboard and the Game ticking threads. This
-// function blocks until interrupted. This function watches the SIGINT, SIGHUP, SIGTERM and SIGQUIT
-// signals and will automatically close and clean up after a signal is received. This function accepts
-// a Context to allow for control of when the Scoreboard stops without using signals.
+// function blocks until interrupted. This function watches the SIGINT, SIGTERM and SIGQUIT signals and will
+// automatically close and clean up after a signal is received. This function accepts a Context to allow for control
+// of when the Scoreboard stops without using signals.
 func (s *Scoreboard) RunContext(ctx context.Context) error {
 	var (
 		e    = make(chan error, 1)
 		w    = make(chan os.Signal, 1)
 		x, c = context.WithCancel(ctx)
 	)
-	signal.Notify(w, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGHUP)
+	signal.Notify(w, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	s.log.Info("Starting Scoreboard service...")
 	if len(s.cert) > 0 && len(s.key) > 0 {
 		go func() {
@@ -308,12 +318,12 @@ func (s *Scoreboard) RunContext(ctx context.Context) error {
 		}
 	case <-x.Done():
 	}
+	c()
 	s.log.Info("Stopping and shutting down...")
 	f, u := context.WithTimeout(x, s.ReadTimeout)
 	s.Server.Shutdown(f)
 	err := s.Server.Close()
 	u()
-	c()
 	close(e)
 	close(w)
 	return err

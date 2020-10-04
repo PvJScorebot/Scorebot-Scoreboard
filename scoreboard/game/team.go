@@ -16,7 +16,9 @@
 
 package game
 
-import "fmt"
+import (
+	"strconv"
+)
 
 var (
 	emptyTeam   team
@@ -85,11 +87,11 @@ func (b *beacon) Hash(h *hasher) uint64 {
 }
 func (t team) Compare(p *planner, o team) {
 	if o.ID == 0 {
-		p.DeltaValue(fmt.Sprintf("team-t%d", t.ID), "", "team")
+		p.DeltaValue("team-t"+strconv.FormatUint(t.ID, 64), "", "team")
 	} else {
-		p.Value(fmt.Sprintf("team-t%d", t.ID), "", "team")
+		p.Value("team-t"+strconv.FormatUint(t.ID, 64), "", "team")
 	}
-	p.Prefix(fmt.Sprintf("%s-team-t%d", p.prefix, t.ID))
+	p.Prefix(p.prefix + "-team-t" + strconv.FormatUint(t.ID, 64))
 	if o.hash == t.hash {
 		p.Value("beacon", "", "team-beacon")
 		p.Value("beacon-con", "", "team-beacon-container")
@@ -99,7 +101,7 @@ func (t team) Compare(p *planner, o team) {
 		p.Value("score", "", "team-score")
 		p.Value("name-name", t.Name, "team-name-div")
 		p.Property("logo", t.Color, "background-color")
-		p.Property("logo", fmt.Sprintf("url('%s')", t.Logo), "background-image")
+		p.Property("logo", "url('"+t.Logo+"')", "background-image")
 		p.Property("", t.Color, "border-color")
 		if t.Offense {
 			p.Property("", "+offense", "class")
@@ -131,7 +133,7 @@ func (t team) Compare(p *planner, o team) {
 		p.DeltaValue("score", "", "team-score")
 		p.DeltaValue("name-name", t.Name, "team-name-div")
 		p.DeltaProperty("logo", t.Color, "background-color")
-		p.DeltaProperty("logo", fmt.Sprintf("url('%s')", t.Logo), "background-image")
+		p.DeltaProperty("logo", "url('"+t.Logo+"')", "background-image")
 		p.DeltaProperty("", t.Color, "border-color")
 		if t.Offense {
 			p.DeltaProperty("", "+offense", "class")
@@ -164,7 +166,7 @@ func (t team) Compare(p *planner, o team) {
 		for k, v := range y {
 			switch {
 			case !v.Second():
-				p.Remove(fmt.Sprintf("host-h%d", k))
+				p.Remove("host-h" + strconv.FormatUint(k, 64))
 			case !v.First():
 				v.B.(host).Compare(p, emptyHost)
 			default:
@@ -174,7 +176,7 @@ func (t team) Compare(p *planner, o team) {
 		for k, v := range u {
 			switch {
 			case !v.Second():
-				p.Remove(fmt.Sprintf("beacon-con-b%d", k))
+				p.Remove("beacon-con-b" + strconv.FormatUint(k, 64))
 			case !v.First():
 				v.B.(beacon).Compare(p, emptyBeacon)
 			default:
@@ -186,11 +188,11 @@ func (t team) Compare(p *planner, o team) {
 }
 func (b beacon) Compare(p *planner, o beacon) {
 	if o.ID == 0 {
-		p.DeltaValue(fmt.Sprintf("beacon-con-b%d", b.ID), "", "beacon")
+		p.DeltaValue("beacon-con-b"+strconv.FormatUint(b.ID, 64), "", "beacon")
 	} else {
-		p.Value(fmt.Sprintf("beacon-con-b%d", b.ID), "", "beacon")
+		p.Value("beacon-con-b"+strconv.FormatUint(b.ID, 64), "", "beacon")
 	}
-	p.Prefix(fmt.Sprintf("%s-beacon-con-b%d", p.prefix, b.ID))
+	p.Prefix(p.prefix + "-beacon-con-b" + strconv.FormatUint(b.ID, 64))
 	if o.hash == b.hash {
 		p.Property("", b.Team, "tid")
 		p.Property("", b.Color, "background")

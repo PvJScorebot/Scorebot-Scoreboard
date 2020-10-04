@@ -30,7 +30,7 @@ bash build.sh
 The Scoreboard can be configured by command line options, though it's preferred to use a config file instead. (Below).
 
 ```text
-Scorebot Scoreboard v2.0.2
+Scorebot Scoreboard v2.2
 
 Leaving any of the required Twitter options empty in command
 line or config will result in Twitter functionality being disabled.

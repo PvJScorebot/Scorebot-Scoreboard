@@ -18,7 +18,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
 
 	"github.com/iDigitalFlame/scorebot-scoreboard/scoreboard"
@@ -30,7 +29,7 @@ func main() {
 		if err == flag.ErrHelp {
 			os.Exit(2)
 		}
-		fmt.Fprintf(os.Stderr, "Error during startup: %s\n", err.Error())
+		os.Stderr.WriteString("Error during startup: " + err.Error() + "!\n")
 		os.Exit(1)
 	}
 
@@ -39,7 +38,7 @@ func main() {
 	}
 
 	if err := s.Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error during runtime: %s\n", err.Error())
+		os.Stderr.WriteString("Error during runtime: " + err.Error() + "!\n")
 		os.Exit(1)
 	}
 }

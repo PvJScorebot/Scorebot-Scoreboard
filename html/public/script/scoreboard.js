@@ -13,8 +13,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.If not, see <https://www.gnu.org/licenses/>.
 //
-//  Scoreboard v2.0.2
-//  2019 iDigitalFlame, The Scorebot Project, CTF Factory
+//  Scoreboard v2.2
+//  2020 iDigitalFlame
 //
 //  Javascript Main File
 //
@@ -50,7 +50,7 @@ function init() {
     document.sb_debug = document.location.toString().indexOf("?debug") > 0;
     debug("Starting init.. Selected Game id: " + game);
     if (!game) {
-        debug("No game ID detected, bailing..");
+        debug("No game ID detected, bailing!");
         return;
     }
     window.addEventListener("resize", check_mobile);
@@ -144,26 +144,26 @@ function auto_scroll() {
 }
 function recv(message) {
     if (message.data === null && !document.sb_loaded) {
-        socket.close()
-    } else {
-        if (!document.sb_loaded) {
-            var lm = document.getElementById("game-status-load");
-            if (lm !== null) {
-                lm.remove();
-            }
+        socket.close();
+        return;
+    }
+    if (!document.sb_loaded) {
+        var lm = document.getElementById("game-status-load");
+        if (lm !== null) {
+            lm.remove();
         }
-        update_board(message.data);
-        if (!document.sb_loaded) {
-            if (is_mobile()) {
-                navigate("overview")
-            } else {
-                navigate("auto");
-                check_mobile();
-            }
-            var gt = document.getElementById("game-status-name");
-            if (gt !== null) {
-                gt.setAttribute("onclick", "return navigate('overview');");
-            }
+    }
+    update_board(message.data);
+    if (!document.sb_loaded) {
+        if (is_mobile()) {
+            navigate("overview")
+        } else {
+            navigate("auto");
+            check_mobile();
+        }
+        var gt = document.getElementById("game-status-name");
+        if (gt !== null) {
+            gt.setAttribute("onclick", "return navigate('overview');");
         }
         document.sb_loaded = true;
     }
@@ -645,6 +645,9 @@ function is_mobile(css_only = false) {
         return false;
     }
     var mb = document.getElementById("menu");
+    if (mb === null || !mb) {
+        return false;
+    }
     return mb.classList.contains("mobile");
 }
 function callout_hide(ignore = false) {
