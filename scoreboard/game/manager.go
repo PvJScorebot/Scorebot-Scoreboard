@@ -393,9 +393,9 @@ func (s *subscription) update(x context.Context, m *Manager) {
 	}
 }
 
-// Twitter creates and returns the Twitter channel. This channel can be used to submit Tweets
-// to be sent to the scoreboard.
-func (m *Manager) Twitter(t time.Duration) chan *twitter.Tweet {
+// Twitter creates and returns the Twitter channel. This channel can be used to submit Tweets to
+// be sent to the scoreboard.
+func (m *Manager) Twitter(t time.Duration) chan<- *twitter.Tweet {
 	m.twitter = &tweets{new: make(chan *twitter.Tweet), timeout: t}
 	return m.twitter.new
 }

@@ -25,10 +25,11 @@ import (
 
 func main() {
 	s, err := scoreboard.Cmdline()
+	if err == flag.ErrHelp {
+		os.Exit(2)
+	}
+
 	if err != nil {
-		if err == flag.ErrHelp {
-			os.Exit(2)
-		}
 		os.Stderr.WriteString("Error during startup: " + err.Error() + "!\n")
 		os.Exit(1)
 	}

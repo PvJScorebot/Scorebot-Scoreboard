@@ -18,6 +18,8 @@ package scoreboard
 
 import (
 	"context"
+	"crypto/tls"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -38,64 +40,13 @@ import (
 	"github.com/iDigitalFlame/scorebot-scoreboard/scoreboard/game"
 )
 
-const (
-	usage = `Scorebot Scoreboard
-
-Leaving any of the required Twitter options empty in command
-line or config will result in Twitter functionality being disabled.
-Required Twitter options: 'Consumer Key and Secret', 'Access Key and Secret',
-'Twitter Keywords' and 'Twitter Language'.
-
-Usage of scoreboard:
-  -c <file>                 Scorebot configuration file path.
-  -d                        Print default configuration and exit.
-  -sbe <url>                Scorebot core address or URL (Required without "-c").
-  -assets <dir>             Scoreboard secondary assets override URL.
-  -dir <directory>          Scoreboard HTML override directory path.
-  -log <file>               Scoreboard log file path.
-  -log-level <number [0-5]> Scoreboard logging level (Default 2).
-  -tick <seconds>           Scorebot poll tate, in seconds (Default 5).
-  -timeout <seconds>        Scoreboard request timeout, in seconds (Default 10).
-  -bind <socket>            Address and port to listen on (Default "0.0.0.0:8080").
-  -cert <file>              Path to TLS certificate file.
-  -key <file>               Path to TLS key file.
-  -tw-ck <key>              Twitter Consumer API key.
-  -tw-cs <secret>           Twitter Consumer API secret.
-  -tw-ak <key>              Twitter Access API key.
-  -tw-as <secret>           Twitter Access API secret.
-  -tw-keywords <list>       Twitter search keywords (Comma separated)
-  -tw-lang <list>           Twitter search language (Comma separated)
-  -tw-expire <seconds>      Tweet display time, in seconds (Default 45).
-  -tw-block-words <list>    Twitter blocked words (Comma separated).
-  -tw-block-user <list>     Twitter blocked Usernames (Comma separated).
-  -tw-only-users <list>     Twitter whitelisted Usernames (Comma separated).
-
-Copyright (C) 2020 iDigitalFlame
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as published
-by the Free Software Foundation, either version 3 of the License, or
-any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-`
-	version = 2.2
-)
-
 var resources = packr.New("html", "../html")
 
 type display struct {
 	Game    uint64
 	Twitter bool
 }
-type errorval struct {
+type errval struct {
 	e error
 	s string
 }
@@ -121,20 +72,35 @@ type Scoreboard struct {
 // function blocks until interrupted. This function watches the SIGINT, SIGHUP, SIGTERM and SIGQUIT
 // signals and will automatically close and clean up after a signal is received.
 func (s *Scoreboard) Run() error {
-	return s.RunContext(context.Background())
-}
-func (e errorval) Error() string {
-	if e.e == nil {
-		return e.s
+	var (
+		err  error
+		w    = make(chan os.Signal, 1)
+		x, c = context.WithCancel(context.Background())
+	)
+	s.Server.BaseContext = func(_ net.Listener) context.Context {
+		return x
 	}
-	return e.s + ": " + e.e.Error()
+	signal.Notify(w, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	s.log.Info("Starting Scoreboard service...")
+	go s.listen(&err, c)
+	go s.twitter(x)
+	go s.Manager.Start(x)
+	select {
+	case <-w:
+	case <-x.Done():
+	}
+	close(w)
+	if c(); err != nil {
+		s.log.Error("Received error during runtime: %s!", err.Error())
+	}
+	s.log.Info("Stopping and shutting down...")
+	f, u := context.WithTimeout(x, s.ReadTimeout)
+	s.Server.Shutdown(f)
+	err = s.Server.Close()
+	u()
+	return err
 }
-func (e errorval) Unwrap() error {
-	return e.e
-}
-
-// New creates a new scoreboard instance from the provided Config struct. Any errors during setup will be returned.
-func (c Config) New() (*Scoreboard, error) {
+func (c config) New() (*Scoreboard, error) {
 	if err := c.verify(); err != nil {
 		return nil, err
 	}
@@ -147,10 +113,10 @@ func (c Config) New() (*Scoreboard, error) {
 		p = filepath.Join(c.Directory, "public")
 		d, err := os.Stat(p)
 		if err != nil {
-			return nil, &errorval{s: `public directory "` + p + `" does not exist`, e: err}
+			return nil, &errval{s: `public directory "` + p + `" does not exist`, e: err}
 		}
 		if !d.IsDir() {
-			return nil, &errorval{s: `public directory "` + p + `" is not a directory`}
+			return nil, &errval{s: `public directory "` + p + `" is not a directory`}
 		}
 		x = filepath.Join(c.Directory, "template")
 	}
@@ -158,7 +124,7 @@ func (c Config) New() (*Scoreboard, error) {
 	if len(c.Log.File) > 0 {
 		f, err := logx.File(c.Log.File, logx.Level(c.Log.Level))
 		if err != nil {
-			return nil, &errorval{s: `unable to create log file "` + c.Log.File + `"`, e: err}
+			return nil, &errval{s: `unable to create log file "` + c.Log.File + `"`, e: err}
 		}
 		s.log = logx.Multiple(f, logx.Console(logx.Level(c.Log.Level)))
 	} else {
@@ -166,13 +132,13 @@ func (c Config) New() (*Scoreboard, error) {
 	}
 	s.html = template.New("base")
 	if err = getTemplate(s.html, x, "home.html"); err != nil {
-		return nil, &errorval{s: "unable to load home template", e: err}
+		return nil, &errval{s: "unable to load home template", e: err}
 	}
 	if err = getTemplate(s.html, x, "scoreboard.html"); err != nil {
-		return nil, &errorval{s: "unable to load scoreboard template", e: err}
+		return nil, &errval{s: "unable to load scoreboard template", e: err}
 	}
 	if s.Manager, err = game.New(c.Scorebot, c.Assets, time.Duration(c.Tick)*time.Second, t, s.log); err != nil {
-		return nil, &errorval{s: "unable to setup game manager", e: err}
+		return nil, &errval{s: "unable to setup game manager", e: err}
 	}
 	s.Server = &http.Server{
 		Addr:              c.Listen,
@@ -196,7 +162,7 @@ func (c Config) New() (*Scoreboard, error) {
 			),
 		)
 		if _, _, err := y.Accounts.VerifyCredentials(nil); err != nil {
-			return nil, &errorval{s: "cannot authenticate to Twitter: %w", e: err}
+			return nil, &errval{s: "cannot authenticate to Twitter: %w", e: err}
 		}
 		s.feed, err = y.Streams.Filter(
 			&twitter.StreamFilterParams{
@@ -206,7 +172,7 @@ func (c Config) New() (*Scoreboard, error) {
 			},
 		)
 		if err != nil {
-			return nil, &errorval{s: "unable to start Twitter filter", e: err}
+			return nil, &errval{s: "unable to start Twitter filter", e: err}
 		}
 		s.filter, s.expire = c.Twitter.Filter, time.Duration(c.Twitter.Expire)*time.Second
 		s.log.Info("Twitter setup successful!")
@@ -219,7 +185,10 @@ func (c Config) New() (*Scoreboard, error) {
 	s.Server.Handler.(*http.ServeMux).HandleFunc("/w", s.httpWebsocket)
 	return &s, nil
 }
-func (s *Scoreboard) startTwitter(x context.Context) {
+func (s *Scoreboard) twitter(x context.Context) {
+	if s.feed == nil {
+		return
+	}
 	for c := s.Manager.Twitter(s.expire); ; {
 		select {
 		case <-x.Done():
@@ -270,63 +239,42 @@ func getTemplate(t *template.Template, d, f string) error {
 		s := filepath.Join(d, f)
 		if i, err := os.Stat(s); err == nil && !i.IsDir() {
 			if _, err = t.New(f).ParseFiles(s); err != nil {
-				return &errorval{s: `unable to parse template "` + f + `"`, e: err}
+				return &errval{s: `unable to parse template "` + f + `"`, e: err}
 			}
 			return nil
 		}
 	}
 	c, err := resources.FindString("template/" + f)
 	if err != nil {
-		return &errorval{s: `could not find template "` + f + `"`, e: err}
+		return &errval{s: `could not find template "` + f + `"`, e: err}
 	}
 	if _, err := t.New(f).Parse(c); err != nil {
-		return &errorval{s: `unable to parse scorebot template "` + f + `"`, e: err}
+		return &errval{s: `unable to parse scorebot template "` + f + `"`, e: err}
 	}
 	return nil
 }
-
-// RunContext begins the listening process for the Scoreboard and the Game ticking threads. This
-// function blocks until interrupted. This function watches the SIGINT, SIGTERM and SIGQUIT signals and will
-// automatically close and clean up after a signal is received. This function accepts a Context to allow for control
-// of when the Scoreboard stops without using signals.
-func (s *Scoreboard) RunContext(ctx context.Context) error {
-	var (
-		e    = make(chan error, 1)
-		w    = make(chan os.Signal, 1)
-		x, c = context.WithCancel(ctx)
-	)
-	signal.Notify(w, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-	s.log.Info("Starting Scoreboard service...")
-	if len(s.cert) > 0 && len(s.key) > 0 {
-		go func() {
-			e <- s.Server.ListenAndServeTLS(s.cert, s.key)
-		}()
-	} else {
-		go func() {
-			e <- s.Server.ListenAndServe()
-		}()
+func (s *Scoreboard) listen(err *error, f context.CancelFunc) {
+	if len(s.cert) == 0 || len(s.key) == 0 {
+		*err = s.Server.ListenAndServe()
+		f()
+		return
 	}
-	if s.feed != nil {
-		go s.startTwitter(x)
+	s.Server.TLSConfig = &tls.Config{
+		NextProtos: []string{"h2", "http/1.1"},
+		MinVersion: tls.VersionTLS12,
+		CipherSuites: []uint16{
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+		},
+		CurvePreferences:         []tls.CurveID{tls.CurveP256, tls.X25519},
+		PreferServerCipherSuites: true,
 	}
-	go s.Manager.Start(x)
-	select {
-	case <-w:
-	case err := <-e:
-		if err != nil {
-			s.log.Error("Received error during startup: %s!", err.Error())
-		}
-	case <-x.Done():
-	}
-	c()
-	s.log.Info("Stopping and shutting down...")
-	f, u := context.WithTimeout(x, s.ReadTimeout)
-	s.Server.Shutdown(f)
-	err := s.Server.Close()
-	u()
-	close(e)
-	close(w)
-	return err
+	*err = s.Server.ListenAndServeTLS(s.cert, s.key)
+	f()
 }
 func (s *Scoreboard) http(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
