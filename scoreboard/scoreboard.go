@@ -89,6 +89,7 @@ func (s *Scoreboard) Run() error {
 	case <-w:
 	case <-x.Done():
 	}
+	signal.Stop(w)
 	close(w)
 	if c(); err != nil {
 		s.log.Error("Received error during runtime: %s!", err.Error())

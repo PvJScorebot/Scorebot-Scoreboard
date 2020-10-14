@@ -18,9 +18,9 @@ package game
 
 import (
 	"errors"
-	"fmt"
 	"hash"
 	"math"
+	"reflect"
 	"sync"
 
 	"blainsmith.com/go/seahash"
@@ -35,6 +35,9 @@ var bufs = sync.Pool{
 
 type hasher struct {
 	h, s hash.Hash64
+}
+type stringer interface {
+	String() string
 }
 
 func (h *hasher) Reset() {
@@ -130,11 +133,11 @@ func (h *hasher) Hash(v interface{}) error {
 		b[4], b[5] = byte(i>>24), byte(i>>16)
 		b[6], b[7] = byte(i>>8), byte(i)
 		h.Write(b)
-	case fmt.Stringer:
-		h.Write([]byte(v.(fmt.Stringer).String()))
+	case stringer:
+		h.Write([]byte(v.(stringer).String()))
 	default:
 		bufs.Put(&b)
-		return errors.New("cannot hash the requested type: " + fmt.Sprintf("%T", v))
+		return errors.New("cannot hash the requested type: " + reflect.TypeOf(v).String())
 	}
 	bufs.Put(&b)
 	return nil
