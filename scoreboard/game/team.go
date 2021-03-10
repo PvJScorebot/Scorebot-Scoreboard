@@ -26,26 +26,25 @@ var (
 )
 
 type team struct {
-	ID      uint64      `json:"id"`
 	Name    string      `json:"name"`
 	Logo    string      `json:"logo"`
 	Color   string      `json:"color"`
-	Flags   scoreFlag   `json:"flags"`
+	Beacons []beacon    `json:"beacons"`
 	Hosts   []host      `json:"hosts"`
+	Flags   scoreFlag   `json:"flags"`
 	Score   score       `json:"score"`
 	Tickets scoreTicket `json:"tickets"`
-	Offense bool        `json:"offense"`
-	Minimal bool        `json:"minimal"`
-	Beacons []beacon    `json:"beacons"`
-
-	hash, total uint64
+	ID      uint64      `json:"id"`
+	hash    uint64
+	total   uint64
+	Minimal bool `json:"minimal"`
+	Offense bool `json:"offense"`
 }
 type beacon struct {
+	Color string `json:"color"`
 	ID    uint64 `json:"id"`
 	Team  uint64 `json:"team"`
-	Color string `json:"color"`
-
-	hash uint64
+	hash  uint64
 }
 
 func (t team) Sum() uint64 {

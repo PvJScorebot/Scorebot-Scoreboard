@@ -54,18 +54,18 @@ type errval struct {
 // Scoreboard is a struct that represents the Scoreboard multiplexer. This struct is used to gather and
 // compare Game data to push to Scoreboard clients.
 type Scoreboard struct {
-	fs     http.Handler
-	ws     *websocket.Upgrader
-	log    logx.Log
-	dir    http.FileSystem
-	key    string
-	cert   string
-	feed   *twitter.Stream
-	html   *template.Template
-	filter filter
-	expire time.Duration
+	fs  http.Handler
+	log logx.Log
+	dir http.FileSystem
+	ws  *websocket.Upgrader
 	*game.Manager
 	*http.Server
+	feed   *twitter.Stream
+	html   *template.Template
+	key    string
+	cert   string
+	filter filter
+	expire time.Duration
 }
 
 // Run begins the listening process for the Scoreboard and the Game ticking threads. This

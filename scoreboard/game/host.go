@@ -39,13 +39,12 @@ var (
 
 type state uint8
 type host struct {
-	ID       uint64    `json:"id"`
 	Name     string    `json:"name"`
-	Online   bool      `json:"online"`
 	Services []service `json:"services"`
-
-	hash  uint64
-	total uint64
+	ID       uint64    `json:"id"`
+	hash     uint64
+	total    uint64
+	Online   bool `json:"online"`
 }
 type protocol uint8
 type service struct {

@@ -119,23 +119,22 @@ type creds struct {
 	ConsumerSecret string `json:"consumer_secret"`
 }
 type tweets struct {
+	Credentials creds  `json:"auth"`
 	Filter      filter `json:"filter"`
 	Expire      int    `json:"expire"`
-	Credentials creds  `json:"auth"`
 }
 type config struct {
-	Log       log    `json:"log,omitempty"`
+	Scorebot  string `json:"scorebot"`
 	Key       string `json:"key,omitempty"`
 	Cert      string `json:"cert,omitempty"`
-	Tick      int    `json:"tick"`
+	Directory string `json:"dir,omitempty"`
 	Assets    string `json:"assets"`
 	Listen    string `json:"listen"`
+	Log       log    `json:"log,omitempty"`
 	Twitter   tweets `json:"twitter,omitempty"`
 	Timeout   int    `json:"timeout"`
-	Scorebot  string `json:"scorebot"`
-	Directory string `json:"dir,omitempty"`
-
-	twitter bool
+	Tick      int    `json:"tick"`
+	twitter   bool
 }
 type filter struct {
 	Language     []string `json:"language"`

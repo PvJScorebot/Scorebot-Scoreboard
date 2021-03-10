@@ -41,18 +41,17 @@ var errMissingGame = errors.New("game ID is missing from JSON data")
 
 type hello uint64
 type tweet struct {
-	ID        uint64
 	User      string
 	Text      string
-	Images    []string
 	UserName  string
 	UserPhoto string
-
-	expire int64
+	Images    []string
+	ID        uint64
+	expire    int64
 }
 type stream struct {
-	ok bool
 	*websocket.Conn
+	ok bool
 }
 type tweets struct {
 	new     chan *twitter.Tweet
@@ -63,27 +62,25 @@ type tweets struct {
 // Manager is a struct that contains for a map of subs and controls the connections between Scorebot
 // and the Scoreboard clients.
 type Manager struct {
-	Games []meta
-
 	log     logx.Log
-	url     url.URL
+	active  map[string]uint64
 	tick    *time.Ticker
 	subs    map[uint64]*subscription
 	client  *http.Client
-	active  map[string]uint64
-	assets  string
-	running uint32
 	twitter *tweets
+	url     url.URL
+	assets  string
+	Games   []meta
 	timeout time.Duration
+	running uint32
 }
 type subscription struct {
-	ID uint64
-
 	new     chan *websocket.Conn
-	last    game
-	stale   uint32
 	cache   []update
 	clients []*stream
+	last    game
+	ID      uint64
+	stale   uint32
 }
 
 func init() {
@@ -330,7 +327,7 @@ func (s *subscription) update(x context.Context, m *Manager) {
 		}
 	}(m.log)
 	for len(s.new) > 0 {
-		s.clients = append(s.clients, &stream{true, <-s.new})
+		s.clients = append(s.clients, &stream{<-s.new, true})
 	}
 	select {
 	case <-x.Done():

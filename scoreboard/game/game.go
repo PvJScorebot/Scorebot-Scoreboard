@@ -62,14 +62,15 @@ type meta struct {
 	Status status `json:"status"`
 }
 type game struct {
-	Meta    meta
+	Credit  string
+	Message string
 	Teams   []team
 	Tweets  []tweet
 	Events  events
-	Credit  string
-	Message string
-
-	hash, total, tweets uint64
+	Meta    meta
+	hash    uint64
+	total   uint64
+	tweets  uint64
 }
 
 func (g game) Len() int {

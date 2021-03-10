@@ -25,20 +25,19 @@ type delta struct {
 	A, B interface{}
 }
 type update struct {
-	ID     string            `json:"id"`
+	Value  interface{}       `json:"value,omitempty"`
 	Data   map[string]string `json:"data"`
+	ID     string            `json:"id"`
 	Name   string            `json:"name,omitempty"`
 	Class  string            `json:"class,omitempty"`
-	Value  interface{}       `json:"value,omitempty"`
 	Event  bool              `json:"event"`
 	Remove bool              `json:"remove"`
 }
 type planner struct {
+	prefix string
 	Delta  []update
 	Create []update
-
 	last   []string
-	prefix string
 }
 type comparable interface {
 	Sum() uint64

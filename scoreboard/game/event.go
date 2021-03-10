@@ -24,9 +24,9 @@ var (
 )
 
 type event struct {
+	Data map[string]string `json:"data"`
 	ID   uint64            `json:"id"`
 	Type uint8             `json:"type"`
-	Data map[string]string `json:"data"`
 }
 type events struct {
 	Window  event
