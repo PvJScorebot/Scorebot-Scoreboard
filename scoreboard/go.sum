@@ -1,10 +1,10 @@
 blainsmith.com/go/seahash v1.1.3 h1:cfP2r+LhlIqSlYp+UY1yNJKmRttdP+kP4fLhYqAf1co=
 blainsmith.com/go/seahash v1.1.3/go.mod h1:pnKU6FdQMfYOGoDBo5FPdlZG7kmOJ/nuNyfu0czty8k=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/PurpleSec/logx v0.1.0 h1:MF6VEorvztx16SUwOfCcGRqx8aj9gj3UTqmMQOF00i0=
-github.com/PurpleSec/logx v0.1.0/go.mod h1:tkLK6CqkhkRSVejDMVgZa0jTq97aRikVNjAON9iUiK0=
-github.com/PurpleSec/parseurl v0.1.0 h1:O5lqREiZisdkzBsSkO+uHrHkTYmiAdAXr9myZD4/7WE=
-github.com/PurpleSec/parseurl v0.1.0/go.mod h1:mZgE03Iv0LBkLPItVE7HnYhaFLXqBRdkl5XZXsKt5wc=
+github.com/PurpleSec/logx v1.5.0 h1:ch53KQy4WlEg0R9nmc89oSmx7LvuWOsris+GNlh8I74=
+github.com/PurpleSec/logx v1.5.0/go.mod h1:tkLK6CqkhkRSVejDMVgZa0jTq97aRikVNjAON9iUiK0=
+github.com/PurpleSec/parseurl v1.5.1 h1:JYiWpZy5GP0GmOuYzr6rTKZ+ICkWI4XP8vcwMtQDfxg=
+github.com/PurpleSec/parseurl v1.5.1/go.mod h1:mZgE03Iv0LBkLPItVE7HnYhaFLXqBRdkl5XZXsKt5wc=
 github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6/go.mod h1:grANhF5doyWs3UAsr3K4I6qtAmlQcZDesFNEHPZAzj8=
 github.com/cenkalti/backoff v2.1.1+incompatible h1:tKJnvO2kl0zmb/jA5UKAt4VoEVw1qxKWjE/Bpp46npY=
 github.com/cenkalti/backoff v2.1.1+incompatible/go.mod h1:90ReRw6GdpyfrHakVjL/QHaoyV4aDUVVkXQJJJ3NXXM=
