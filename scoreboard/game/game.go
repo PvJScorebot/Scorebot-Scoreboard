@@ -79,6 +79,9 @@ func (g game) Len() int {
 func (m meta) Active() bool {
 	return m.Status != cancelled && m.Status != completed
 }
+func (m meta) Display() bool {
+	return m.Status != cancelled
+}
 func (m mode) String() string {
 	switch m {
 	case redBlue:
