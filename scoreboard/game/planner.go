@@ -77,23 +77,23 @@ func printStr(v interface{}) string {
 	case int:
 		s = strconv.Itoa(i)
 	case uint:
-		s = strconv.FormatUint(uint64(i), 64)
+		s = strconv.FormatUint(uint64(i), 10)
 	case int8:
 		s = strconv.Itoa(int(i))
 	case uint8:
-		s = strconv.FormatUint(uint64(i), 8)
+		s = strconv.FormatUint(uint64(i), 10)
 	case int16:
 		s = strconv.Itoa(int(i))
 	case uint16:
-		s = strconv.FormatUint(uint64(i), 16)
+		s = strconv.FormatUint(uint64(i), 10)
 	case int32:
 		s = strconv.Itoa(int(i))
 	case uint32:
-		s = strconv.FormatUint(uint64(i), 32)
+		s = strconv.FormatUint(uint64(i), 10)
 	case int64:
 		s = strconv.Itoa(int(i))
 	case uint64:
-		s = strconv.FormatUint(uint64(i), 64)
+		s = strconv.FormatUint(uint64(i), 10)
 	case float32:
 		s = strconv.FormatFloat(float64(i), 'f', 2, 32)
 	case float64:
@@ -168,10 +168,10 @@ func (p *planner) Event(i uint64, t uint8, d map[string]string) {
 }
 func (p *planner) DeltaEvent(i uint64, t uint8, d map[string]string) {
 	u := update{
-		ID:    strconv.FormatUint(i, 64),
+		ID:    strconv.FormatUint(i, 10),
 		Data:  d,
 		Event: true,
-		Value: strconv.FormatUint(uint64(t), 8),
+		Value: strconv.FormatUint(uint64(t), 10),
 	}
 	p.Delta = append(p.Delta, u)
 	p.Create = append(p.Create, u)

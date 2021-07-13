@@ -130,7 +130,7 @@ func (m *Manager) New(n *websocket.Conn) {
 	if !ok || s == nil {
 		m.log.Debug("Checking Game ID %d, requested by %q...", h, n.RemoteAddr().String())
 		var g game
-		if err := m.getJSON(context.Background(), "api/scoreboard/"+strconv.FormatUint(uint64(h), 64)+"/", &g); err != nil {
+		if err := m.getJSON(context.Background(), "api/scoreboard/"+strconv.FormatUint(uint64(h), 10)+"/", &g); err != nil {
 			m.log.Error("Error retriving data for Game ID %d: %s!", h, err.Error())
 			n.Close()
 			return

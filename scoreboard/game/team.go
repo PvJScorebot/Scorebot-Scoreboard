@@ -86,11 +86,11 @@ func (b *beacon) Hash(h *hasher) uint64 {
 }
 func (t team) Compare(p *planner, o team) {
 	if o.ID == 0 {
-		p.DeltaValue("team-t"+strconv.FormatUint(t.ID, 64), "", "team")
+		p.DeltaValue("team-t"+strconv.FormatUint(t.ID, 10), "", "team")
 	} else {
-		p.Value("team-t"+strconv.FormatUint(t.ID, 64), "", "team")
+		p.Value("team-t"+strconv.FormatUint(t.ID, 10), "", "team")
 	}
-	p.Prefix(p.prefix + "-team-t" + strconv.FormatUint(t.ID, 64))
+	p.Prefix(p.prefix + "-team-t" + strconv.FormatUint(t.ID, 10))
 	if o.hash == t.hash {
 		p.Value("beacon", "", "team-beacon")
 		p.Value("beacon-con", "", "team-beacon-container")
@@ -165,7 +165,7 @@ func (t team) Compare(p *planner, o team) {
 		for k, v := range y {
 			switch {
 			case !v.Second():
-				p.Remove("host-h" + strconv.FormatUint(k, 64))
+				p.Remove("host-h" + strconv.FormatUint(k, 10))
 			case !v.First():
 				v.B.(host).Compare(p, emptyHost)
 			default:
@@ -175,7 +175,7 @@ func (t team) Compare(p *planner, o team) {
 		for k, v := range u {
 			switch {
 			case !v.Second():
-				p.Remove("beacon-con-b" + strconv.FormatUint(k, 64))
+				p.Remove("beacon-con-b" + strconv.FormatUint(k, 10))
 			case !v.First():
 				v.B.(beacon).Compare(p, emptyBeacon)
 			default:
