@@ -122,11 +122,11 @@ func (s *service) Hash(h *hasher) uint64 {
 }
 func (h host) Compare(p *planner, o host) {
 	if o.ID == 0 {
-		p.DeltaValue("host-h"+strconv.FormatUint(h.ID, 64), "", "host")
+		p.DeltaValue("host-h"+strconv.FormatUint(h.ID, 10), "", "host")
 	} else {
-		p.Value("host-h"+strconv.FormatUint(h.ID, 64), "", "host")
+		p.Value("host-h"+strconv.FormatUint(h.ID, 10), "", "host")
 	}
-	p.Prefix(p.prefix + "-host-h" + strconv.FormatUint(h.ID, 64))
+	p.Prefix(p.prefix + "-host-h" + strconv.FormatUint(h.ID, 10))
 	if o.hash == h.hash {
 		p.Value("name", h.Name, "host-name")
 		if h.Online {
@@ -158,7 +158,7 @@ func (h host) Compare(p *planner, o host) {
 		for k, v := range c {
 			switch {
 			case !v.Second():
-				p.Remove("s" + strconv.FormatUint(k, 64))
+				p.Remove("s" + strconv.FormatUint(k, 10))
 			case !v.First():
 				v.B.(service).Compare(p, emptyService)
 			default:
@@ -187,11 +187,11 @@ func (s *state) UnmarshalJSON(b []byte) error {
 }
 func (s service) Compare(p *planner, o service) {
 	if o.ID == 0 {
-		p.DeltaValue("s"+strconv.FormatUint(s.ID, 64), "", "service")
+		p.DeltaValue("s"+strconv.FormatUint(s.ID, 10), "", "service")
 	} else {
-		p.Value("s"+strconv.FormatUint(s.ID, 64), "", "service")
+		p.Value("s"+strconv.FormatUint(s.ID, 10), "", "service")
 	}
-	p.Prefix(p.prefix + "-s" + strconv.FormatUint(s.ID, 64))
+	p.Prefix(p.prefix + "-s" + strconv.FormatUint(s.ID, 10))
 	if o.hash == s.hash {
 		p.Value("port", s.Port, s.State.class())
 		p.Value("protocol", s.Protocol.String(), "service-protocol")

@@ -54,11 +54,11 @@ func (e *events) Hash(h *hasher) uint64 {
 }
 func compareTweet(p *planner, n, o tweet) {
 	if o.ID == 0 {
-		p.DeltaValue("tweet-t"+strconv.FormatUint(n.ID, 64), "", "tweet")
+		p.DeltaValue("tweet-t"+strconv.FormatUint(n.ID, 10), "", "tweet")
 	} else {
-		p.Value("tweet-t"+strconv.FormatUint(n.ID, 64), "", "tweet")
+		p.Value("tweet-t"+strconv.FormatUint(n.ID, 10), "", "tweet")
 	}
-	p.Prefix(p.prefix + "-tweet-t" + strconv.FormatUint(n.ID, 64))
+	p.Prefix(p.prefix + "-tweet-t" + strconv.FormatUint(n.ID, 10))
 	if o.ID > 0 {
 		p.Value("pic", "", "tweet-pic")
 		p.Property("pic-img", "url('"+n.UserPhoto+"')", "background-image")
@@ -113,7 +113,7 @@ func (g game) compareTweets(p *planner, o *game) {
 	for k, v := range c {
 		switch {
 		case !v.Second():
-			p.Remove("tweet-t" + strconv.FormatUint(k, 64))
+			p.Remove("tweet-t" + strconv.FormatUint(k, 10))
 		case !v.First():
 			compareTweet(p, v.B.(tweet), emptyTweet)
 		default:

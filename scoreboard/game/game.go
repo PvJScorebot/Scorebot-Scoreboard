@@ -214,7 +214,7 @@ func (g *game) Compare(p *planner, o *game) {
 	for k, v := range c {
 		switch {
 		case !v.Second():
-			p.Remove("team-t" + strconv.FormatUint(k, 64))
+			p.Remove("team-t" + strconv.FormatUint(k, 10))
 		case !v.First():
 			v.B.(team).Compare(p, emptyTeam)
 		default:

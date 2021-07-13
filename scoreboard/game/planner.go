@@ -84,8 +84,7 @@ func printStr(v interface{}) string {
 		s = strconv.FormatUint(uint64(i), 10)
 	case int16:
 		s = strconv.Itoa(int(i))
-	case uint16:
-		s = strconv.FormatUint(uint64(i), 10)
+		s = strconv.Itoa(int(i))
 	case int32:
 		s = strconv.Itoa(int(i))
 	case uint32:

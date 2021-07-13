@@ -336,7 +336,7 @@ func (s *subscription) update(x context.Context, m *Manager) {
 	}
 	m.log.Debug("Checking for update for subscribed Game %d...", s.ID)
 	var g game
-	if err := m.getJSON(x, "api/scoreboard/"+strconv.FormatUint(s.ID, 64), &g); err != nil {
+	if err := m.getJSON(x, "api/scoreboard/"+strconv.FormatUint(s.ID, 10), &g); err != nil {
 		m.log.Error("Error retriving data for Game ID %d: %s!", s.ID, err.Error())
 		return
 	}

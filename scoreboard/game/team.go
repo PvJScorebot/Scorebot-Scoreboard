@@ -187,11 +187,11 @@ func (t team) Compare(p *planner, o team) {
 }
 func (b beacon) Compare(p *planner, o beacon) {
 	if o.ID == 0 {
-		p.DeltaValue("beacon-con-b"+strconv.FormatUint(b.ID, 64), "", "beacon")
+		p.DeltaValue("beacon-con-b"+strconv.FormatUint(b.ID, 10), "", "beacon")
 	} else {
-		p.Value("beacon-con-b"+strconv.FormatUint(b.ID, 64), "", "beacon")
+		p.Value("beacon-con-b"+strconv.FormatUint(b.ID, 10), "", "beacon")
 	}
-	p.Prefix(p.prefix + "-beacon-con-b" + strconv.FormatUint(b.ID, 64))
+	p.Prefix(p.prefix + "-beacon-con-b" + strconv.FormatUint(b.ID, 10))
 	if o.hash == b.hash {
 		p.Property("", b.Team, "tid")
 		p.Property("", b.Color, "background")
