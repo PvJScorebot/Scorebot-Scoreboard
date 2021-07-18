@@ -79,20 +79,21 @@ func printStr(v interface{}) string {
 	case uint:
 		s = strconv.FormatUint(uint64(i), 10)
 	case int8:
-		s = strconv.Itoa(int(i))
+		s = strconv.FormatInt(int64(i), 10)
 	case uint8:
 		s = strconv.FormatUint(uint64(i), 10)
 	case int16:
-		s = strconv.Itoa(int(i))
-		s = strconv.Itoa(int(i))
+		s = strconv.FormatInt(int64(i), 10)
+	case uint16:
+		s = strconv.FormatUint(uint64(i), 10)
 	case int32:
-		s = strconv.Itoa(int(i))
+		s = strconv.FormatInt(int64(i), 10)
 	case uint32:
 		s = strconv.FormatUint(uint64(i), 10)
 	case int64:
-		s = strconv.Itoa(int(i))
+		s = strconv.FormatInt(i, 10)
 	case uint64:
-		s = strconv.FormatUint(uint64(i), 10)
+		s = strconv.FormatUint(i, 10)
 	case float32:
 		s = strconv.FormatFloat(float64(i), 'f', 2, 32)
 	case float64:
