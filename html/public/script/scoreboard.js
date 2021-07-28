@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.If not, see <https://www.gnu.org/licenses/>.
 //
-//  Scoreboard v2.21
+//  Scoreboard v2.22
 //  2020 iDigitalFlame
 //
 //  Javascript Main File
@@ -309,7 +309,8 @@ function scroll_elements() {
     }
     var tn = document.getElementsByClassName("team-name-div");
     for (var ti = 0; ti < tn.length; ti++) {
-        scroll_element(tn[ti]);
+        // The simple scroll is broke here, so I made this!
+        scroll_vert_simple(tn[ti]);
     }
     /* Need to figure out why Host names do not scroll, even when set as 'block'.
     var hn = document.getElementsByClassName("host-name");
@@ -688,4 +689,21 @@ function select_div(panel, divs, select) {
     } else {
         gt.classList.add("single");
     }
+}
+function scroll_vert_simple(ele) {
+    if (ele.scrollWidth === 0) {
+        ele.classList.remove("reverse");
+        return;
+    }
+    var rev = ele.classList.contains("reverse");
+    if (!rev && ele.scrollTop == 0) {
+        ele.scrollTop = ele.offsetHeight;
+        ele.classList.add("reverse");
+        return;
+    }
+    if (rev && ele.scrollTop == 0) {
+        ele.classList.remove("reverse");
+        return;
+    }
+    ele.scrollTop -= 2;
 }

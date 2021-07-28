@@ -14,7 +14,7 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-    Scoreboard v2.21
+    Scoreboard v2.22
     2020 iDigitalFlame
 
     CSS Main File
@@ -278,7 +278,7 @@ body {
     line-height: 20px;
     display: inline-block;
     font-family: FontAwesome;
-    border-left: rgb(0, 0, 0) solid 5px;
+    border-left: rgb(11, 24, 14) solid 5px;
 }
 #callout-service .err::before {
     content: "";
@@ -471,10 +471,10 @@ body {
     color: rgb(255, 255, 255);
 }
 #game-tab .selected {
-    border-bottom: 1px solid rgb(62, 146, 46);
+    border-bottom: 2px solid rgb(62, 146, 46);
 }
 #game-tab .auto-selected {
-    border-bottom: 1px solid rgb(22, 119, 158);
+    border-bottom: 2px solid rgb(22, 119, 158);
 }
 
 #game-status {
@@ -581,6 +581,7 @@ body {
     max-width: 60px;
     text-align: center;
     color: rgb(255, 255, 255);
+    border-left: rgb(11, 24, 14) solid 5px;
 }
 .team.selected .team-logo {
     width: 300px;
@@ -755,7 +756,7 @@ body {
     line-height: 20px;
     display: table-cell;
     color: rgba(0, 0, 0, 0);
-    border-left: rgb(0, 0, 0) solid 5px;
+    border-left: rgb(25, 30, 36) solid 5px;
 }
 .service-protocol {
     display: none;

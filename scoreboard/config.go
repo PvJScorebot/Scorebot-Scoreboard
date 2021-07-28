@@ -60,7 +60,7 @@ const defaults = `{
     "scorebot": "http://scorebot"
 }
 `
-const usage = `Scorebot Scoreboard v2.21
+const usage = `Scorebot Scoreboard v2.22
 
 Leaving any of the required Twitter options empty in command
 line or config will result in Twitter functionality being disabled.
