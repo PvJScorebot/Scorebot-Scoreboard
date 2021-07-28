@@ -64,7 +64,7 @@ func (t team) Less(i, j int) bool {
 	return t.Hosts[i].Name < t.Hosts[j].Name
 }
 func (t *team) Hash(h *hasher) uint64 {
-	if sort.Sort(t); t.hash == 0 {
+	if t.hash == 0 {
 		h.Hash(t.ID)
 		h.Hash(t.Name)
 		h.Hash(t.Logo)
@@ -72,6 +72,7 @@ func (t *team) Hash(h *hasher) uint64 {
 		h.Hash(t.Offense)
 		h.Hash(t.Minimal)
 		t.hash = h.Segment()
+		sort.Sort(t)
 	}
 	t.total = t.hash
 	for i := range t.Hosts {
