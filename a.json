@@ -1,0 +1,35 @@
+{
+    "log": {
+        "file": "scoreboard.log",
+        "level": 2
+    },
+    "tick": 5,
+    "assets": "",
+    "listen": "0.0.0.0:8080",
+    "twitter": {
+        "filter": {
+            "language": [
+                "en"
+            ],
+            "keywords": [
+                "pvj",
+                "ctf"
+            ],
+            "only_users": [],
+            "blocked_users": [],
+            "banned_words": []
+        },
+        "expire": 45,
+        "auth": {
+            "access_key": "",
+            "consumer_key": "",
+            "access_secret": "",
+            "consumer_secret": ""
+        }
+    },
+    "timeout": 10,
+    "key": "",
+    "scorebot": "http://10.150.0.190",
+    "cert": "",
+    "dir": "html"
+}

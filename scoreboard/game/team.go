@@ -17,6 +17,7 @@
 package game
 
 import (
+	"sort"
 	"strconv"
 )
 
@@ -47,14 +48,23 @@ type beacon struct {
 	hash  uint64
 }
 
+func (t team) Len() int {
+	return len(t.Hosts)
+}
 func (t team) Sum() uint64 {
 	return t.ID
 }
 func (b beacon) Sum() uint64 {
 	return b.ID
 }
+func (t *team) Swap(i, j int) {
+	t.Hosts[i], t.Hosts[j] = t.Hosts[j], t.Hosts[i]
+}
+func (t team) Less(i, j int) bool {
+	return t.Hosts[i].Name < t.Hosts[j].Name
+}
 func (t *team) Hash(h *hasher) uint64 {
-	if t.hash == 0 {
+	if sort.Sort(t); t.hash == 0 {
 		h.Hash(t.ID)
 		h.Hash(t.Name)
 		h.Hash(t.Logo)
