@@ -42,7 +42,7 @@ type planner struct {
 type comparable interface {
 	Sum() uint64
 }
-type compare map[uint64]delta
+type compare map[uint64]*delta
 
 func (d delta) First() bool {
 	return d.A != nil
@@ -55,13 +55,13 @@ func (p *planner) Prefix(s string) {
 	p.prefix = s
 }
 func (c compare) One(d comparable) {
-	c[d.Sum()] = delta{A: d}
+	c[d.Sum()] = &delta{A: d}
 }
 func (c compare) Two(d comparable) {
 	s := d.Sum()
 	v, ok := c[s]
 	if !ok {
-		c[s] = delta{B: d}
+		c[s] = &delta{B: d}
 		return
 	}
 	v.B = d
