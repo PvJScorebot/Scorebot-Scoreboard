@@ -12,16 +12,15 @@ Twitter integration is also enabled in this version. Add your API keys into the 
 
 ## Download
 
-You can visit the [Releases](https://github.com/iDigitalFlame/scorebot-scoreboard/releases) page to download a linux compiled version. The resources and images are packed into the
-binary using [Packr](https://github.com/gobuffalo/packr/tree/master/v2). It will run as long as you point it to an active Scorebot instance.
+You can visit the [Releases](https://github.com/iDigitalFlame/scorebot-scoreboard/releases) page to download a linux
+compiled version. The resources and images are packed into the binary using go:embed. It will run as long as you point
+it to an active Scorebot instance.
 
 ## Building
 
 ```shell
 git clone https://github.com/iDigitalFlame/scorebot-scoreboard/
-cd scorebot-scoreboard/scoreboard
-go build ./..
-cd ..
+cd scorebot-scoreboard
 bash build.sh
 ```
 
