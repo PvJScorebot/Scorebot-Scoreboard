@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.If not, see <https://www.gnu.org/licenses/>.
 //
-//  Scoreboard v2.22
+//  Scoreboard v2.3
 //  2020 iDigitalFlame
 //
 //  Javascript Main File
@@ -35,6 +35,21 @@ var messages = [
     "E = mc^(OMG)/wtf",
     "Don't make me hack you scrub!",
     "I found your IP address '127.0.0.1'! prepare to get DDoSd noob!",
+    "Proving P = NP...",
+    "Computing 6 x 9...",
+    "Mining bitcoin...",
+    "Dividing by 0...",
+    "Initializing Skynet...",
+    "[REDACTED]",
+    "Downloading more RAM...",
+    "Ordering 1s and 0s...",
+    "Navigating neural network...",
+    "Importing machine learning...",
+    "Issuing Alice and Bob one-time pads...",
+    "Mining bitcoin cash...",
+    "Symlinking emacs and vim to ed...",
+    "Generating key material by trying to escape vim...",
+    "(creating unresolved tension...",
 ];
 
 // Auto Interval Constants
@@ -555,6 +570,7 @@ function set_beacon_image(beacon) {
         layer.putImageData(draw, 0, 0);
         beacon.style.background = "url('" + canvas.toDataURL("image/png") + "')";
     }
+    image.crossOrigin = "anonymous";
     image.src = "/image/beacon.png";
 }
 function handle_event_popup(event) {

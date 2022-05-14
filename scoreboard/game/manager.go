@@ -20,7 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -34,7 +34,6 @@ import (
 	"github.com/PurpleSec/parseurl"
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/gorilla/websocket"
-	"github.com/stvp/slug"
 )
 
 var errMissingGame = errors.New("game ID is missing from JSON data")
@@ -83,9 +82,6 @@ type subscription struct {
 	stale   uint32
 }
 
-func init() {
-	slug.Replacement = '-'
-}
 func (m *Manager) close() {
 	for n, s := range m.subs {
 		for i := range s.clients {
@@ -103,12 +99,33 @@ func (m *Manager) close() {
 func (t tweet) Sum() uint64 {
 	return t.ID
 }
+func cleanSlugString(s string) string {
+	var b strings.Builder
+	b.Grow(len(s))
+	for i := range s {
+		switch {
+		case s[i] <= '9' && s[i] >= '0': // Numbers
+			fallthrough
+		case s[i] <= 'Z' && s[i] >= 'A': // Capital Letters
+			fallthrough
+		case s[i] <= 'z' && s[i] >= 'z': // Lowercase Letters
+			fallthrough
+		case s[i] == '-' || s[i] == '.' || s[i] == '_': // Symbols
+			b.WriteByte(s[i])
+		default:
+			b.WriteByte('-')
+		}
+	}
+	v := b.String()
+	b.Reset()
+	return v
+}
 
 // Game will attempt to resolve the game name provided to an active game ID. This function will replace
 // any spaces and invalid characters and matches the Game name without case sensitivity. THis function returns
 // zero if no Game was found
 func (m *Manager) Game(s string) uint64 {
-	return m.active[strings.ToLower(slug.Clean(s))]
+	return m.active[strings.ToLower(cleanSlugString(s))]
 }
 
 // New attempts to add the supplied web client to the Subscription swarm.
@@ -188,7 +205,7 @@ func (m *Manager) update(x context.Context) {
 		return
 	}
 	for i := range m.Games {
-		n := slug.Clean(m.Games[i].Name)
+		n := cleanSlugString(m.Games[i].Name)
 		if !m.Games[i].Active() {
 			delete(m.active, n)
 			continue
@@ -417,7 +434,7 @@ func (m Manager) get(x context.Context, u string) ([]byte, error) {
 	if o.StatusCode >= 400 {
 		return nil, errors.New(`request "` + m.url.String() + `" returned status code ` + strconv.Itoa(o.StatusCode))
 	}
-	b, err := ioutil.ReadAll(o.Body)
+	b, err := io.ReadAll(o.Body)
 	if err != nil {
 		return nil, errors.New(`error reading from the URL "` + m.url.String() + `": ` + err.Error())
 	}

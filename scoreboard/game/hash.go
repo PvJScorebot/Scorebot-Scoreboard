@@ -18,12 +18,13 @@ package game
 
 import (
 	"errors"
-	"hash"
 	"math"
-	"reflect"
 	"sync"
+)
 
-	"blainsmith.com/go/seahash"
+const (
+	fnvPrime = 1099511628211
+	fnvStart = 14695981039346656037
 )
 
 var bufs = sync.Pool{
@@ -34,33 +35,39 @@ var bufs = sync.Pool{
 }
 
 type hasher struct {
-	h, s hash.Hash64
+	h, s uint64
 }
 type stringer interface {
 	String() string
 }
 
 func (h *hasher) Reset() {
-	if h.h != nil {
-		h.h.Reset()
-	}
-	if h.s != nil {
-		h.s.Reset()
-	}
+	h.h, h.s = fnvStart, fnvStart
 }
 func (h hasher) Sum64() uint64 {
-	if h.h == nil {
-		return 0
+	return h.h
+}
+func (h *hasher) Write(b []byte) {
+	if h.h == 0 {
+		h.h = fnvStart
 	}
-	return h.h.Sum64()
+	if h.s == 0 {
+		h.s = fnvStart
+	}
+	h.s = updateFnv(h.s, b)
+	h.h = updateFnv(h.h, b)
 }
 func (h *hasher) Segment() uint64 {
-	if h.s == nil {
-		return 0
-	}
-	v := h.s.Sum64()
-	h.s.Reset()
+	v := h.s
+	h.s = fnvStart
 	return v
+}
+func updateFnv(h uint64, b []byte) uint64 {
+	for i := range b {
+		h *= fnvPrime
+		h ^= uint64(b[i])
+	}
+	return h
 }
 func (h *hasher) Hash(v interface{}) error {
 	b := *bufs.Get().(*[]byte)
@@ -137,18 +144,8 @@ func (h *hasher) Hash(v interface{}) error {
 		h.Write([]byte(v.(stringer).String()))
 	default:
 		bufs.Put(&b)
-		return errors.New("cannot hash the requested type: " + reflect.TypeOf(v).String())
+		return errors.New("cannot hash the requested type")
 	}
 	bufs.Put(&b)
 	return nil
-}
-func (h *hasher) Write(b []byte) (int, error) {
-	if h.h == nil {
-		h.h = seahash.New()
-	}
-	if h.s == nil {
-		h.s = seahash.New()
-	}
-	h.s.Write(b)
-	return h.h.Write(b)
 }

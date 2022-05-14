@@ -19,7 +19,6 @@ package scoreboard
 import (
 	"encoding/json"
 	"flag"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -60,7 +59,7 @@ const defaults = `{
     "scorebot": "http://scorebot"
 }
 `
-const usage = `Scorebot Scoreboard v2.22
+const usage = `Scorebot Scoreboard v2.3
 
 Leaving any of the required Twitter options empty in command
 line or config will result in Twitter functionality being disabled.
@@ -246,7 +245,7 @@ func Cmdline() (*Scoreboard, error) {
 	c.Twitter.Filter.Language, c.Twitter.Filter.Keywords = split(twl), split(twk)
 	c.Twitter.Filter.BlockedUsers, c.Twitter.Filter.BlockedWords = split(twbUsers), split(twbWords)
 	if len(s) > 0 {
-		b, err := ioutil.ReadFile(s)
+		b, err := os.ReadFile(s)
 		if err != nil {
 			return nil, &errval{s: `cannot read file "` + s + `"`, e: err}
 		}

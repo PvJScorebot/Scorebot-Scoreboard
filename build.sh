@@ -20,35 +20,8 @@ if [ $# -ge 1 ]; then
     output="$1"
 fi
 
-_gopath="$(set | grep GOPATH)"
-if [ -z "$_gopath" ]; then
-    _gopath="$HOME/go"
-else
-    _gopath="$(echo $_gopath | awk -F'=' '{print $2}')"
-fi
-export PATH="$_gopath/bin:$PATH"
-
-which packr2 &> /dev/null
-if [ $? -ne 0 ]; then
-    printf "Installing packr..\n"
-    bash -c "cd scoreboard; go get -u github.com/gobuffalo/packr/v2/packr2"
-fi
-
-packr="$(env PATH=\"$_gopath/bin:$PATH\" which packr2 2> /dev/null)"
-if [ -z "$packr" ]; then
-    printf "Could not find \"packr2\" in your \$PATH!\nMake sure your \$GOPATH is in \$PATH!\n"
-    exit 1
-fi
-
 printf "Building...\n"
-bash -c "cd scoreboard; $packr"
-cat <<EOF > scoreboard/scoreboard-packr.go
-// +build !skippackr
-package scoreboard
-
-import _ "github.com/iDigitalFlame/scorebot-scoreboard/scoreboard/packrd"
-EOF
-bash -c "cd scoreboard; go build -trimpath -ldflags '-s -w' -o \"$output\" cmd/main.go; $packr clean"
+bash -c "cd scoreboard; go build -trimpath -buildvcs=false -ldflags '-s -w' -o \"$output\" cmd/main.go"
 
 which upx &> /dev/null
 if [ $? -eq 0 ] && [ -f "$output" ]; then

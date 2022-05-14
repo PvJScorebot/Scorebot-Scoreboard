@@ -19,12 +19,13 @@ package scoreboard
 import (
 	"context"
 	"crypto/tls"
+	"embed"
+	"io/fs"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
-	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -35,20 +36,20 @@ import (
 	"github.com/PurpleSec/logx"
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
-	"github.com/gobuffalo/packr/v2"
 	"github.com/gorilla/websocket"
 	"github.com/iDigitalFlame/scorebot-scoreboard/scoreboard/game"
 )
 
-var resources = packr.New("html", "../html")
+//go:embed html
+var resources embed.FS
 
-type display struct {
-	Game    uint64
-	Twitter bool
-}
 type errval struct {
 	e error
 	s string
+}
+type display struct {
+	Game    uint64
+	Twitter bool
 }
 
 // Scoreboard is a struct that represents the Scoreboard multiplexer. This struct is used to gather and
@@ -77,14 +78,12 @@ func (s *Scoreboard) Run() error {
 		w    = make(chan os.Signal, 1)
 		x, c = context.WithCancel(context.Background())
 	)
-	s.Server.BaseContext = func(_ net.Listener) context.Context {
-		return x
-	}
+	s.BaseContext = func(_ net.Listener) context.Context { return x }
 	signal.Notify(w, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	s.log.Info("Starting Scoreboard service...")
 	go s.listen(&err, c)
 	go s.twitter(x)
-	go s.Manager.Start(x)
+	go s.Start(x)
 	select {
 	case <-w:
 	case <-x.Done():
@@ -96,8 +95,8 @@ func (s *Scoreboard) Run() error {
 	}
 	s.log.Info("Stopping and shutting down...")
 	f, u := context.WithTimeout(x, s.ReadTimeout)
-	s.Server.Shutdown(f)
-	err = s.Server.Close()
+	err = s.Shutdown(f)
+	s.Close()
 	u()
 	return err
 }
@@ -112,8 +111,8 @@ func (c config) New() (*Scoreboard, error) {
 	)
 	if len(c.Directory) > 0 {
 		p = filepath.Join(c.Directory, "public")
-		d, err := os.Stat(p)
-		if err != nil {
+		var d fs.FileInfo
+		if d, err = os.Stat(p); err != nil {
 			return nil, &errval{s: `public directory "` + p + `" does not exist`, e: err}
 		}
 		if !d.IsDir() {
@@ -123,8 +122,8 @@ func (c config) New() (*Scoreboard, error) {
 	}
 	var s Scoreboard
 	if len(c.Log.File) > 0 {
-		f, err := logx.File(c.Log.File, logx.Level(c.Log.Level))
-		if err != nil {
+		var f logx.Log
+		if f, err = logx.File(c.Log.File, logx.Level(c.Log.Level)); err != nil {
 			return nil, &errval{s: `unable to create log file "` + c.Log.File + `"`, e: err}
 		}
 		s.log = logx.Multiple(f, logx.Console(logx.Level(c.Log.Level)))
@@ -162,7 +161,7 @@ func (c config) New() (*Scoreboard, error) {
 				oauth1.NewToken(c.Twitter.Credentials.AccessKey, c.Twitter.Credentials.AccessSecret),
 			),
 		)
-		if _, _, err := y.Accounts.VerifyCredentials(nil); err != nil {
+		if _, _, err = y.Accounts.VerifyCredentials(nil); err != nil {
 			return nil, &errval{s: "cannot authenticate to Twitter: %w", e: err}
 		}
 		s.feed, err = y.Streams.Filter(
@@ -181,7 +180,7 @@ func (c config) New() (*Scoreboard, error) {
 		s.log.Warning("Missing Twitter keys and/or filter parameters, skipping Twitter setup!")
 	}
 	s.key, s.cert = c.Key, c.Cert
-	s.fs, s.dir = http.FileServer(&s), http.Dir(p)
+	s.fs, s.dir = http.FileServer(http.FS(&s)), http.Dir(p)
 	s.Server.Handler.(*http.ServeMux).HandleFunc("/", s.http)
 	s.Server.Handler.(*http.ServeMux).HandleFunc("/w", s.httpWebsocket)
 	return &s, nil
@@ -190,7 +189,7 @@ func (s *Scoreboard) twitter(x context.Context) {
 	if s.feed == nil {
 		return
 	}
-	for c := s.Manager.Twitter(s.expire); ; {
+	for c := s.Twitter(s.expire); ; {
 		select {
 		case <-x.Done():
 			close(c)
@@ -228,12 +227,16 @@ func (s *Scoreboard) twitter(x context.Context) {
 
 // Open satisfies the http.FileSystem interface. This function is used to mask the packed resources and
 // use any replacement files (if they exist).
-func (s Scoreboard) Open(n string) (http.File, error) {
+func (s *Scoreboard) Open(n string) (fs.File, error) {
 	f, err := s.dir.Open(n)
 	if err == nil {
 		return f, nil
 	}
-	return resources.Open(path.Join("public", n))
+	r, err := resources.Open("html/public/" + n)
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
 }
 func getTemplate(t *template.Template, d, f string) error {
 	if len(d) > 0 {
@@ -245,22 +248,22 @@ func getTemplate(t *template.Template, d, f string) error {
 			return nil
 		}
 	}
-	c, err := resources.FindString("template/" + f)
+	b, err := resources.ReadFile("html/template/" + f)
 	if err != nil {
 		return &errval{s: `could not find template "` + f + `"`, e: err}
 	}
-	if _, err := t.New(f).Parse(c); err != nil {
+	if _, err := t.New(f).Parse(string(b)); err != nil {
 		return &errval{s: `unable to parse scorebot template "` + f + `"`, e: err}
 	}
 	return nil
 }
 func (s *Scoreboard) listen(err *error, f context.CancelFunc) {
 	if len(s.cert) == 0 || len(s.key) == 0 {
-		*err = s.Server.ListenAndServe()
+		*err = s.ListenAndServe()
 		f()
 		return
 	}
-	s.Server.TLSConfig = &tls.Config{
+	s.TLSConfig = &tls.Config{
 		NextProtos: []string{"h2", "http/1.1"},
 		MinVersion: tls.VersionTLS12,
 		CipherSuites: []uint16{
@@ -274,7 +277,7 @@ func (s *Scoreboard) listen(err *error, f context.CancelFunc) {
 		CurvePreferences:         []tls.CurveID{tls.CurveP256, tls.X25519},
 		PreferServerCipherSuites: true,
 	}
-	*err = s.Server.ListenAndServeTLS(s.cert, s.key)
+	*err = s.ListenAndServeTLS(s.cert, s.key)
 	f()
 }
 func (s *Scoreboard) http(w http.ResponseWriter, r *http.Request) {
@@ -282,9 +285,9 @@ func (s *Scoreboard) http(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
-	if len(r.URL.Path) <= 1 || r.URL.Path == "/" {
+	if w.Header().Set("Access-Control-Allow-Origin", `"*"`); len(r.URL.Path) <= 1 || r.URL.Path == "/" {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		if err := s.html.ExecuteTemplate(w, "home.html", s.Manager.Games); err != nil {
+		if err := s.html.ExecuteTemplate(w, "home.html", s.Games); err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			s.log.Error("Error during request from %q: %s", r.RemoteAddr, err.Error())
 		}
@@ -301,7 +304,7 @@ func (s *Scoreboard) http(w http.ResponseWriter, r *http.Request) {
 	}
 	switch {
 	case i < 0:
-		v = s.Manager.Game(n)
+		v = s.Game(n)
 	case strings.ToLower(n[:i]) == "game":
 		if x, err := strconv.Atoi(n[i+1:]); err == nil {
 			v = uint64(x)
@@ -324,5 +327,5 @@ func (s *Scoreboard) httpWebsocket(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
-	s.Manager.New(c)
+	s.New(c)
 }
