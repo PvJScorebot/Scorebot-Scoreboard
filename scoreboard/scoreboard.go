@@ -1,4 +1,4 @@
-// Copyright(C) 2020 iDigitalFlame
+// Copyright(C) 2020 - 2023 iDigitalFlame
 //
 // This program is free software: you can redistribute it and / or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -34,10 +34,10 @@ import (
 	"time"
 
 	"github.com/PurpleSec/logx"
+	"github.com/PvJScorebot/scorebot-scoreboard/scoreboard/game"
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
 	"github.com/gorilla/websocket"
-	"github.com/iDigitalFlame/scorebot-scoreboard/scoreboard/game"
 )
 
 //go:embed html
@@ -80,7 +80,7 @@ func (s *Scoreboard) Run() error {
 	)
 	s.BaseContext = func(_ net.Listener) context.Context { return x }
 	signal.Notify(w, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-	s.log.Info("Starting Scoreboard service...")
+	s.log.Info("Starting Scoreboard service..")
 	go s.listen(&err, c)
 	go s.twitter(x)
 	go s.Start(x)
@@ -93,7 +93,7 @@ func (s *Scoreboard) Run() error {
 	if c(); err != nil {
 		s.log.Error("Received error during runtime: %s!", err.Error())
 	}
-	s.log.Info("Stopping and shutting down...")
+	s.log.Info("Stopping and shutting down..")
 	f, u := context.WithTimeout(x, s.ReadTimeout)
 	err = s.Shutdown(f)
 	s.Close()
@@ -274,8 +274,7 @@ func (s *Scoreboard) listen(err *error, f context.CancelFunc) {
 			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
 			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 		},
-		CurvePreferences:         []tls.CurveID{tls.CurveP256, tls.X25519},
-		PreferServerCipherSuites: true,
+		CurvePreferences: []tls.CurveID{tls.CurveP256, tls.X25519},
 	}
 	*err = s.ListenAndServeTLS(s.cert, s.key)
 	f()
@@ -289,7 +288,7 @@ func (s *Scoreboard) http(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		if err := s.html.ExecuteTemplate(w, "home.html", s.Games); err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			s.log.Error("Error during request from %q: %s", r.RemoteAddr, err.Error())
+			s.log.Error(`Error during request from "%s": %s`, r.RemoteAddr, err.Error())
 		}
 		return
 	}
@@ -314,11 +313,11 @@ func (s *Scoreboard) http(w http.ResponseWriter, r *http.Request) {
 		s.fs.ServeHTTP(w, r)
 		return
 	}
-	s.log.Debug("Received scoreboard request from %q...", r.RemoteAddr)
+	s.log.Debug(`Received scoreboard request from "%s"..`, r.RemoteAddr)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := s.html.ExecuteTemplate(w, "scoreboard.html", &display{Game: v, Twitter: s.feed != nil}); err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		s.log.Error("Error during request from %q: %s!", r.RemoteAddr, err.Error())
+		s.log.Error(`Error during request from "%s": %s!`, r.RemoteAddr, err.Error())
 	}
 }
 func (s *Scoreboard) httpWebsocket(w http.ResponseWriter, r *http.Request) {

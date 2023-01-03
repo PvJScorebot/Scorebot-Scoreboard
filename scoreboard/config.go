@@ -1,4 +1,4 @@
-// Copyright(C) 2020 iDigitalFlame
+// Copyright(C) 2020 - 2023 iDigitalFlame
 //
 // This program is free software: you can redistribute it and / or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -25,6 +25,8 @@ import (
 
 	"github.com/PurpleSec/logx"
 )
+
+var version = "unknown"
 
 const defaults = `{
     "log": {
@@ -59,7 +61,7 @@ const defaults = `{
     "scorebot": "http://scorebot"
 }
 `
-const usage = `Scorebot Scoreboard v2.3
+const usage = `Scorebot Scoreboard v2.5
 
 Leaving any of the required Twitter options empty in command
 line or config will result in Twitter functionality being disabled.
@@ -69,6 +71,7 @@ Required Twitter options: 'Consumer Key and Secret', 'Access Key and Secret',
 Usage of scoreboard:
   -c <file>                 Scorebot configuration file path.
   -d                        Print default configuration and exit.
+  -V                        Print version string and exit.
   -sbe <url>                Scorebot core address or URL (Required without "-c").
   -assets <dir>             Scoreboard secondary assets override URL.
   -dir <directory>          Scoreboard HTML override directory path.
@@ -90,7 +93,7 @@ Usage of scoreboard:
   -tw-block-user <list>     Twitter blocked Usernames (Comma separated).
   -tw-only-users <list>     Twitter whitelisted Usernames (Comma separated).
 
-Copyright (C) 2020 iDigitalFlame
+Copyright (C) 2020 - 2023 iDigitalFlame
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -197,8 +200,8 @@ func (c *config) verify() error {
 func Cmdline() (*Scoreboard, error) {
 	var (
 		c                     config
-		d                     bool
 		args                  = flag.NewFlagSet("Scorebot Scoreboard", flag.ExitOnError)
+		d, ver                bool
 		twbWords, twoUsers    string
 		s, twk, twl, twbUsers string
 	)
@@ -206,32 +209,37 @@ func Cmdline() (*Scoreboard, error) {
 		os.Stdout.WriteString(usage)
 		os.Exit(2)
 	}
-	args.StringVar(&s, "c", "", "scoreboard config file path.")
-	args.BoolVar(&d, "d", false, "Print default configuration and exit.")
-	args.StringVar(&c.Scorebot, "sbe", "", "Scorebot core address or URL (Required without -c).")
-	args.StringVar(&c.Assets, "assets", "", "Scoreboard secondary assets override URL.")
-	args.StringVar(&c.Directory, "dir", "", "Scoreboard HTML directory path.")
-	args.StringVar(&c.Log.File, "log", "", "Scoreboard log file path.")
-	args.IntVar(&c.Log.Level, "log-level", 2, "Scoreboard logging level (Default 2).")
-	args.IntVar(&c.Tick, "tick", 5, "Scorebot poll rate, in seconds (Default 5).")
-	args.IntVar(&c.Timeout, "timeout", 10, "Scoreboard request timeout, in seconds (Default 10).")
-	args.StringVar(&c.Listen, "bind", "0.0.0.0:8080", "Address and port to listen on (Default 0.0.0.0:8080).")
-	args.StringVar(&c.Key, "key", "", "Path to TLS key file.")
-	args.StringVar(&c.Cert, "cert", "", "Path to TLS certificate file.")
-	args.StringVar(&c.Twitter.Credentials.ConsumerKey, "tw-ck", "", "Twitter Consumer API key.")
-	args.StringVar(&c.Twitter.Credentials.ConsumerSecret, "tw-cs", "", "Twitter Consumer API secret.")
-	args.StringVar(&c.Twitter.Credentials.AccessKey, "tw-ak", "", "Twitter Access API key.")
-	args.StringVar(&c.Twitter.Credentials.AccessSecret, "tw-as", "", "Twitter Access API secret.")
-	args.StringVar(&twk, "tw-keywords", "", "Twitter search keywords (Comma separated)")
-	args.StringVar(&twl, "tw-lang", "", "Twitter search language (Comma separated)")
-	args.IntVar(&c.Twitter.Expire, "tw-expire", 45, "Tweet display time, in seconds (Default 45).")
-	args.StringVar(&twbWords, "tw-block-words", "", "Twitter blocked words (Comma separated).")
-	args.StringVar(&twbUsers, "tw-block-user", "", "Twitter blocked Usernames (Comma separated).")
-	args.StringVar(&twoUsers, "tw-only-users", "", "Twitter whitelisted Usernames (Comma separated).")
+	args.StringVar(&s, "c", "", "")
+	args.BoolVar(&d, "d", false, "")
+	args.BoolVar(&ver, "V", false, "")
+	args.StringVar(&c.Scorebot, "sbe", "", "")
+	args.StringVar(&c.Assets, "assets", "", "")
+	args.StringVar(&c.Directory, "dir", "", "")
+	args.StringVar(&c.Log.File, "log", "", "")
+	args.IntVar(&c.Log.Level, "log-level", 2, "")
+	args.IntVar(&c.Tick, "tick", 5, "")
+	args.IntVar(&c.Timeout, "timeout", 10, "")
+	args.StringVar(&c.Listen, "bind", "0.0.0.0:8080", "")
+	args.StringVar(&c.Key, "key", "", "")
+	args.StringVar(&c.Cert, "cert", "", "")
+	args.StringVar(&c.Twitter.Credentials.ConsumerKey, "tw-ck", "", "")
+	args.StringVar(&c.Twitter.Credentials.ConsumerSecret, "tw-cs", "", "")
+	args.StringVar(&c.Twitter.Credentials.AccessKey, "tw-ak", "", "")
+	args.StringVar(&c.Twitter.Credentials.AccessSecret, "tw-as", "", "")
+	args.StringVar(&twk, "tw-keywords", "", "")
+	args.StringVar(&twl, "tw-lang", "", "")
+	args.IntVar(&c.Twitter.Expire, "tw-expire", 45, "")
+	args.StringVar(&twbWords, "tw-block-words", "", "")
+	args.StringVar(&twbUsers, "tw-block-user", "", "")
+	args.StringVar(&twoUsers, "tw-only-users", "", "")
 
 	if err := args.Parse(os.Args[1:]); err != nil {
 		os.Stdout.WriteString(usage)
 		return nil, flag.ErrHelp
+	}
+	if ver {
+		os.Stdout.WriteString("Scorebot Scoreboard: " + version + "\n")
+		return nil, nil
 	}
 	if d {
 		os.Stdout.WriteString(defaults)

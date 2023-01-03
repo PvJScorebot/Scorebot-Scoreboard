@@ -1,4 +1,4 @@
-// Copyright(C) 2020 iDigitalFlame
+// Copyright(C) 2020 - 2023 iDigitalFlame
 //
 // This program is free software: you can redistribute it and / or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -72,6 +72,8 @@ func (p *planner) rollbackPrefix() {
 func printStr(v interface{}) string {
 	var s string
 	switch i := v.(type) {
+	case []byte:
+		s = string(i)
 	case string:
 		s = i
 	case int:
@@ -99,6 +101,8 @@ func printStr(v interface{}) string {
 	case float64:
 		s = strconv.FormatFloat(i, 'f', 2, 64)
 	default:
+		// NOTE(dij): Should we remove this? It seems like it's not called.
+		//            Could remove a call to the heavy 'fmt' package.
 		s = fmt.Sprintf("%s", v)
 	}
 	return s

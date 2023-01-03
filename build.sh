@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-# Copyright (C) 2020 iDigitalFlame
+# Copyright (C) 2020 - 2023 iDigitalFlame
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published
@@ -20,8 +20,8 @@ if [ $# -ge 1 ]; then
     output="$1"
 fi
 
-printf "Building...\n"
-bash -c "cd scoreboard; go build -trimpath -buildvcs=false -ldflags '-s -w' -o \"$output\" cmd/main.go"
+printf "Building..\n"
+bash -c "cd scoreboard; go build -trimpath -buildvcs=false -ldflags '-s -w -X github.com/PvJScorebot/scorebot-scoreboard/scoreboard.version=$(date +%F)_$(git rev-parse --short HEAD 2> /dev/null || echo "non-git")' -o \"$output\" cmd/main.go"
 
 which upx &> /dev/null
 if [ $? -eq 0 ] && [ -f "$output" ]; then

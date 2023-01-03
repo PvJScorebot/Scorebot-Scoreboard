@@ -1,4 +1,4 @@
-// Copyright(C) 2020 iDigitalFlame
+// Copyright(C) 2020 - 2023 iDigitalFlame
 //
 // This program is free software: you can redistribute it and / or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -135,20 +135,20 @@ func (m *Manager) New(n *websocket.Conn) {
 			l.Error("Collection newclient function recovered from a panic: %s!", err)
 		}
 	}(m.log)
-	m.log.Debug("Received a connection from %q, listening for Hello...", n.RemoteAddr().String())
+	m.log.Debug(`Received a connection from "%s", listening for Hello..`, n.RemoteAddr().String())
 	var h hello
 	if err := n.ReadJSON(&h); err != nil {
-		m.log.Error("Could not read Hello message from %q, closing: %s!", n.RemoteAddr().String(), err.Error())
+		m.log.Error(`Could not read Hello message from "%s", closing: %s!`, n.RemoteAddr().String(), err.Error())
 		n.Close()
 		return
 	}
-	m.log.Debug("Received Hello with requested Game ID %d from %q.", h, n.RemoteAddr().String())
+	m.log.Debug(`Received Hello with requested Game ID %d from "%s".`, h, n.RemoteAddr().String())
 	s, ok := m.subs[uint64(h)]
 	if !ok || s == nil {
-		m.log.Debug("Checking Game ID %d, requested by %q...", h, n.RemoteAddr().String())
+		m.log.Debug(`Checking Game ID %d, requested by "%s"..`, h, n.RemoteAddr().String())
 		var g game
 		if err := m.getJSON(context.Background(), "api/scoreboard/"+strconv.FormatUint(uint64(h), 10)+"/", &g); err != nil {
-			m.log.Error("Error retriving data for Game ID %d: %s!", h, err.Error())
+			m.log.Error("Error retrieving data for Game ID %d: %s!", h, err.Error())
 			n.Close()
 			return
 		}
@@ -199,7 +199,7 @@ func (m *Manager) Start(x context.Context) {
 	}
 }
 func (m *Manager) update(x context.Context) {
-	m.log.Trace("Starting update...")
+	m.log.Trace("Starting update..")
 	if err := m.getJSON(x, "api/games/", &m.Games); err != nil {
 		m.log.Error("Error occurred during update tick: %s", err.Error())
 		return
@@ -212,7 +212,7 @@ func (m *Manager) update(x context.Context) {
 		}
 		if _, ok := m.active[n]; !ok {
 			m.active[n] = m.Games[i].ID
-			m.log.Debug("Added Game name mapping %q to ID %d.", n, m.Games[i].ID)
+			m.log.Debug(`Added Game name mapping "%s" to ID %d.`, n, m.Games[i].ID)
 		}
 	}
 	select {
@@ -351,10 +351,10 @@ func (s *subscription) update(x context.Context, m *Manager) {
 		return
 	default:
 	}
-	m.log.Debug("Checking for update for subscribed Game %d...", s.ID)
+	m.log.Debug("Checking for update for subscribed Game %d..", s.ID)
 	var g game
 	if err := m.getJSON(x, "api/scoreboard/"+strconv.FormatUint(s.ID, 10), &g); err != nil {
-		m.log.Error("Error retriving data for Game ID %d: %s!", s.ID, err.Error())
+		m.log.Error("Error retrieving data for Game ID %d: %s!", s.ID, err.Error())
 		return
 	}
 	g.Meta.ID = s.ID
@@ -375,11 +375,11 @@ func (s *subscription) update(x context.Context, m *Manager) {
 	default:
 	}
 	var u []update
-	m.log.Debug("Running game comparison on Game %d...", s.ID)
+	m.log.Debug("Running game comparison on Game %d..", s.ID)
 	s.cache, u = g.Delta(m.assets, &s.last)
 	s.last = g
 	if len(u) > 0 {
-		m.log.Debug("%d Updates detected in Game %d, updating clients...", len(u), s.ID)
+		m.log.Debug("%d Updates detected in Game %d, updating clients..", len(u), s.ID)
 		r := make([]*stream, 0, len(s.clients))
 		for i := range s.clients {
 			select {
@@ -396,7 +396,7 @@ func (s *subscription) update(x context.Context, m *Manager) {
 			}
 			s.clients[i].ok = false
 			if err := s.clients[i].WriteJSON(u); err != nil {
-				m.log.Error("Received error by client %q, removing: %s!", s.clients[i].RemoteAddr().String(), err.Error())
+				m.log.Error(`Received error by client "%s", removing: %s!`, s.clients[i].RemoteAddr().String(), err.Error())
 				s.clients[i].Close()
 				continue
 			}
@@ -474,7 +474,7 @@ func New(burl, d string, tick, t time.Duration, l logx.Log) (*Manager, error) {
 			Timeout: t,
 			Transport: &http.Transport{
 				Proxy:                 http.ProxyFromEnvironment,
-				DialContext:           (&net.Dialer{Timeout: t, KeepAlive: t, DualStack: true}).DialContext,
+				DialContext:           (&net.Dialer{Timeout: t, KeepAlive: t}).DialContext,
 				IdleConnTimeout:       t,
 				TLSHandshakeTimeout:   t,
 				ExpectContinueTimeout: t,

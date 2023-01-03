@@ -1,4 +1,4 @@
-// Copyright(C) 2020 iDigitalFlame
+// Copyright(C) 2020 - 2023 iDigitalFlame
 //
 // This program is free software: you can redistribute it and / or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -18,8 +18,8 @@ package game
 
 import (
 	"errors"
-	"math"
 	"sync"
+	"unsafe"
 )
 
 const (
@@ -85,12 +85,12 @@ func (h *hasher) Hash(v interface{}) error {
 	case string:
 		h.Write([]byte(i))
 	case float32:
-		n := math.Float32bits(i)
+		n := *(*uint32)(unsafe.Pointer(&i))
 		b[0], b[1] = byte(n>>24), byte(n>>16)
 		b[2], b[3] = byte(n>>8), byte(n)
 		h.Write(b[:4])
 	case float64:
-		n := math.Float64bits(i)
+		n := *(*uint64)(unsafe.Pointer(&i))
 		b[0], b[1] = byte(n>>56), byte(n>>48)
 		b[2], b[3] = byte(n>>40), byte(n>>32)
 		b[4], b[5] = byte(n>>24), byte(n>>16)

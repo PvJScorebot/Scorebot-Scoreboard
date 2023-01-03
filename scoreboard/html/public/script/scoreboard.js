@@ -1,4 +1,4 @@
-// Copyright(C) 2020 iDigitalFlame
+// Copyright(C) 2020 - 2023 iDigitalFlame
 //
 // This program is free software: you can redistribute it and / or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -20,7 +20,7 @@
 //
 
 // Close messages
-var messages = [
+const messages = [
     "Whatda trying to pull here?",
     "Delete system32 to speed up your computer!",
     "Loading reverse shell...",
@@ -53,9 +53,9 @@ var messages = [
 ];
 
 // Auto Interval Constants
-var interval_all = 15000;
-var interval_team = 7500;
-var interval_credit = 5000;
+const interval_all = 15000;
+const interval_team = 7500;
+const interval_credit = 5000;
 
 function init() {
     document.sb_auto = false;
@@ -77,7 +77,7 @@ function init() {
     document.sb_event_title = document.getElementById("event-title");
     setInterval(scroll_elements, 200);
     debug("Opening websocket..");
-    var s = window.location.host + "/w";
+    let s = window.location.host + "/w";
     if (document.location.protocol.indexOf("https") >= 0) {
         s = "wss://" + s;
     } else {
@@ -109,14 +109,14 @@ function hamburger() {
     if (!is_mobile()) {
         return false;
     }
-    var dt = document.getElementById("game-tab");
-    if (dt === null) {
+    let display_tab = document.getElementById("game-tab");
+    if (display_tab === null) {
         return false;
     }
-    if (dt.style.display.indexOf("none") > -1 || dt.style.display.length === 0) {
-        dt.style.display = "block";
+    if (display_tab.style.display.indexOf("none") > -1 || display_tab.style.display.length === 0) {
+        display_tab.style.display = "block";
     } else {
-        dt.style.display = "none";
+        display_tab.style.display = "none";
     }
     return false;
 }
@@ -130,42 +130,42 @@ function auto_scroll() {
         return;
     }
     debug("Started auto scroll..");
-    var tm = document.getElementById("game-tab").children;
-    var nx = false;
-    for (var i = 0; i < tm.length; i++) {
-        if (tm[i].id === "auto-tab") {
+    let tabs = document.getElementById("game-tab").children;
+    let tabs_auto = false;
+    for (let i = 0; i < tabs.length; i++) {
+        if (tabs[i].id === "auto-tab") {
             continue;
         }
-        if (tm[i].id === "game-tweet-tab") {
-            var tc = document.getElementById("game-tweet");
-            if (tc === null || tc.children.length === 0) {
+        if (tabs[i].id === "game-tweet-tab") {
+            let tab_tweets = document.getElementById("game-tweet");
+            if (tab_tweets === null || tab_tweets.children.length === 0) {
                 continue;
             }
         }
-        if (nx) {
-            auto_set(tm[i], tm);
+        if (tabs_auto) {
+            auto_set(tabs[i], tabs);
             return
         }
-        nx = tm[i].classList.contains("auto-selected");
-        if (nx) {
-            tm[i].classList.remove("auto-selected");
+        tabs_auto = tabs[i].classList.contains("auto-selected");
+        if (tabs_auto) {
+            tabs[i].classList.remove("auto-selected");
         }
     }
-    if (tm[0].id !== "auto-tab") {
-        auto_set(tm[0], tm);
-    } else if (tm[1].id !== "auto-tab") {
-        auto_set(tm[1], tm);
+    if (tabs[0].id !== "auto-tab") {
+        auto_set(tabs[0], tabs);
+    } else if (tabs[1].id !== "auto-tab") {
+        auto_set(tabs[1], tabs);
     }
 }
 function recv(message) {
     if (message.data === null && !document.sb_loaded) {
-        socket.close();
+        document.sb_socket.close();
         return;
     }
     if (!document.sb_loaded) {
-        var lm = document.getElementById("game-status-load");
-        if (lm !== null) {
-            lm.remove();
+        let load_message = document.getElementById("game-status-load");
+        if (load_message !== null) {
+            load_message.remove();
         }
     }
     update_board(message.data);
@@ -176,85 +176,84 @@ function recv(message) {
             navigate("auto");
             check_mobile();
         }
-        var gt = document.getElementById("game-status-name");
-        if (gt !== null) {
-            gt.setAttribute("onclick", "return navigate('overview');");
+        let game_status = document.getElementById("game-status-name");
+        if (game_status !== null) {
+            game_status.setAttribute("onclick", "return navigate('overview');");
         }
         document.sb_loaded = true;
     }
 }
 function update_tabs() {
-    var ty = document.getElementById("game-tab");
-    if (ty === null || ty.length <= 3) {
+    let tabs = document.getElementById("game-tab");
+    if (tabs === null || tabs.length <= 3) {
         return;
     }
-    for (var i = 0; i < ty.children.length; i++) {
-        if (ty.children[i].id.indexOf("-team-") > 0) {
-            var tnd = document.getElementById(ty.children[i].id.replace("-tab", ""));
-            if (tnd === null) {
-                ty.children[i].remove();
+    for (let i = 0; i < tabs.children.length; i++) {
+        if (tabs.children[i].id.indexOf("-team-") > 0) {
+            let tabs_titles = document.getElementById(tabs.children[i].id.replace("-tab", ""));
+            if (tabs_titles === null) {
+                tabs.children[i].remove();
             }
         }
     }
-    var tm = document.getElementsByClassName("team");
-    for (var i = 0; i < tm.length; i++) {
-        var ele = document.getElementById(tm[i].id + "-tab");
-        if (tm[i].classList.contains("mini")) {
-            if (ele !== null) {
-                ele.remove();
+    let teams = document.getElementsByClassName("team");
+    for (let i = 0; i < teams.length; i++) {
+        let team_tab = document.getElementById(teams[i].id + "-tab");
+        if (teams[i].classList.contains("mini")) {
+            if (team_tab !== null) {
+                team_tab.remove();
             }
             continue;
         }
-        if (ele === null) {
-            ele = document.createElement("a");
-            ele.id = tm[i].id + "-tab";
-            var tl = document.getElementById("game-tab");
-            if (tl !== null) {
-                tl.appendChild(ele);
+        if (team_tab === null) {
+            team_tab = document.createElement("a");
+            team_tab.id = teams[i].id + "-tab";
+            let game_tab = document.getElementById("game-tab");
+            if (game_tab !== null) {
+                game_tab.appendChild(team_tab);
             }
         }
-        var name = document.getElementById(tm[i].id + "-name-name");
-        if (name === null) {
+        let team_name = document.getElementById(teams[i].id + "-name-name");
+        if (team_name === null) {
             continue;
         }
-        if (name.scrollHeight > name.offsetHeight) {
-            name.classList.add("small");
+        if (team_name.scrollHeight > team_name.offsetHeight) {
+            team_name.classList.add("small");
         }
-        ele.setAttribute("href", "#");
-        ele.setAttribute("onclick", "return navigate('" + tm[i].id + "');");
-        var td = document.getElementById(tm[i].id);
-        if (td !== null) {
-            td.setAttribute("onclick", "return navigate('" + tm[i].id + "');");
+        team_tab.setAttribute("href", "#");
+        team_tab.setAttribute("onclick", "return navigate('" + teams[i].id + "');");
+        let team_div = document.getElementById(teams[i].id);
+        if (team_div !== null) {
+            team_div.setAttribute("onclick", "return navigate('" + teams[i].id + "');");
         }
-        ele.innerText = name.innerText
+        team_tab.innerText = team_name.innerText
     }
 }
 function check_mobile() {
     if (is_mobile(true)) {
         return;
     }
-    var mb = document.getElementById("menu");
-    var dt = document.getElementById("game-tab");
-    if (dt === null || mb === null) {
+    let menu_bar = document.getElementById("menu");
+    let tabs = document.getElementById("game-tab");
+    if (tabs === null || menu_bar === null) {
         return;
     }
-    if (dt.offsetHeight <= 25) {
-        if (document.sb_tab_offset === null || (document.sb_tab_offset !== null && document.sb_tab_offset < dt.parentElement.offsetWidth)) {
+    if (tabs.offsetHeight <= 25) {
+        if (document.sb_tab_offset === null || (document.sb_tab_offset !== null && document.sb_tab_offset < tabs.parentElement.offsetWidth)) {
             document.sb_tab_offset = null;
-            mb.classList.remove("mobile");
-            dt.classList.remove("mobile");
-            if (dt.style.display.indexOf("none") > -1 || dt.style.display.length === 0) {
-                dt.style.display = "";
+            tabs.classList.remove("mobile");
+            menu_bar.classList.remove("mobile");
+            if (tabs.style.display.indexOf("none") > -1 || tabs.style.display.length === 0) {
+                tabs.style.display = "";
             }
             return;
-        }
-        if (document.sb_tab_offset === null) {
+        } else if (document.sb_tab_offset === null) {
             return;
         }
     }
-    document.sb_tab_offset = dt.offsetWidth;
-    dt.classList.add("mobile");
-    mb.classList.add("mobile");
+    document.sb_tab_offset = tabs.offsetWidth;
+    tabs.classList.add("mobile");
+    menu_bar.classList.add("mobile");
 }
 function callout_done() {
     document.sb_callout = false
@@ -266,66 +265,66 @@ function debug(message) {
     }
 }
 function navigate(panel) {
-    var oe = document.getElementById("overview-tab");
-    var tm = document.getElementById("game-tab").children;
-    select_div(panel, tm, true);
+    let overview = document.getElementById("overview-tab");
+    let teams = document.getElementById("game-tab").children;
+    select_div(panel, teams, true);
     if (panel === "auto") {
-        if (oe !== null) {
+        if (overview !== null) {
             document.sb_auto = true;
-            oe.classList.add("auto-selected");
+            overview.classList.add("auto-selected");
             setTimeout(auto_scroll, interval_all);
         }
     } else if (document.sb_auto) {
-        var oe = document.getElementById("overview-tab");
-        if (oe !== null) {
-            oe.classList.remove("auto-selected");
+        let overview_tab = document.getElementById("overview-tab");
+        if (overview_tab !== null) {
+            overview_tab.classList.remove("auto-selected");
         }
         document.sb_auto = false;
     }
     if (is_mobile()) {
-        var dt = document.getElementById("game-tab");
-        if (dt !== null) {
-            if (dt.style.display.indexOf("none") === -1 || dt.style.display.length !== 0) {
-                dt.style.display = "none";
+        let game_tab = document.getElementById("game-tab");
+        if (game_tab !== null) {
+            if (game_tab.style.display.indexOf("none") === -1 || game_tab.style.display.length !== 0) {
+                game_tab.style.display = "none";
             }
         }
     }
 }
 function display_close() {
     debug("Displaying closed board...");
-    var em = document.getElementById("game-disconnected");
-    if (em !== null) {
-        em.style.display = "block";
+    let disconnect_message = document.getElementById("game-disconnected");
+    if (disconnect_message !== null) {
+        disconnect_message.style.display = "block";
     }
 }
 function update_beacons() {
-    var bl = document.getElementsByClassName("beacon");
-    for (var bi = 0; bi < bl.length; bi++) {
-        set_beacon_image(bl[bi]);
+    let beacons = document.getElementsByClassName("beacon");
+    for (let i = 0; i < beacons.length; i++) {
+        set_beacon_image(beacons[i]);
     }
 }
 function display_invalid() {
     debug("Displaying invalid board...");
     if (!document.sb_loaded) {
-        var lm = document.getElementById("game-status-load");
-        if (lm !== null) {
-            lm.remove();
+        let load_message = document.getElementById("game-status-load");
+        if (load_message !== null) {
+            load_message.remove();
         }
     }
-    var em = document.getElementById("game-invalid");
-    if (em !== null) {
-        em.style.display = "block";
+    let error_message = document.getElementById("game-invalid");
+    if (error_message !== null) {
+        error_message.style.display = "block";
     }
 }
 function scroll_elements() {
-    var bt = document.getElementsByClassName("team-beacon");
-    for (var bi = 0; bi < bt.length; bi++) {
-        scroll_beacon(bt[bi]);
+    let beacons = document.getElementsByClassName("team-beacon");
+    for (let i = 0; i < beacons.length; i++) {
+        scroll_beacon(beacons[i]);
     }
-    var tn = document.getElementsByClassName("team-name-div");
-    for (var ti = 0; ti < tn.length; ti++) {
+    let teams = document.getElementsByClassName("team-name-div");
+    for (let i = 0; i < teams.length; i++) {
         // The simple scroll is broke here, so I made this!
-        scroll_vert_simple(tn[ti]);
+        scroll_vert_simple(teams[i]);
     }
     /* Need to figure out why Host names do not scroll, even when set as 'block'.
     var hn = document.getElementsByClassName("host-name");
@@ -335,16 +334,16 @@ function scroll_elements() {
     */
 }
 function update_board(data) {
-    var up = JSON.parse(data);
-    debug("Received " + up.length + " entries...");
-    for (var x = 0; x < up.length; x++) {
-        handle_update(up[x]);
+    let updates = JSON.parse(data);
+    debug("Received " + updates.length + " entries...");
+    for (let i = 0; i < updates.length; i++) {
+        handle_update(updates[i]);
     }
     update_tabs();
     update_beacons();
-    var gm = document.getElementById("game-status-name");
-    if (gm !== null) {
-        document.title = gm.innerText;
+    let game_name = document.getElementById("game-status-name");
+    if (game_name !== null) {
+        document.title = game_name.innerText;
     }
     callout_add("host", "callout-host");
     callout_add("service", "callout-service");
@@ -361,31 +360,19 @@ function scroll_element(ele) {
         ele.classList.remove("reverse");
         return;
     }
-    var rev = ele.classList.contains("reverse");
-    if ((ele.scrollWidth - ele.offsetWidth) == ele.scrollLeft) {
+    let reversed = ele.classList.contains("reverse");
+    if ((ele.scrollWidth - ele.offsetWidth) === ele.scrollLeft) {
         ele.classList.add("reverse");
-        rev = true;
-    } else if (ele.scrollLeft == 0) {
+        reversed = true;
+    } else if (ele.scrollLeft === 0) {
         ele.classList.remove("reverse");
-        rev = false;
+        reversed = false;
     }
-    if (rev) {
+    if (reversed) {
         ele.scrollLeft -= 2;
     } else {
         ele.scrollLeft += 2;
     }
-}
-function auto_set(div, divs) {
-    div.classList.add("auto-selected");
-    if (div.id === "overview-tab") {
-        setTimeout(auto_scroll, interval_all);
-    } else if (div.id === "credits-tab") {
-        setTimeout(auto_scroll, interval_credit);
-    } else {
-        setTimeout(auto_scroll, interval_team);
-    }
-    callout_hide(true);
-    select_div(div.id.replace("-tab", ""), divs, false);
 }
 function handle_event(event) {
     if (!event.value) {
@@ -414,92 +401,88 @@ function callout(event, type) {
     if (type === "callout-host" && !event.fromElement.classList.contains("offline")) {
         return;
     }
-    var e = document.getElementById("callout");
-    if (e === null) {
+    let callout = document.getElementById("callout");
+    if (callout === null) {
         return;
     }
-    e.style.display = "block";
-    e.style.top = (event.clientY + 10) + "px";
-    e.style.left = (event.clientX + 10) + "px";
-    for (var ci = 0; ci < e.children.length; ci++) {
-        if (e.children[ci].id === type) {
-            e.children[ci].style.display = "block";
+    callout.style.display = "block";
+    callout.style.top = (event.clientY + 10) + "px";
+    callout.style.left = (event.clientX + 10) + "px";
+    for (let i = 0; i < callout.children.length; i++) {
+        if (callout.children[i].id === type) {
+            callout.children[i].style.display = "block";
         } else {
-            e.children[ci].style.display = "none";
+            callout.children[i].style.display = "none";
         }
     }
     document.sb_callout = true;
 }
 function handle_update(update) {
-    debug("Processing '" + JSON.stringify(update) + "'...")
+    debug("Processing '" + JSON.stringify(update) + "'..")
     if (update.event) {
         handle_event(update);
         return
     }
     if (update.remove) {
-        var rele = document.getElementById(update.id);
-        if (rele !== null) {
+        let removals = document.getElementById(update.id);
+        if (removals !== null) {
             debug("Deleting ID " + update.id + "..");
-            rele.remove();
+            removals.remove();
             return
         }
     }
-    var pa = null;
-    var sr = update.id.lastIndexOf("-");
-    if (sr > 0) {
-        var pn = update.id.substring(0, sr);
-        pa = document.getElementById(pn);
+    let parent = null;
+    let seperator = update.id.lastIndexOf("-");
+    if (seperator > 0) {
+        parent = document.getElementById(update.id.substring(0, seperator));
     }
-    var ele = document.getElementById(update.id);
-    if (ele === null && pa !== null) {
-        ele = document.createElement("div")
-        ele.id = update.id;
-        pa.appendChild(ele);
+    let target = document.getElementById(update.id);
+    if (target === null && parent !== null) {
+        target = document.createElement("div")
+        target.id = update.id;
+        parent.appendChild(target);
         debug("Created element " + update.id + "..");
     }
-    if (ele === null) {
+    if (target === null) {
         return;
     }
     if (update.class) {
-        ele.className = "";
-        var cl = update.class.split(" ");
-        for (var ci = 0; ci < cl.length; ci++) {
-            ele.classList.add(cl[ci]);
+        target.className = "";
+        let classes = update.class.split(" ");
+        for (let i = 0; i < classes.length; i++) {
+            target.classList.add(classes[i]);
         }
     }
     if (!update.value) {
         return;
     }
-    if (!update.name && update.value !== null) {
-        ele.innerText = update.value;
-        return;
-    }
     if (!update.name) {
+        target.innerText = update.value;
         return;
     }
     if (update.name !== "class") {
-        ele.style[update.name] = update.value;
+        target.style[update.name] = update.value;
         return;
     }
-    var cv = update.value[0];
-    if (!(cv === "-" || cv === "+")) {
-        ele.classList.add(update.value);
+    let class_action = update.value[0];
+    if (!(class_action === "-" || class_action === "+")) {
+        target.classList.add(update.value);
         return;
     }
-    var cd = update.value.substring(1);
-    if (cv == "+") {
-        if (!ele.classList.contains(cd)) {
-            ele.classList.add(cd);
+    let class_data = update.value.substring(1);
+    if (class_action === "+") {
+        if (!target.classList.contains(class_data)) {
+            target.classList.add(class_data);
         }
     }
-    if (cv == "-") {
-        if (ele.classList.contains(cd)) {
-            ele.classList.remove(cd);
+    if (class_action === "-") {
+        if (target.classList.contains(class_data)) {
+            target.classList.remove(class_data);
         }
     }
 }
 function scroll_beacon(beacon) {
-    var bc = beacon.children[0];
+    let bc = beacon.children[0];
     if (bc === null || bc.length === 0) {
         return;
     }
@@ -507,11 +490,11 @@ function scroll_beacon(beacon) {
         beacon.classList.remove("reverse");
         return;
     }
-    var rev = beacon.classList.contains("reverse");
-    if ((beacon.scrollTop + beacon.offsetHeight) == bc.offsetHeight) {
+    let rev = beacon.classList.contains("reverse");
+    if ((beacon.scrollTop + beacon.offsetHeight) === bc.offsetHeight) {
         beacon.classList.add("reverse");
         rev = true;
-    } else if (beacon.scrollTop == 0) {
+    } else if (beacon.scrollTop === 0) {
         beacon.classList.remove("reverse");
         rev = false;
     }
@@ -521,48 +504,77 @@ function scroll_beacon(beacon) {
         beacon.scrollTop += 5;
     }
 }
-function callout_add(elec, type) {
-    var el = document.getElementsByClassName(elec);
-    for (var ei = 0; ei < el.length; ei++) {
-        if (!el[ei].onmouseover) {
-            el[ei].setAttribute("onmouseover", "callout(event, '" + type + "');");
-            el[ei].setAttribute("onmouseout", "callout_done();");
+function callout_add(ele, type) {
+    let elements = document.getElementsByClassName(ele);
+    for (let i = 0; i < elements.length; i++) {
+        if (!elements[i].onmouseover) {
+            elements[i].setAttribute("onmouseover", "callout(event, '" + type + "');");
+            elements[i].setAttribute("onmouseout", "callout_done();");
         }
     }
+}
+function auto_set(div, entries) {
+    div.classList.add("auto-selected");
+    if (div.id === "overview-tab") {
+        setTimeout(auto_scroll, interval_all);
+    } else if (div.id === "credits-tab") {
+        setTimeout(auto_scroll, interval_credit);
+    } else {
+        setTimeout(auto_scroll, interval_team);
+    }
+    callout_hide(true);
+    select_div(div.id.replace("-tab", ""), entries, false);
+}
+function scroll_vert_simple(ele) {
+    if (ele.scrollWidth === 0) {
+        ele.classList.remove("reverse");
+        return;
+    }
+    let rev = ele.classList.contains("reverse");
+    if (!rev && ele.scrollTop === 0) {
+        ele.scrollTop = ele.offsetHeight;
+        ele.classList.add("reverse");
+        return;
+    }
+    if (rev && ele.scrollTop === 0) {
+        ele.classList.remove("reverse");
+        return;
+    }
+    ele.scrollTop -= 2;
 }
 function set_beacon_image(beacon) {
     if (beacon.style.background.indexOf("data") >= 0) {
         return
     }
-    var bg = beacon.style.background;
-    if (bg === null || bg === "") {
+    let bg_color = beacon.style.background;
+    if (bg_color === null || bg_color === "") {
         return;
     }
-    var color = [0, 0, 0];
-    if (bg.indexOf(",") > 0) {
-        var bs = bg.split(",");
-        if (bs.length == 3) {
-            color[0] = parseInt(bs[0].replace(")", "").replace("rgb(", ""), 10);
-            color[1] = parseInt(bs[1].replace(")", "").replace("rgb(", ""), 10);
-            color[2] = parseInt(bs[2].replace(")", "").replace("rgb(", ""), 10);
+    let color = [0, 0, 0];
+    if (bg_color.indexOf(",") > 0) {
+        let colors = bg_color.split(",");
+        if (colors.length === 3) {
+            color[0] = parseInt(colors[0].replace(")", "").replace("rgb(", ""), 10);
+            color[1] = parseInt(colors[1].replace(")", "").replace("rgb(", ""), 10);
+            color[2] = parseInt(colors[2].replace(")", "").replace("rgb(", ""), 10);
         }
     } else {
-        var bs = hex.match(/[a-f0-9]{2}/gi);
-        if (bs.length == 3) {
-            color[0] = parseInt(bs[0], 16);
-            color[1] = parseInt(bs[1], 16);
-            color[2] = parseInt(bs[2], 16);
+        let colors = bg_color.match(/[a-f0-9]{2}/gi);
+        if (colors.length === 3) {
+            color[0] = parseInt(colors[0], 16);
+            color[1] = parseInt(colors[1], 16);
+            color[2] = parseInt(colors[2], 16);
         }
     }
-    var image = new Image();
+    let image = new Image();
     image.onload = function () {
-        var canvas = document.createElement("canvas");
+        let canvas = document.createElement("canvas");
         canvas.width = 25;
         canvas.height = 25;
-        var layer = canvas.getContext("2d");
+        let layer = canvas.getContext("2d");
         layer.drawImage(this, 0, 0);
-        var draw = layer.getImageData(0, 0, 128, 128);
-        for (var i = 0; i < draw.data.length; i += 4) {
+        let draw = layer.getImageData(0, 0, 128, 128);
+        for (let i = 0; i < draw.data.length; i += 4) {
             draw.data[i] = color[0];
             draw.data[i + 1] = color[1];
             draw.data[i + 2] = color[2];
@@ -595,11 +607,11 @@ function handle_event_popup(event) {
         if (!(event.data.video)) {
             return;
         }
-        var yt = "https://www.youtube-nocookie.com/embed/" + event.data.video + "?controls=0&amp;autoplay=1";
+        let youtube_url = "https://www.youtube-nocookie.com/embed/" + event.data.video + "?controls=0&amp;autoplay=1";
         if (event.data.start) {
-            yt = yt + "&amp;start=" + event.data.start;
+            youtube_url = youtube_url + "&amp;start=" + event.data.start;
         }
-        document.sb_event_data.innerHTML = '<iframe width="100%" height=100%" src="' + yt + '" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope"></iframe>';
+        document.sb_event_data.innerHTML = '<iframe width="100%" height=100%" src="' + youtube_url + '" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope"></iframe>';
         document.sb_event.style.display = "block";
         debug("Video event shown!");
     } else {
@@ -610,116 +622,100 @@ function handle_event_popup(event) {
 }
 function handle_event_effect(event) {
     if (event.remove) {
-        var ele = document.getElementById("eff-" + event.id);
-        if (ele !== null) {
-            ele.remove();
+        let effect = document.getElementById("eff-" + event.id);
+        if (effect !== null) {
+            effect.remove();
         }
         return;
     }
-    var ele = document.createElement("div");
-    ele.id = "eff-" + event.id;
-    ele.innerHTML = event.data.html;
-    document.sb_effect.appendChild(ele);
+    let container = document.createElement("div");
+    container.id = "eff-" + event.id;
+    container.innerHTML = event.data.html;
+    document.sb_effect.appendChild(container);
     debug("Added effect event!");
-    var sc = ele.getElementsByTagName("script");
-    if (sc.length > 0) {
-        debug("Triggering event scripts");
-        for (var si = 0; si < sc.length; si++) {
-            eval(sc[si].text);
-        }
+    let scripts = container.getElementsByTagName("script");
+    if (scripts.length === 0) {
+        return;
+    }
+    debug("Triggering event scripts");
+    for (let i = 0; i < scripts.length; i++) {
+        eval(scripts[i].text);
     }
 }
 function handle_event_message(event) {
     if (event.remove) {
-        var ele = document.getElementById("msg-" + event.id);
-        if (ele !== null) {
-            ele.remove();
+        let event_message = document.getElementById("msg-" + event.id);
+        if (event_message !== null) {
+            event_message.remove();
         }
         return;
     }
-    var ele = document.createElement("div");
-    ele.id = "msg-" + event.id;
-    ele.classList.add("message");
+    let message = document.createElement("div");
+    message.id = "msg-" + event.id;
+    message.classList.add("message");
     if (event.data.command && event.data.command.length > 0) {
         if (event.data.response && event.data.response.length > 0) {
-            ele.innerHTML = "[root@localhost ~]# " + event.data.text + "<br/>" + event.data.response.replace("\n", "<br/>");
+            message.innerHTML = "[root@localhost ~]# " + event.data.text + "<br/>" + event.data.response.replace("\n", "<br/>");
         } else {
-            ele.innerText = "[root@localhost ~]# " + event.data.text;
+            message.innerText = "[root@localhost ~]# " + event.data.text;
         }
     } else {
-        ele.innerText = "[root@localhost ~]# echo " + event.data.text + " > /dev/null";
+        message.innerText = "[root@localhost ~]# echo " + event.data.text + " > /dev/null";
     }
-    document.sb_message.appendChild(ele);
+    document.sb_message.appendChild(message);
     document.sb_message.scrollTop = document.sb_message.offsetHeight;
     debug("Added message event!");
 }
 function is_mobile(css_only = false) {
-    var ms = window.matchMedia("only screen and (max-width: 650px)").matches || window.matchMedia("only screen and (max-width:767px) and (orientation:portrait)").matches
-    if (ms) {
+    let media_match = window.matchMedia("only screen and (max-width: 650px)").matches || window.matchMedia("only screen and (max-width:767px) and (orientation:portrait)").matches
+    if (media_match) {
         return true;
     }
     if (css_only) {
         return false;
     }
-    var mb = document.getElementById("menu");
-    if (mb === null || !mb) {
+    let menu = document.getElementById("menu");
+    if (menu === null || !menu) {
         return false;
     }
-    return mb.classList.contains("mobile");
+    return menu.classList.contains("mobile");
 }
 function callout_hide(ignore = false) {
     if (!document.sb_callout || ignore) {
-        var c = document.getElementById("callout");
-        if (c === null) {
+        let callout = document.getElementById("callout");
+        if (callout === null) {
             return;
         }
-        c.style.display = "none";
+        callout.style.display = "none";
     }
 }
-function select_div(panel, divs, select) {
-    for (var i = 0; i < divs.length; i++) {
-        name = divs[i].id.replace("-tab", "");
+function select_div(panel, entries, select) {
+    for (let i = 0; i < entries.length; i++) {
+        let name = entries[i].id.replace("-tab", "");
         if (select) {
             if (name === panel) {
-                divs[i].classList.add("selected");
+                entries[i].classList.add("selected");
             } else {
-                divs[i].classList.remove("selected");
-                divs[i].classList.remove("auto-selected");
+                entries[i].classList.remove("selected");
+                entries[i].classList.remove("auto-selected");
             }
         }
-        var pe = document.getElementById(name);
-        if (pe !== null) {
+        let target = document.getElementById(name);
+        if (target !== null) {
             if (name === panel) {
-                pe.classList.add("selected");
+                target.classList.add("selected");
             } else {
-                pe.classList.remove("selected");
+                target.classList.remove("selected");
             }
         }
     }
-    var gt = document.getElementById("game-team");
-    if (gt === null) {
+    let team = document.getElementById("game-team");
+    if (team === null) {
         return;
     }
     if (panel === "auto" || panel === "overview") {
-        gt.classList.remove("single");
+        team.classList.remove("single");
     } else {
-        gt.classList.add("single");
+        team.classList.add("single");
     }
-}
-function scroll_vert_simple(ele) {
-    if (ele.scrollWidth === 0) {
-        ele.classList.remove("reverse");
-        return;
-    }
-    var rev = ele.classList.contains("reverse");
-    if (!rev && ele.scrollTop == 0) {
-        ele.scrollTop = ele.offsetHeight;
-        ele.classList.add("reverse");
-        return;
-    }
-    if (rev && ele.scrollTop == 0) {
-        ele.classList.remove("reverse");
-        return;
-    }
-    ele.scrollTop -= 2;
 }
